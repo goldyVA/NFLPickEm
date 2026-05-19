@@ -427,10 +427,7 @@
         headerRow.appendChild(th);
       }
 
-      const totalsTh = document.createElement('th');
-      totalsTh.className = 'totals-th';
-      totalsTh.textContent = finalGames.length > 0 ? 'Score' : 'Picks';
-      headerRow.appendChild(totalsTh);
+
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
@@ -471,14 +468,25 @@
           row.appendChild(td);
         }
 
-        const totalsTd = document.createElement('td');
-        totalsTd.className = 'totals-cell';
-        const {correct, total} = memberTotals[member.uid];
-        const pickedCount = games.filter(g=>allPicks[member.uid]?.[g.id]?.teamId).length;
-        totalsTd.innerHTML = finalGames.length > 0
-          ? `<span class="correct-count">${correct}</span><span class="slash">/</span>${total}`
-          : `<span style="color:var(--ink-faint)">${pickedCount}</span>`;
-        row.appendChild(totalsTd);
+
+        // MNF Points cell
+        if (mnfGame) {
+          const tbTd = document.createElement('td');
+          tbTd.className = 'totals-cell';
+          const mnfLocked3 = gameIsLocked(mnfGame.startTime);
+          const tbGuess = allTiebreakers[member.uid];
+          if (!mnfLocked3) {
+            tbTd.innerHTML = tbGuess != null ? `<span class="pick-chip chip-locked">🔒</span>` : `<span style="color:var(--ink-faint)">—</span>`;
+          } else if (tbGuess != null) {
+            const actual3 = mnfGame.statusName === 'STATUS_FINAL' ? (parseInt(mnfGame.awayScore||0) + parseInt(mnfGame.homeScore||0)) : null;
+            const diff = actual3 != null ? Math.abs(tbGuess - actual3) : null;
+            const diffStr = diff != null ? `<br><span style="font-size:10px;color:var(--ink-faint)">off by ${diff % 1 === 0 ? diff : diff.toFixed(1)}</span>` : '';
+            tbTd.innerHTML = `<span style="font-weight:600">${tbGuess % 1 === 0 ? tbGuess : parseFloat(tbGuess).toFixed(1)}</span>${diffStr}`;
+          } else {
+            tbTd.innerHTML = `<span style="color:var(--ink-faint)">—</span>`;
+          }
+          row.appendChild(tbTd);
+        }
         tbody.appendChild(row);
       }
 
