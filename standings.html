@@ -139,9 +139,9 @@
 
   <div class="filter-bar">
     <span class="filter-label">View:</span>
-    <button class="filter-btn active" data-tab="season" id="tabSeason">Full Season</button>
-    <button class="filter-btn" data-tab="week" id="tabWeek">By Week</button>
-    <select class="week-select" id="weekSelect" style="display:none">
+    <button class="filter-btn" data-tab="season" id="tabSeason">Full Season</button>
+    <button class="filter-btn active" data-tab="week" id="tabWeek">By Week</button>
+    <select class="week-select" id="weekSelect">
       <option value="1">Week 1</option>
     </select>
   </div>
@@ -180,7 +180,7 @@
 
   const MEDALS = ['🥇','🥈','🥉'];
   let currentUser = null;
-  let currentFilter = 'season';
+  let currentFilter = 'week';
   let currentWeek = 1;
   let allMembers = [];
   let allGames   = {};  // { 'week-N': { gameId: game } }
