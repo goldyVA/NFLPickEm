@@ -430,6 +430,16 @@
       totalsTh.className = 'totals-th';
       totalsTh.textContent = finalGames.length > 0 ? 'Score' : 'Picks';
       headerRow.appendChild(totalsTh);
+      if (mnfGame) {
+        const tbTh = document.createElement('th');
+        tbTh.className = 'totals-th';
+        const mnfLocked = gameIsLocked(mnfGame.startTime);
+        const actual = mnfGame.statusName === 'STATUS_FINAL' ? (mnfGame.awayScore + mnfGame.homeScore) : null;
+        tbTh.innerHTML = mnfLocked
+          ? `MNF TB${actual != null ? `<br><span style="font-size:10px;font-weight:400;color:var(--ink-faint)">actual: ${actual}</span>` : ''}`
+          : 'MNF TB';
+        headerRow.appendChild(tbTh);
+      }
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
@@ -478,10 +488,28 @@
           ? `<span class="correct-count">${correct}</span><span class="slash">/</span>${total}`
           : `<span style="color:var(--ink-faint)">${pickedCount}</span>`;
         row.appendChild(totalsTd);
+        if (mnfGame) {
+          const tbTd = document.createElement('td');
+          tbTd.className = 'totals-cell';
+          const mnfLocked = gameIsLocked(mnfGame.startTime);
+          const tbGuess = allTiebreakers[member.uid];
+          if (!mnfLocked) {
+            tbTd.innerHTML = tbGuess != null ? `<span class="pick-chip chip-locked">🔒</span>` : `<span style="color:var(--ink-faint)">—</span>`;
+          } else if (tbGuess != null) {
+            const actual = mnfGame.statusName === 'STATUS_FINAL' ? (mnfGame.awayScore + mnfGame.homeScore) : null;
+            const diff = actual != null ? Math.abs(tbGuess - actual) : null;
+            const diffStr = diff != null ? `<br><span style="font-size:10px;color:var(--ink-faint)">off by ${diff % 1 === 0 ? diff : diff.toFixed(1)}</span>` : '';
+            tbTd.innerHTML = `<span style="font-weight:600">${tbGuess % 1 === 0 ? tbGuess : parseFloat(tbGuess).toFixed(1)}</span>${diffStr}`;
+          } else {
+            tbTd.innerHTML = `<span style="color:var(--ink-faint)">—</span>`;
+          }
+          row.appendChild(tbTd);
+        }
         tbody.appendChild(row);
       }
 
-      // MNF tiebreaker guess row (if MNF game)
+      // MNF tiebreaker guess row (removed — now shown inline per member)
+      // kept as comment to preserve structure (if MNF game)
       if (mnfGame && mnfGame.statusName === 'STATUS_FINAL') {
         const tbRow = document.createElement('tr');
         tbRow.className = 'tb-row';
