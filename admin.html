@@ -677,15 +677,8 @@
     document.getElementById('settingSurvivorWeek').value = settings.survivorStartWeek || 1;
     document.getElementById('regToggle').checked         = settings.registrationOpen !== false;
 
-    // Detect max week
-    const startDate = settings.seasonStartDate;
-    let maxWeek = 18;
-    if (startDate) {
-      const start  = new Date(startDate + 'T00:00:00-05:00');
-      const diffMs = new Date() - start;
-      maxWeek = diffMs < 0 ? 1 : Math.min(18, Math.max(1, Math.floor(diffMs / (7*24*60*60*1000)) + 1));
-    }
-    populateWeekSelects(maxWeek);
+    // Admin can always access all 18 weeks
+    populateWeekSelects(18);
 
     await loadMembers();
     loadFreePassQueue();
