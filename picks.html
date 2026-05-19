@@ -354,6 +354,8 @@
           ? (parseInt(away?.score) > parseInt(home?.score) ? away?.team?.id : home?.team?.id)
           : null,
         broadcast: comp?.broadcasts?.[0]?.names?.[0] || '',
+        venue: comp?.venue?.fullName || '',
+        city: comp?.venue?.address?.city || '',
       });
     }
     return games;
@@ -525,6 +527,7 @@
               </div>
               ${statusBadge}
             </div>
+            ${(game.venue || game.city) ? `<div style="padding:4px 14px 6px;font-size:11px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark)">${[game.venue, game.city].filter(Boolean).join(' · ')}</div>` : ''}
             <div class="card-body">
               <div class="team-side">
                 <img class="team-logo" src="${espnLogo(game.awayTeam.abbrev)}" alt="${game.awayTeam.abbrev}" onerror="this.style.display='none'" />
