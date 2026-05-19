@@ -217,7 +217,8 @@
   function normalizeAbbrev(a){const m={'WAS':'WSH','JAC':'JAX','KAN':'KC','NEP':'NE','NOS':'NO','GNB':'GB','SFO':'SF','TAM':'TB'};return m[a?.toUpperCase()]||a?.toUpperCase()||'??';}
 
   function gameIsLocked(t){return t?new Date()>=new Date(t):false;}
-  function formatGameTime(t){if(!t)return'';const d=new Date(t);const day=d.toLocaleDateString('en-US',{weekday:'short',timeZone:'America/New_York'});const time=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York',timeZoneName:'short'});return `${day} · ${time}`;}
+  function formatGameDay(t){if(!t)return'';return new Date(t).toLocaleDateString('en-US',{weekday:'short',timeZone:'America/New_York'});}
+  function formatGameTime(t){if(!t)return'';return new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York',timeZoneName:'short'});}
 
   function getCurrentWeek(){
     if(!seasonStartDate)return 1;
@@ -421,7 +422,7 @@
             <img class="game-header-logo" src="${espnLogo(game.homeTeam.abbrev)}" alt="${game.homeTeam.abbrev}" onerror="this.style.display='none'" />
           </div>
           ${scoreHTML}
-          <span class="game-header-status ${statusClass}">${statusText}</span>
+          <span class="game-header-status ${statusClass}">${statusClass==='status-upcoming' ? `<span style="display:flex;flex-direction:column;align-items:center;gap:1px"><span style="font-size:10px;font-weight:500">${formatGameDay(game.startTime)}</span><span>${formatGameTime(game.startTime)}</span></span>` : statusText}</span>
         </div>`;
         headerRow.appendChild(th);
       }
