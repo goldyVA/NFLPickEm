@@ -322,7 +322,7 @@
       }
 
       if (!games.length) {
-        document.getElementById('resultsContainer').innerHTML = '<div class="state-box"><div class="icon">📅</div><h3>No games yet</h3><p>Games for this week haven\'t been loaded yet. Go to Admin → Refresh ESPN Games to load them.</p></div>';
+        document.getElementById('resultsContainer').innerHTML = '<div class="state-box"><div class="icon">📅</div><h3>No games yet</h3><p>Go to Admin → Refresh ESPN Games to load this week.</p></div>';
         return;
       }
 
@@ -545,11 +545,6 @@
     pollInterval = setInterval(()=>loadResults(currentWeek), 3*60*1000);
   });
 
-  function getCurrentWeek(){
-    if(!seasonStartDate)return 1;
-    const diff=Math.floor((new Date()-new Date(seasonStartDate+'T00:00:00'))/86400000);
-    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
-  }
 </script>
 </body>
 </html>
