@@ -281,8 +281,16 @@
     if (mnfWinners.length > 1) contenders = mnfWinners;
 
     // TB2: closest total points guess
-    const minDiff = Math.min(...contenders.map(s => s.tbDiff));
-    return contenders.filter(s => s.tbDiff === minDiff);
+    // Only consider people who actually submitted a guess (tbDiff < Infinity)
+    const withGuess = contenders.filter(s => s.tbDiff < Infinity);
+    if (withGuess.length > 0) {
+      const minDiff = Math.min(...withGuess.map(s => s.tbDiff));
+      const closest = withGuess.filter(s => s.tbDiff === minDiff);
+      // If there's still a tie (same diff), declare co-winners
+      return closest;
+    }
+    // Nobody submitted a guess — all remaining contenders are co-winners
+    return contenders;
   }
 
   async function loadResults(week) {
@@ -364,15 +372,29 @@
 
       // Sort members
       const anyStarted = games.some(g => gameIsLocked(g.startTime));
+
+      function lastName(name) {
+        const parts = (name || '').trim().split(' ');
+        return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+      }
+
       members.sort((a,b)=>{
+        const aPickCount = games.filter(g=>allPicks[a.uid]?.[g.id]?.teamId).length;
+        const bPickCount = games.filter(g=>allPicks[b.uid]?.[g.id]?.teamId).length;
+        const aHasPicks = aPickCount > 0;
+        const bHasPicks = bPickCount > 0;
+
+        // No picks always at bottom
+        if (aHasPicks !== bHasPicks) return aHasPicks ? -1 : 1;
+
         if (!anyStarted) {
-          const aP = games.filter(g=>allPicks[a.uid]?.[g.id]?.teamId).length > 0;
-          const bP = games.filter(g=>allPicks[b.uid]?.[g.id]?.teamId).length > 0;
-          if (aP!==bP) return aP?-1:1;
-          return a.displayName.localeCompare(b.displayName);
+          // Before games start: alphabetical by last name
+          return lastName(a.displayName).localeCompare(lastName(b.displayName));
         }
+
+        // After games start: by correct picks desc, then last name
         const diff = memberTotals[b.uid].correct - memberTotals[a.uid].correct;
-        return diff !== 0 ? diff : a.displayName.localeCompare(b.displayName);
+        return diff !== 0 ? diff : lastName(a.displayName).localeCompare(lastName(b.displayName));
       });
 
       // Weekly winners
