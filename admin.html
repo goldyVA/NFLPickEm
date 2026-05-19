@@ -595,6 +595,12 @@
 
   // ── Populate week dropdowns ───────────────────────────────────────────
   function populateWeekSelects(maxWeek) {
+    const startDate = document.getElementById('settingSeasonStart')?.value || '';
+    let currentWeek = 1;
+    if (startDate) {
+      const diff = Math.floor((new Date() - new Date(startDate + 'T00:00:00')) / 86400000);
+      currentWeek = diff < 0 ? 1 : Math.min(18, Math.max(1, Math.floor(diff / 7) + 1));
+    }
     for (const id of ['toolWeek','espnWeek']) {
       const el = document.getElementById(id);
       for (let w = 1; w <= maxWeek; w++) {
@@ -602,7 +608,7 @@
         o.value = w; o.textContent = `Week ${w}`;
         el.appendChild(o);
       }
-      el.value = maxWeek;
+      el.value = currentWeek;
     }
   }
 
