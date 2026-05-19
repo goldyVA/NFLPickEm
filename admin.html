@@ -403,6 +403,7 @@
             <button class="mini-btn ${m.donated ? 'red' : 'green'}" onclick="toggleDonation('${m.uid}', ${!m.donated})">
               ${m.donated ? 'Mark unpaid' : '✓ Mark paid'}
             </button>
+            <button class="mini-btn" onclick="renameMember('${m.uid}', '${m.displayName}')">Rename</button>
             ${m.uid !== currentUser.uid ? `<button class="mini-btn red" onclick="removeMember('${m.uid}', '${m.displayName}')">Remove</button>` : ''}
           </div>
         </td>`;
@@ -438,6 +439,18 @@
   }
 
   // ── Toggle donation ───────────────────────────────────────────────────
+  window.renameMember = async (uid, currentName) => {
+    const newName = prompt(`Enter new display name for ${currentName}:`, currentName);
+    if (!newName || newName.trim() === currentName) return;
+    try {
+      await update(ref(db, `adminConfig/members/${uid}`), { displayName: newName.trim() });
+      showMsg('membersMsg', `✓ Display name updated to "${newName.trim()}".`, 'info');
+      loadMembers();
+    } catch(err) {
+      showMsg('membersMsg', 'Could not update name. Please try again.', 'error');
+    }
+  };
+
   window.toggleDonation = async (uid, val) => {
     await update(ref(db, `adminConfig/members/${uid}`), { donated: val });
     loadMembers();
