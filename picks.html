@@ -317,7 +317,8 @@
 
   // ── ESPN game fetch ───────────────────────────────────────────────────
   async function fetchGamesFromESPN(week) {
-    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
+    const year = seasonStartDate ? seasonStartDate.slice(0,4) : new Date().getFullYear();
+    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`;
     const resp = await fetch(url);
     const data = await resp.json();
     const games = [];
