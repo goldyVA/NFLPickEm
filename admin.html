@@ -172,7 +172,6 @@
   <div class="admin-tabs">
     <button class="atab active" data-panel="members">Members</button>
     <button class="atab" data-panel="settings">Settings</button>
-    <button class="atab" data-panel="autopick">Auto-Pick</button>
     <button class="atab" data-panel="survivor">Survivor</button>
     <button class="atab" data-panel="tools">Tools</button>
   </div>
@@ -235,22 +234,7 @@
   </div>
 
   <!-- ── Auto-pick panel ── -->
-  <div class="panel" id="panel-autopick">
-    <div class="section">
-      <div class="section-title">Auto-Pick for Week</div>
-      <div class="section-sub">Fill in picks for any member who hasn't submitted for the selected week. Only games that have already started (locked) will be auto-filled using a random team. Auto-picks are flagged with <strong>auto: true</strong> in the database.</div>
-      <div class="field">
-        <label for="autoPickWeek">Week</label>
-        <select id="autoPickWeek">
-          <option value="">Select week…</option>
-          <!-- Populated dynamically -->
-        </select>
-      </div>
-      <div class="btn-row">
-        <button class="btn-primary" onclick="runAutoPick()">Run Auto-Pick</button>
-      </div>
-      <div class="msg" id="autoPickMsg"></div>
-    </div>
+
   </div>
 
   <!-- ── Survivor panel ── -->
@@ -502,40 +486,7 @@
     await update(ref(db, 'adminConfig/settings'), { [key]: val });
   };
 
-  // ── Auto-pick ─────────────────────────────────────────────────────────
-  window.runAutoPick = async () => {
-    const week = document.getElementById('autoPickWeek').value;
-    if (!week) { showMsg('autoPickMsg','Select a week first.','error'); return; }
-    const wk   = `week-${week}`;
-    const btn  = document.querySelector('#panel-autopick .btn-primary');
-    btn.disabled = true; btn.textContent = 'Running…';
 
-    try {
-      const gamesSnap = await get(ref(db, `games/${wk}`));
-      if (!gamesSnap.exists()) { showMsg('autoPickMsg','No games found. Refresh ESPN data first.','error'); btn.disabled=false; btn.textContent='Run Auto-Pick'; return; }
-      const games = gamesSnap.val();
-      const now   = new Date();
-
-      let count = 0;
-      for (const m of allMembers) {
-        const picksSnap = await get(ref(db, `picks/${m.uid}/${wk}`));
-        const myPicks   = picksSnap.exists() ? picksSnap.val() : {};
-        const updates   = {};
-        for (const [gameId, game] of Object.entries(games)) {
-          if (myPicks[gameId]?.teamId) continue; // already picked
-          if (!game.startTime || new Date(game.startTime) > now) continue; // not started
-          // Random team: home or away
-          const pick = Math.random() < 0.5 ? game.homeTeam?.id : game.awayTeam?.id;
-          if (pick) { updates[gameId] = { teamId: pick, auto: true }; count++; }
-        }
-        if (Object.keys(updates).length) await update(ref(db, `picks/${m.uid}/${wk}`), updates);
-      }
-      showMsg('autoPickMsg', `✓ Auto-pick complete — ${count} picks inserted.`, 'info');
-    } catch(e) {
-      showMsg('autoPickMsg', `Error: ${e.message}`, 'error');
-    }
-    btn.disabled = false; btn.textContent = 'Run Auto-Pick';
-  };
 
   // ── Survivor admin list ───────────────────────────────────────────────
   async function loadSurvivorAdmin() {
@@ -648,7 +599,7 @@
 
   // ── Populate week dropdowns ───────────────────────────────────────────
   function populateWeekSelects(maxWeek) {
-    for (const id of ['autoPickWeek','toolWeek','espnWeek']) {
+    for (const id of ['toolWeek','espnWeek']) {
       const el = document.getElementById(id);
       for (let w = 1; w <= maxWeek; w++) {
         const o = document.createElement('option');
