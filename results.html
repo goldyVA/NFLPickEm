@@ -324,6 +324,11 @@
 
       games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
 
+      if (!games.length) {
+        document.getElementById('resultsContainer').innerHTML = `<div class="state-box"><div class="icon">📅</div><h3>No games yet</h3><p>Games for Week ${week} have not been loaded yet. An admin can refresh ESPN data from the Admin panel.</p></div>`;
+        return;
+      }
+
       // Members
       const mSnap = await get(ref(db, 'adminConfig/members'));
       let members = [];
