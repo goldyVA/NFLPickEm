@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Survivor · NFL Pick'em</title>
+  <title>Survivor · NFL Pick Em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -142,7 +142,7 @@
 
 <nav id="mainNav"></nav>
 <div id="mobileDrawer" class="mobile-drawer">
-  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick Em</span><button class="drawer-close" id="drawerClose">✕</button></div>
   <div class="drawer-user" id="drawerUser"></div>
   <div class="drawer-nav" id="drawerNav"></div>
   <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
@@ -199,7 +199,7 @@
   function initNav({activePage,isAdmin,userName}){
     const links=[{href:'picks.html',label:'Picks',icon:'📋'},{href:'results.html',label:'Results',icon:'📊'},{href:'standings.html',label:'Standings',icon:'🏆'},{href:'survivor.html',label:'Survivor',icon:'💀'},{href:'profile.html',label:'Profile',icon:'👤'}];
     if(isAdmin)links.push({href:'admin.html',label:'Admin',icon:'⚙️'});
-    document.getElementById('mainNav').innerHTML=`<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick'em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
+    document.getElementById('mainNav').innerHTML=`<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick Em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
     document.getElementById('drawerUser').textContent=userName;
     document.getElementById('drawerNav').innerHTML=links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
     const h=document.getElementById('hamburgerBtn'),dr=document.getElementById('mobileDrawer'),ov=document.getElementById('drawerOverlay'),cl=document.getElementById('drawerClose');
