@@ -243,7 +243,7 @@
 
     <div class="section">
       <div class="section-title">Reset Survivor Season</div>
-      <div class="section-sub">Clears all survivor data for the 2025 season. Use with caution — this cannot be undone.</div>
+      <div class="section-sub">Clears all survivor data for the 2026 season. Use with caution — this cannot be undone.</div>
       <div class="btn-row">
         <button class="btn-danger" onclick="resetSurvivor()">🗑️ Reset Survivor Season</button>
       </div>
@@ -412,7 +412,7 @@
 
   // ── Load free pass queue ──────────────────────────────────────────────
   async function loadFreePassQueue() {
-    const snap = await get(ref(db, 'survivor/2025'));
+    const snap = await get(ref(db, 'survivor/2026'));
     allSurvivor = {};
     if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
 
@@ -453,7 +453,7 @@
 
   // ── Approve free pass ─────────────────────────────────────────────────
   window.approveFreePass = async (uid, week) => {
-    await update(ref(db, `survivor/2025/${uid}`), {
+    await update(ref(db, `survivor/2026/${uid}`), {
       freePassRequested: false, freePassUsed: true, freePassWeek: week, alive: true, eliminatedWeek: null,
     });
     showMsg('fpMsg', '✓ Free pass approved — member restored to alive.', 'info');
@@ -462,7 +462,7 @@
 
   // ── Deny free pass ────────────────────────────────────────────────────
   window.denyFreePass = async (uid) => {
-    await update(ref(db, `survivor/2025/${uid}`), { freePassRequested: false });
+    await update(ref(db, `survivor/2026/${uid}`), { freePassRequested: false });
     showMsg('fpMsg', 'Free pass denied.', 'warn');
     loadFreePassQueue();
   };
@@ -486,7 +486,7 @@
 
   // ── Survivor admin list ───────────────────────────────────────────────
   async function loadSurvivorAdmin() {
-    const snap = await get(ref(db, 'survivor/2025'));
+    const snap = await get(ref(db, 'survivor/2026'));
     allSurvivor = {};
     if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
 
@@ -508,9 +508,9 @@
 
   // ── Reset survivor ────────────────────────────────────────────────────
   window.resetSurvivor = async () => {
-    if (!confirm('Reset the entire 2025 survivor season? All picks and statuses will be deleted. This cannot be undone.')) return;
+    if (!confirm('Reset the entire 2026 survivor season? All picks and statuses will be deleted. This cannot be undone.')) return;
     if (!confirm('Are you absolutely sure? Type OK in your mind and click again.')) return;
-    await remove(ref(db, 'survivor/2025'));
+    await remove(ref(db, 'survivor/2026'));
     showMsg('survivorResetMsg', '✓ Survivor season reset.', 'info');
     loadSurvivorAdmin();
     loadFreePassQueue();
