@@ -163,19 +163,7 @@
     </div>
   </div>
 
-  <!-- Google linking -->
-  <div class="section" id="googleSection">
-    <div class="section-title">Google Account</div>
-    <div class="section-sub" id="googleSub">Link your Google account to sign in with one tap.</div>
-    <div class="btn-row">
-      <button class="btn-google" id="googleLinkBtn" style="display:none">
-        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
-        Link Google account
-      </button>
-      <button class="btn-danger" id="googleUnlinkBtn" style="display:none">Unlink Google</button>
-    </div>
-    <div class="msg" id="googleMsg"></div>
-  </div>
+
 
   <!-- Email preferences -->
   <div class="section">
@@ -221,7 +209,6 @@
       {href:'profile.html',  label:'Profile',   icon:'👤'},
     ];
     if (isAdmin) links.push({href:'admin.html', label:'Admin', icon:'⚙️'});
-
     document.getElementById('mainNav').innerHTML = `
       <div class="nav-inner">
         <a class="nav-logo" href="index.html">🏈 NFL Pick Em</a>
@@ -236,20 +223,15 @@
           </button>
         </div>
       </div>`;
-
     document.getElementById('drawerUser').textContent = userName;
     document.getElementById('drawerNav').innerHTML =
       links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
-
-    const hamburger = document.getElementById('hamburgerBtn');
-    const drawer    = document.getElementById('mobileDrawer');
-    const overlay   = document.getElementById('drawerOverlay');
-    const closeBtn  = document.getElementById('drawerClose');
-    const open  = () => { drawer.classList.add('open'); overlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
-    const close = () => { drawer.classList.remove('open'); overlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
-    hamburger.addEventListener('click', open);
-    closeBtn?.addEventListener('click', close);
-    overlay?.addEventListener('click', close);
+    const hamburger=document.getElementById('hamburgerBtn'),drawer=document.getElementById('mobileDrawer'),overlay=document.getElementById('drawerOverlay'),closeBtn=document.getElementById('drawerClose');
+    if(hamburger){
+      const open=()=>{drawer.classList.add('open');overlay.classList.add('show');hamburger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';};
+      const close=()=>{drawer.classList.remove('open');overlay.classList.remove('show');hamburger.setAttribute('aria-expanded','false');document.body.style.overflow='';};
+      hamburger.addEventListener('click',open);closeBtn?.addEventListener('click',close);overlay?.addEventListener('click',close);
+    }
   }
 
   const firebaseConfig = {
@@ -290,8 +272,8 @@
         <h2>${m?.displayName || user.email}</h2>
         <p>${user.email}</p>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-          ${hasEmail  ? '<span class="auth-provider">📧 Email/PIN</span>' : ''}
-          ${hasGoogle ? '<span class="auth-provider"><svg width="14" height="14" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg> Google</span>' : ''}
+          ${hasEmail  ? '<span class="auth-provider">📧 Email / PIN</span>' : ''}
+          ${hasGoogle ? '<span class="auth-provider">🔑 Google</span>' : ''}
         </div>
       </div>`;
 
@@ -299,16 +281,9 @@
     if (hasEmail) document.getElementById('pinSection').style.display = '';
 
     // Google section
-    const googleSub    = document.getElementById('googleSub');
-    const linkBtn      = document.getElementById('googleLinkBtn');
-    const unlinkBtn    = document.getElementById('googleUnlinkBtn');
+
     if (hasGoogle) {
-      googleSub.textContent = 'Your Google account is linked. You can sign in with Google or your PIN.';
-      if (hasEmail) unlinkBtn.style.display = ''; // only show unlink if they have another sign-in method
-    } else {
-      googleSub.textContent = 'Link your Google account to sign in with one tap in addition to your PIN.';
-      linkBtn.style.display = '';
-    }
+
 
     // Preferences
     document.getElementById('reminderToggle').checked = m?.pickReminderOptIn !== false;
@@ -345,39 +320,7 @@
     btn.disabled = false; btn.textContent = 'Update PIN';
   };
 
-  // ── Google link ─────────────────────────────────────────────────────
-  document.getElementById('googleLinkBtn').addEventListener('click', async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      if (isMobile) {
-        await linkWithRedirect(currentUser, provider);
-      } else {
-        await linkWithPopup(currentUser, provider);
-        showMsg('googleMsg','✓ Google account linked!','info');
-        renderIdentity();
-      }
-    } catch (err) {
-      const msgs = {
-        'auth/credential-already-in-use': 'This Google account is already linked to another Pick\'em account.',
-        'auth/popup-closed-by-user': null,
-        'auth/cancelled-popup-request': null,
-      };
-      const msg = msgs[err.code];
-      if (msg !== null) showMsg('googleMsg', msg || 'Linking failed. Please try again.', 'error');
-    }
-  });
 
-  // ── Google unlink ───────────────────────────────────────────────────
-  document.getElementById('googleUnlinkBtn').addEventListener('click', async () => {
-    if (!confirm('Unlink Google? You\'ll still be able to sign in with your PIN.')) return;
-    try {
-      await unlink(currentUser, 'google.com');
-      showMsg('googleMsg','✓ Google account unlinked.','info');
-      renderIdentity();
-    } catch (err) {
-      showMsg('googleMsg','Could not unlink. Please try again.','error');
-    }
-  });
 
   // ── Save preference ─────────────────────────────────────────────────
   window.savePreference = async function(key, value) {
