@@ -302,7 +302,8 @@
       if (!games.length) {
         // Try ESPN directly
         try {
-          const resp = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
+          const year = seasonStartDate ? seasonStartDate.slice(0,4) : new Date().getFullYear();
+          const resp = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`);
           const data = await resp.json();
           for (const event of (data.events||[])) {
             const comp=event.competitions?.[0];
