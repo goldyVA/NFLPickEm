@@ -426,10 +426,7 @@
         headerRow.appendChild(th);
       }
 
-      const totalsTh = document.createElement('th');
-      totalsTh.className = 'totals-th';
-      totalsTh.textContent = finalGames.length > 0 ? 'Score' : 'Picks';
-      headerRow.appendChild(totalsTh);
+
       if (mnfGame) {
         const tbTh = document.createElement('th');
         tbTh.className = 'totals-th';
@@ -480,14 +477,7 @@
           row.appendChild(td);
         }
 
-        const totalsTd = document.createElement('td');
-        totalsTd.className = 'totals-cell';
-        const {correct, total} = memberTotals[member.uid];
-        const pickedCount = games.filter(g=>allPicks[member.uid]?.[g.id]?.teamId).length;
-        totalsTd.innerHTML = finalGames.length > 0
-          ? `<span class="correct-count">${correct}</span><span class="slash">/</span>${total}`
-          : `<span style="color:var(--ink-faint)">${pickedCount}</span>`;
-        row.appendChild(totalsTd);
+
         if (mnfGame) {
           const tbTd = document.createElement('td');
           tbTd.className = 'totals-cell';
