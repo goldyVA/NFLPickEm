@@ -280,11 +280,6 @@
     // Show PIN section only for email-auth users
     if (hasEmail) document.getElementById('pinSection').style.display = '';
 
-    // Google section
-
-    if (hasGoogle) {
-
-
     // Preferences
     document.getElementById('reminderToggle').checked = m?.pickReminderOptIn !== false;
     document.getElementById('summaryToggle').checked  = !m?.weeklySummaryOptOut;
