@@ -303,7 +303,45 @@
     from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
   import { getDatabase, ref, get, set, update, remove }
     from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
-  import { initNav } from './nav.js';
+  function initNav({activePage, isAdmin, userName}) {
+    const links = [
+      {href:'picks.html',    label:'Picks',     icon:'📋'},
+      {href:'results.html',  label:'Results',   icon:'📊'},
+      {href:'standings.html',label:'Standings', icon:'🏆'},
+      {href:'survivor.html', label:'Survivor',  icon:'💀'},
+      {href:'profile.html',  label:'Profile',   icon:'👤'},
+    ];
+    if (isAdmin) links.push({href:'admin.html', label:'Admin', icon:'⚙️'});
+
+    document.getElementById('mainNav').innerHTML = `
+      <div class="nav-inner">
+        <a class="nav-logo" href="index.html">🏈 NFL Pick Em</a>
+        <div class="nav-links">
+          ${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}
+        </div>
+        <div class="nav-right">
+          <span class="nav-user">${userName}</span>
+          <button class="btn-signout" id="signOutBtn">Sign Out</button>
+          <button class="hamburger" id="hamburgerBtn" aria-expanded="false" aria-label="Menu">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>`;
+
+    document.getElementById('drawerUser').textContent = userName;
+    document.getElementById('drawerNav').innerHTML =
+      links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
+
+    const hamburger = document.getElementById('hamburgerBtn');
+    const drawer    = document.getElementById('mobileDrawer');
+    const overlay   = document.getElementById('drawerOverlay');
+    const closeBtn  = document.getElementById('drawerClose');
+    const open  = () => { drawer.classList.add('open'); overlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+    const close = () => { drawer.classList.remove('open'); overlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+    hamburger.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+    overlay?.addEventListener('click', close);
+  }
 
   const firebaseConfig = {
   apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -565,9 +603,7 @@
     const btn = document.querySelector('#panel-tools .btn-primary');
     btn.disabled = true; btn.textContent = 'Fetching…';
     try {
-      const seasonStart = document.getElementById('settingSeasonStart')?.value || '';
-      const year = seasonStart ? seasonStart.slice(0,4) : new Date().getFullYear();
-      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`;
+      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
       const res  = await fetch(url);
       const data = await res.json();
       const events = data.events || [];
