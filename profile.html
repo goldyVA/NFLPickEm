@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:#F7F5F0; --cream-dark:#EDEAE2;
+      --ink:#1A1A1A; --ink-light:#555550; --ink-faint:#999990;
+      --charcoal:#1E2A38; --red:#C0392B; --green:#27AE60; --accent:#E8A838;
+      --white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px; --radius-sm:8px;
+    }
+    html,body { min-height:100%; font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); }
+    body { padding-top:58px; }
+
+    /* Nav shared */
+    #mainNav { position:fixed; top:0; left:0; right:0; background:var(--white); box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:200; height:58px; }
+    .nav-inner { max-width:1100px; margin:0 auto; padding:0 24px; height:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .nav-links { display:flex; gap:2px; flex:1; justify-content:center; }
+    .nav-link { padding:6px 12px; border-radius:6px; font-size:14px; font-weight:500; color:var(--ink-light); text-decoration:none; white-space:nowrap; }
+    .nav-link:hover { background:var(--cream); color:var(--ink); }
+    .nav-link.active { background:var(--charcoal); color:var(--white); }
+    .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .nav-user { font-size:13px; color:var(--ink-faint); white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+    .btn-signout { padding:6px 12px; border:1.5px solid var(--cream-dark); border-radius:6px; background:transparent; font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; }
+    .btn-signout:hover { border-color:var(--red); color:var(--red); }
+    .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px; width:36px; height:36px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:8px; cursor:pointer; padding:0; flex-shrink:0; }
+    .hamburger span { display:block; width:18px; height:2px; background:var(--ink); border-radius:2px; transition:all .2s; }
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0;}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+    .mobile-drawer { position:fixed; top:0; right:0; width:280px; height:100dvh; background:var(--white); z-index:300; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; box-shadow:-4px 0 24px rgba(0,0,0,.12); }
+    .mobile-drawer.open { transform:translateX(0); }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299; opacity:0; pointer-events:none; transition:opacity .28s; }
+    .drawer-overlay.show { opacity:1; pointer-events:all; }
+    .drawer-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:58px; border-bottom:1px solid var(--cream-dark); flex-shrink:0; }
+    .drawer-title { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); }
+    .drawer-close { width:32px; height:32px; border:none; background:var(--cream); border-radius:8px; font-size:16px; cursor:pointer; color:var(--ink-light); display:flex; align-items:center; justify-content:center; }
+    .drawer-user { padding:12px 20px; font-size:13px; color:var(--ink-faint); border-bottom:1px solid var(--cream-dark); background:var(--cream); }
+    .drawer-nav { flex:1; padding:12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
+    .drawer-link { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); text-decoration:none; }
+    .drawer-link:hover { background:var(--cream); }
+    .drawer-link.active { background:var(--charcoal); color:var(--white); }
+    .drawer-icon { font-size:20px; width:28px; text-align:center; }
+    .drawer-signout { margin:12px; padding:13px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:10px; font-family:inherit; font-size:15px; font-weight:500; color:var(--red); cursor:pointer; flex-shrink:0; }
+    .drawer-signout:hover { background:#FDF0EF; border-color:var(--red); }
+    button,a,[role=button] { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+    @media(max-width:720px) { .nav-links{display:none} .nav-user{display:none} .btn-signout{display:none} .hamburger{display:flex} }
+
+    /* Page */
+    .page-body { max-width:620px; margin:0 auto; padding:32px 24px 60px; }
+    h1 { font-family:'DM Serif Display',serif; font-size:32px; color:var(--charcoal); margin-bottom:28px; }
+
+    /* Avatar / identity */
+    .identity-card { background:var(--white); border:1.5px solid var(--cream-dark); border-radius:var(--radius); padding:24px; margin-bottom:24px; display:flex; align-items:center; gap:20px; box-shadow:var(--shadow-sm); }
+    .avatar { width:64px; height:64px; border-radius:50%; background:var(--charcoal); display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; }
+    .identity-info h2 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); margin-bottom:4px; }
+    .identity-info p  { font-size:14px; color:var(--ink-faint); }
+    .identity-info .auth-provider { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-faint); margin-top:6px; padding:4px 10px; background:var(--cream); border-radius:100px; }
+
+    /* Section cards */
+    .section { background:var(--white); border:1.5px solid var(--cream-dark); border-radius:var(--radius); padding:24px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
+    .section-title { font-size:16px; font-weight:700; color:var(--charcoal); margin-bottom:6px; }
+    .section-sub   { font-size:13px; color:var(--ink-faint); margin-bottom:20px; line-height:1.5; }
+
+    /* Fields */
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:13px; font-weight:500; color:var(--ink-light); }
+    .field input { width:100%; padding:11px 14px; border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); background:var(--white); font-family:inherit; font-size:15px; color:var(--ink); outline:none; transition:border-color .15s; }
+    .field input:focus { border-color:var(--charcoal); }
+    .field input::placeholder { color:var(--ink-faint); }
+    .field input:disabled { background:var(--cream); color:var(--ink-faint); }
+
+    /* Buttons */
+    .btn-primary { padding:11px 22px; background:var(--charcoal); color:var(--white); border:none; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-secondary { padding:11px 22px; background:transparent; color:var(--ink-light); border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:500; cursor:pointer; transition:all .15s; }
+    .btn-secondary:hover { border-color:var(--ink-light); color:var(--ink); }
+    .btn-secondary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-danger { padding:11px 22px; background:transparent; color:var(--red); border:1.5px solid #F0C4C0; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:500; cursor:pointer; transition:all .15s; }
+    .btn-danger:hover { background:#FDF0EF; border-color:var(--red); }
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+
+    /* Google button */
+    .btn-google { padding:11px 18px; background:var(--white); color:var(--ink); border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:500; cursor:pointer; display:inline-flex; align-items:center; gap:10px; transition:border-color .15s,box-shadow .15s; }
+    .btn-google:hover { border-color:#aaa; box-shadow:var(--shadow-sm); }
+
+    /* Toggle row */
+    .toggle-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--cream-dark); }
+    .toggle-row:last-child { border-bottom:none; padding-bottom:0; }
+    .toggle-text { flex:1; }
+    .toggle-text strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+    .toggle-text span { font-size:13px; color:var(--ink-faint); line-height:1.45; }
+    .toggle { position:relative; width:46px; height:26px; flex-shrink:0; margin-top:2px; }
+    .toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-slider { position:absolute; inset:0; background:var(--cream-dark); border-radius:100px; cursor:pointer; transition:background .2s; }
+    .toggle-slider::before { content:''; position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:50%; background:var(--white); transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+    .toggle input:checked + .toggle-slider { background:var(--charcoal); }
+    .toggle input:checked + .toggle-slider::before { transform:translateX(20px); }
+
+    /* Messages */
+    .msg { display:none; font-size:13px; padding:10px 14px; border-radius:var(--radius-sm); line-height:1.5; margin-top:12px; }
+    .msg.show { display:block; }
+    .msg.error { background:#FDF0EF; color:var(--red); border:1px solid #F5C6C2; }
+    .msg.info  { background:#EFF8F2; color:#1D6A3E; border:1px solid #B8DFCA; }
+
+    .spinner { width:24px; height:24px; border:3px solid var(--cream-dark); border-top-color:var(--charcoal); border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div class="mobile-drawer" id="mobileDrawer"></div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-body">
+  <h1>Profile</h1>
+
+  <!-- Identity -->
+  <div class="identity-card" id="identityCard">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Change PIN (hidden for Google-only users) -->
+  <div class="section" id="pinSection" style="display:none">
+    <div class="section-title">Change PIN</div>
+    <div class="section-sub">Your PIN is 6–8 digits and used to sign in alongside your email.</div>
+    <div class="field">
+      <label for="pinCurrent">Current PIN</label>
+      <input type="password" id="pinCurrent" inputmode="numeric" placeholder="••••••" autocomplete="current-password" />
+    </div>
+    <div class="field">
+      <label for="pinNew">New PIN</label>
+      <input type="password" id="pinNew" inputmode="numeric" placeholder="••••••" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label for="pinConfirm">Confirm New PIN</label>
+      <input type="password" id="pinConfirm" inputmode="numeric" placeholder="••••••" autocomplete="new-password" />
+    </div>
+    <div class="msg" id="pinMsg"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="savePinBtn" onclick="changePin()">Update PIN</button>
+    </div>
+  </div>
+
+  <!-- Google linking -->
+  <div class="section" id="googleSection">
+    <div class="section-title">Google Account</div>
+    <div class="section-sub" id="googleSub">Link your Google account to sign in with one tap.</div>
+    <div class="btn-row">
+      <button class="btn-google" id="googleLinkBtn" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Link Google account
+      </button>
+      <button class="btn-danger" id="googleUnlinkBtn" style="display:none">Unlink Google</button>
+    </div>
+    <div class="msg" id="googleMsg"></div>
+  </div>
+
+  <!-- Email preferences -->
+  <div class="section">
+    <div class="section-title">Email Preferences</div>
+    <div class="toggle-row">
+      <div class="toggle-text">
+        <strong>Pick Reminders</strong>
+        <span>Get an email on Thursday, Sunday, and Monday mornings if you haven't submitted picks for that day's games.</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="reminderToggle" onchange="savePreference('pickReminderOptIn', this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-text">
+        <strong>Weekly Summary</strong>
+        <span>Receive a summary email after Monday Night Football with results, standings, and survivor updates.</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="summaryToggle" onchange="savePreference('weeklySummaryOptOut', !this.checked)" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut,
+           EmailAuthProvider, GoogleAuthProvider,
+           reauthenticateWithCredential, updatePassword,
+           linkWithPopup, linkWithRedirect, getRedirectResult,
+           unlink } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get, update }
+    from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+  import { initNav } from './nav.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser  = null;
+  let memberData   = null;
+  const isMobile   = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className   = `msg ${type} show`;
+  }
+
+  // ── Render identity card ────────────────────────────────────────────
+  function renderIdentity() {
+    const user = currentUser;
+    const m    = memberData;
+    const providers = user.providerData.map(p => p.providerId);
+    const hasGoogle = providers.includes('google.com');
+    const hasEmail  = providers.includes('password');
+
+    document.getElementById('identityCard').innerHTML = `
+      <div class="avatar">👤</div>
+      <div class="identity-info">
+        <h2>${m?.displayName || user.email}</h2>
+        <p>${user.email}</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          ${hasEmail  ? '<span class="auth-provider">📧 Email/PIN</span>' : ''}
+          ${hasGoogle ? '<span class="auth-provider"><svg width="14" height="14" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg> Google</span>' : ''}
+        </div>
+      </div>`;
+
+    // Show PIN section only for email-auth users
+    if (hasEmail) document.getElementById('pinSection').style.display = '';
+
+    // Google section
+    const googleSub    = document.getElementById('googleSub');
+    const linkBtn      = document.getElementById('googleLinkBtn');
+    const unlinkBtn    = document.getElementById('googleUnlinkBtn');
+    if (hasGoogle) {
+      googleSub.textContent = 'Your Google account is linked. You can sign in with Google or your PIN.';
+      if (hasEmail) unlinkBtn.style.display = ''; // only show unlink if they have another sign-in method
+    } else {
+      googleSub.textContent = 'Link your Google account to sign in with one tap in addition to your PIN.';
+      linkBtn.style.display = '';
+    }
+
+    // Preferences
+    document.getElementById('reminderToggle').checked = m?.pickReminderOptIn !== false;
+    document.getElementById('summaryToggle').checked  = !m?.weeklySummaryOptOut;
+  }
+
+  // ── Change PIN ──────────────────────────────────────────────────────
+  window.changePin = async function() {
+    const cur  = document.getElementById('pinCurrent').value.trim();
+    const nw   = document.getElementById('pinNew').value.trim();
+    const conf = document.getElementById('pinConfirm').value.trim();
+    if (!cur)                      { showMsg('pinMsg','Enter your current PIN.','error'); return; }
+    if (!/^\d{6,8}$/.test(nw))    { showMsg('pinMsg','New PIN must be 6–8 digits.','error'); return; }
+    if (nw !== conf)               { showMsg('pinMsg','New PINs do not match.','error'); return; }
+    const btn = document.getElementById('savePinBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    try {
+      const cred = EmailAuthProvider.credential(currentUser.email, cur);
+      await reauthenticateWithCredential(currentUser, cred);
+      await updatePassword(currentUser, nw);
+      document.getElementById('pinCurrent').value = '';
+      document.getElementById('pinNew').value      = '';
+      document.getElementById('pinConfirm').value  = '';
+      showMsg('pinMsg','✓ PIN updated successfully.','info');
+    } catch (err) {
+      const msgs = {
+        'auth/wrong-password':     'Current PIN is incorrect.',
+        'auth/invalid-credential': 'Current PIN is incorrect.',
+        'auth/too-many-requests':  'Too many attempts. Try again later.',
+        'auth/weak-password':      'PIN too short (minimum 6 digits).',
+      };
+      showMsg('pinMsg', msgs[err.code] || 'Update failed. Please try again.', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Update PIN';
+  };
+
+  // ── Google link ─────────────────────────────────────────────────────
+  document.getElementById('googleLinkBtn').addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      if (isMobile) {
+        await linkWithRedirect(currentUser, provider);
+      } else {
+        await linkWithPopup(currentUser, provider);
+        showMsg('googleMsg','✓ Google account linked!','info');
+        renderIdentity();
+      }
+    } catch (err) {
+      const msgs = {
+        'auth/credential-already-in-use': 'This Google account is already linked to another Pick\'em account.',
+        'auth/popup-closed-by-user': null,
+        'auth/cancelled-popup-request': null,
+      };
+      const msg = msgs[err.code];
+      if (msg !== null) showMsg('googleMsg', msg || 'Linking failed. Please try again.', 'error');
+    }
+  });
+
+  // ── Google unlink ───────────────────────────────────────────────────
+  document.getElementById('googleUnlinkBtn').addEventListener('click', async () => {
+    if (!confirm('Unlink Google? You\'ll still be able to sign in with your PIN.')) return;
+    try {
+      await unlink(currentUser, 'google.com');
+      showMsg('googleMsg','✓ Google account unlinked.','info');
+      renderIdentity();
+    } catch (err) {
+      showMsg('googleMsg','Could not unlink. Please try again.','error');
+    }
+  });
+
+  // ── Save preference ─────────────────────────────────────────────────
+  window.savePreference = async function(key, value) {
+    try {
+      await update(ref(db, `adminConfig/members/${currentUser.uid}`), { [key]: value });
+    } catch (err) {
+      console.error('Preference save failed:', err);
+    }
+  };
+
+  // ── Auth ─────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    // Handle redirect result from mobile Google linking
+    try {
+      const result = await getRedirectResult(auth);
+      if (result) showMsg('googleMsg','✓ Google account linked!','info');
+    } catch (err) {
+      if (err.code === 'auth/credential-already-in-use') {
+        showMsg('googleMsg','This Google account is linked to another Pick\'em account.','error');
+      }
+    }
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    memberData      = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+    if (!memberData?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    initNav({ activePage: 'profile.html', isAdmin, userName: memberData?.displayName || user.email });
+    const _so = () => signOut(auth).then(() => window.location.href = 'index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click', _so);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _so);
+
+    renderIdentity();
+  });
+</script>
+</body>
+</html>

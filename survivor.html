@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Survivor · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#F7F5F0;--cream-dark:#EDEAE2;
+      --ink:#1A1A1A;--ink-light:#555550;--ink-faint:#999990;
+      --charcoal:#1E2530;--red:#C0392B;--green:#27AE60;--accent:#E8A838;--white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px;--radius-sm:8px;
+    }
+    html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink)}
+    body{padding-top:58px}
+    #mainNav{position:fixed;top:0;left:0;right:0;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:200;height:58px}
+    .nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+    .nav-links{display:flex;gap:2px;flex:1;justify-content:center}
+    .nav-link{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-light);text-decoration:none;white-space:nowrap}
+    .nav-link:hover{background:var(--cream);color:var(--ink)}.nav-link.active{background:var(--charcoal);color:var(--white)}
+    .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nav-user{font-size:13px;color:var(--ink-faint);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+    .btn-signout{padding:6px 12px;border:1.5px solid var(--cream-dark);border-radius:6px;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;white-space:nowrap}
+    .btn-signout:hover{border-color:var(--red);color:var(--red)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:36px;height:36px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:8px;cursor:pointer;padding:0;flex-shrink:0}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .2s}
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    .mobile-drawer{position:fixed;top:0;right:0;width:280px;height:100dvh;background:var(--white);z-index:300;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+    .mobile-drawer.open{transform:translateX(0)}
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;opacity:0;pointer-events:none;transition:opacity .28s}
+    .drawer-overlay.show{opacity:1;pointer-events:all}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;border-bottom:1px solid var(--cream-dark);flex-shrink:0}
+    .drawer-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal)}
+    .drawer-close{width:32px;height:32px;border:none;background:var(--cream);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink-light);display:flex;align-items:center;justify-content:center}
+    .drawer-user{padding:12px 20px;font-size:13px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark);background:var(--cream)}
+    .drawer-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .drawer-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none}
+    .drawer-link:hover{background:var(--cream)}.drawer-link.active{background:var(--charcoal);color:var(--white)}
+    .drawer-icon{font-size:20px;width:28px;text-align:center}
+    .drawer-signout{margin:12px;padding:13px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:10px;font-family:inherit;font-size:15px;font-weight:500;color:var(--red);cursor:pointer}
+    .drawer-signout:hover{background:#FDF0EF;border-color:var(--red)}
+    @media(max-width:720px){.nav-links{display:none}.nav-user{display:none}.btn-signout{display:none}.hamburger{display:flex}}
+    button,a,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+    .page-wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
+    .page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--charcoal)}
+    .page-subtitle{font-size:14px;color:var(--ink-faint);margin-top:4px;margin-bottom:24px}
+    .spinner{width:28px;height:28px;border:3px solid var(--cream-dark);border-top-color:var(--charcoal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .state-box{text-align:center;padding:40px 20px;color:var(--ink-faint)}
+
+    /* Status card */
+    .status-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;margin-bottom:24px;border-left:4px solid var(--green)}
+    .status-card.dead{border-left-color:var(--red)}
+    .status-card.freepass{border-left-color:var(--accent)}
+    .s-status-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+    .s-top-left{display:flex;align-items:center;gap:14px}
+    .s-icon{font-size:36px;line-height:1}
+    .s-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--charcoal)}
+    .s-sub{font-size:13px;color:var(--ink-faint);margin-top:3px}
+    .s-fp-note{font-size:13px}
+    .s-pick-row{margin-top:16px;padding-top:16px;border-top:1px solid var(--cream-dark);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .s-pick-label{font-size:13px;font-weight:600;color:var(--ink-light);flex-shrink:0}
+    .s-current-pick{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700}
+    .pick-win{background:#D4EDDA;color:#155724}
+    .pick-loss{background:#F8D7DA;color:#721C24}
+    .pick-pending{background:var(--cream-dark);color:var(--ink)}
+    .s-result-win{font-size:13px;font-weight:700;color:var(--green)}
+    .s-result-pending{font-size:13px;color:var(--ink-faint)}
+    .s-result-loss{font-size:13px;font-weight:700;color:var(--red)}
+    .s-freepass-btn{padding:10px 18px;background:var(--accent);color:var(--ink);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:block;margin-top:12px}
+    .s-fp-pending{margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px}
+
+    /* Team grid */
+    .s-team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--cream-dark)}
+    .s-team-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;transition:all .15s;position:relative;font-family:inherit}
+    .s-team-tile:hover:not([disabled]){border-color:var(--charcoal);background:#F0F3F7}
+    .s-team-tile.s-selected{border-color:var(--charcoal);background:var(--charcoal);color:var(--white)}
+    .s-team-tile.s-used{opacity:.4;cursor:not-allowed;background:var(--cream)}
+    .s-team-tile.s-started{opacity:.6;cursor:not-allowed}
+    .s-team-tile img{width:36px;height:36px;object-fit:contain}
+    .s-team-tile span{font-size:10px;font-weight:700;text-transform:uppercase}
+    .s-tile-badge{position:absolute;top:2px;right:2px;font-size:9px;background:var(--ink-faint);color:white;border-radius:3px;padding:1px 3px}
+    .s-selected .s-tile-badge{background:rgba(255,255,255,.3)}
+    .s-confirm-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .s-selected-label{font-size:14px;font-weight:600;color:var(--ink)}
+    .s-confirm-btn{padding:10px 20px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .s-cancel-btn{padding:10px 16px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--ink-light);cursor:pointer}
+    .s-msg{font-size:13px;padding:8px 12px;border-radius:var(--radius-sm);display:none}
+    .s-msg.show{display:block}
+    .s-msg.error{background:#FDF0EF;color:var(--red)}
+    .s-msg.info{background:#EFF6F2;color:#1D6A3E}
+
+    /* Section */
+    .section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;margin-bottom:24px}
+    .section-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);margin-bottom:16px}
+
+    /* Leaderboard */
+    .leader-list{display:flex;flex-direction:column;gap:8px}
+    .leader-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--cream);border-radius:var(--radius-sm)}
+    .leader-row.is-you{background:#EEF2F8}
+    .leader-rank{font-size:13px;color:var(--ink-faint);width:20px;text-align:center;flex-shrink:0}
+    .leader-name{flex:1;font-weight:600;font-size:15px}
+    .leader-you{font-size:11px;color:var(--ink-faint);font-weight:400;margin-left:6px}
+    .lstatus{font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px}
+    .lstatus-alive{background:#D4EDDA;color:#155724}
+    .lstatus-dead{background:#F8D7DA;color:#721C24}
+    .lstatus-freepass{background:#FEF9EE;color:#7A5A10}
+    .leader-picks{font-size:12px;color:var(--ink-faint);flex-shrink:0}
+
+    /* Weekly grid */
+    .grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table.wgrid{border-collapse:collapse;min-width:100%;font-size:12px}
+    .wgrid th,.wgrid td{padding:5px 4px;text-align:center;white-space:nowrap}
+    .wgrid .wth{text-align:left;padding-left:8px;font-weight:600;min-width:100px;position:sticky;left:0;background:var(--white);z-index:1}
+    .wgrid .wtd{text-align:left;padding-left:8px;font-size:13px;position:sticky;left:0;background:var(--white);z-index:1}
+    .wgrid .is-you .wtd{color:var(--charcoal);font-weight:700}
+    .you-tag{font-size:10px;color:var(--ink-faint);font-weight:400;margin-left:4px}
+    .week-hd{color:var(--ink-faint);font-weight:500;font-size:11px}
+    .week-hd.current{color:var(--charcoal);font-weight:700}
+    .totals-hd,.totals-td{font-size:12px;padding-left:8px}
+    .gc{display:inline-block;border-radius:4px;padding:2px 4px;font-size:10px;font-weight:700;min-width:28px;text-align:center}
+    .gc-win{background:#D4EDDA;color:#155724}
+    .gc-loss{background:#F8D7DA;color:#721C24}
+    .gc-fp{background:#FEF9EE;color:#7A5A10;border:1px solid #F5DFA0}
+    .gc-pending{background:var(--cream-dark);color:var(--ink-faint)}
+    .gc-future{color:var(--cream-dark)}
+    .gc-blank{color:var(--cream-dark)}
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div id="mobileDrawer" class="mobile-drawer">
+  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+  <div class="drawer-user" id="drawerUser"></div>
+  <div class="drawer-nav" id="drawerNav"></div>
+  <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-wrap">
+  <div class="page-title">💀 Survivor</div>
+  <div class="page-subtitle">One pick per week. Never reuse a team. One wrong pick = eliminated.</div>
+
+  <div id="loadingState" class="state-box"><div class="spinner"></div><p>Loading survivor…</p></div>
+  <div id="mainContent" style="display:none">
+    <div class="status-card" id="myStatusCard"></div>
+    <div class="section">
+      <div class="section-title">Leaderboard</div>
+      <div class="leader-list" id="leaderList"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Season Grid</div>
+      <div class="grid-wrap" id="weeklyGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get, update }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let isAdmin = false;
+  let allMembers = [];
+  let allStates  = {};
+  let seasonStartDate = null;
+  let survivorStartWeek = 1;
+  let survivorSelected = null;
+
+  function initNav({activePage,isAdmin,userName}){
+    const links=[{href:'picks.html',label:'Picks',icon:'📋'},{href:'results.html',label:'Results',icon:'📊'},{href:'standings.html',label:'Standings',icon:'🏆'},{href:'survivor.html',label:'Survivor',icon:'💀'},{href:'profile.html',label:'Profile',icon:'👤'}];
+    if(isAdmin)links.push({href:'admin.html',label:'Admin',icon:'⚙️'});
+    document.getElementById('mainNav').innerHTML=`<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick'em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
+    document.getElementById('drawerUser').textContent=userName;
+    document.getElementById('drawerNav').innerHTML=links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
+    const h=document.getElementById('hamburgerBtn'),dr=document.getElementById('mobileDrawer'),ov=document.getElementById('drawerOverlay'),cl=document.getElementById('drawerClose');
+    const open=()=>{dr.classList.add('open');ov.classList.add('show');h.setAttribute('aria-expanded','true');document.body.style.overflow='hidden'};
+    const close=()=>{dr.classList.remove('open');ov.classList.remove('show');h.setAttribute('aria-expanded','false');document.body.style.overflow=''};
+    h.addEventListener('click',open);cl?.addEventListener('click',close);ov?.addEventListener('click',close);
+  }
+
+  function espnLogo(abbrev){return`https://a.espncdn.com/i/teamlogos/nfl/500/${(abbrev||'').toLowerCase()}.png`;}
+  function normalizeAbbrev(a){const m={'WAS':'WSH','JAC':'JAX','KAN':'KC','NEP':'NE','NOS':'NO','GNB':'GB','SFO':'SF','TAM':'TB'};return m[a?.toUpperCase()]||a?.toUpperCase()||'??';}
+
+  function getCurrentWeek(){
+    if(!seasonStartDate)return 1;
+    const diff=Math.floor((new Date()-new Date(seasonStartDate+'T00:00:00'))/86400000);
+    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
+  }
+
+  // Get games for a specific week
+  async function fetchWeekGames(week){
+    const snap=await get(ref(db,`games/week-${week}`));
+    if(!snap.exists())return[];
+    return Object.entries(snap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
+  }
+
+  // Get the deadline (latest start time) for a week = MNF kickoff or last game
+  function weekDeadline(games){
+    if(!games.length)return null;
+    return games.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b).startTime;
+  }
+
+  // Find result of a pick for a week's games
+  function getPickResult(abbrev, games){
+    for(const g of games){
+      const isAway=normalizeAbbrev(g.awayTeam?.abbrev)===normalizeAbbrev(abbrev);
+      const isHome=normalizeAbbrev(g.homeTeam?.abbrev)===normalizeAbbrev(abbrev);
+      if(!isAway&&!isHome)continue;
+      if(g.statusName!=='STATUS_FINAL'||!g.winnerId)return'pending';
+      const winnerIsAway=String(g.winnerId)===String(g.awayTeam?.id);
+      return(isAway&&winnerIsAway)||(isHome&&!winnerIsAway)?'win':'loss';
+    }
+    return'pending';
+  }
+
+  // Compute survivor status from picks history
+  function computeStatus(usedPicks, freePassUsed, freePassWeek, weekGames, startWeek, currentWeek){
+    // usedPicks: { 'week-N': abbrev }
+    let alive = true;
+    let eliminatedWeek = null;
+
+    for(let w=startWeek; w<=currentWeek; w++){
+      const wk = `week-${w}`;
+      const pick = usedPicks[wk];
+      const games = weekGames[wk] || [];
+      const deadline = weekDeadline(games);
+      const deadlinePassed = deadline ? new Date() >= new Date(deadline) : w < currentWeek;
+
+      if(!pick){
+        if(deadlinePassed){
+          // Missed — eliminated
+          alive = false;
+          eliminatedWeek = w;
+          break;
+        }
+      } else {
+        const result = getPickResult(pick, games);
+        if(result === 'loss'){
+          if(freePassUsed && freePassWeek === w){
+            // Free pass saves them
+          } else {
+            alive = false;
+            eliminatedWeek = w;
+            break;
+          }
+        }
+      }
+    }
+    return { alive, eliminatedWeek };
+  }
+
+  // ── Render my status card ────────────────────────────────────────────
+  async function renderMyStatus(myState, currentWeekGames, currentWeek){
+    const card = document.getElementById('myStatusCard');
+    const usedPicks = myState.usedPicks || {};
+    const freePassUsed = myState.freePassUsed || false;
+    const freePassWeek = myState.freePassWeek || null;
+    const fpRequested  = myState.freePassRequested || false;
+
+    const thisPick = usedPicks[`week-${currentWeek}`] || null;
+    const deadline = weekDeadline(currentWeekGames);
+    const deadlinePassed = deadline ? new Date() >= new Date(deadline) : false;
+    const canPick = myState.alive && !deadlinePassed;
+
+    // Game started for this pick?
+    const pickGameStarted = thisPick && currentWeekGames.some(g =>
+      (normalizeAbbrev(g.awayTeam?.abbrev)===normalizeAbbrev(thisPick)||normalizeAbbrev(g.homeTeam?.abbrev)===normalizeAbbrev(thisPick))
+      && new Date() >= new Date(g.startTime)
+    );
+
+    let icon, title, sub;
+    if(myState.alive){
+      icon='💪'; title='Still Alive';
+      const wkCount = Object.keys(usedPicks).length;
+      sub = `${wkCount} week${wkCount!==1?'s':''} survived`;
+    } else {
+      icon='💀'; title=`Eliminated — Week ${myState.eliminatedWeek}`;
+      sub='Better luck next season';
+      card.classList.add('dead');
+    }
+
+    let pickHTML='';
+    if(!myState.alive){
+      const losingPick = usedPicks[`week-${myState.eliminatedWeek}`];
+      const showReqBtn = !freePassUsed && !fpRequested;
+      pickHTML=`
+        <div class="s-pick-row">
+          ${losingPick?`<div class="s-current-pick pick-loss"><img src="${espnLogo(normalizeAbbrev(losingPick))}" style="width:20px;height:20px;object-fit:contain" />${normalizeAbbrev(losingPick)}</div><span class="s-result-loss">❌ Team lost</span>`:'<span style="font-size:13px;color:var(--red)">⚠️ Missed pick deadline</span>'}
+        </div>
+        ${showReqBtn?`<button class="s-freepass-btn" id="reqFPBtn">🎟️ Request Free Pass</button>`:''}
+        ${fpRequested?`<div class="s-fp-pending">⏳ Free pass requested — awaiting admin approval.</div>`:''}`;
+    } else if(thisPick){
+      const chipClass = pickGameStarted ? (getPickResult(thisPick,currentWeekGames)==='win'?'pick-win':getPickResult(thisPick,currentWeekGames)==='loss'?'pick-loss':'pick-pending') : 'pick-pending';
+      const resultLabel = getPickResult(thisPick,currentWeekGames)==='win' ? '✅ Survived!'
+        : pickGameStarted ? '⏳ Game in progress…'
+        : '🔓 Pick saved';
+      pickHTML=`<div class="s-pick-row">
+        <span class="s-pick-label">Week ${currentWeek} pick:${canPick?' <span style="font-size:12px;font-weight:400;color:var(--ink-faint)">(tap below to change)</span>':''}</span>
+        <div class="s-current-pick ${chipClass}"><img src="${espnLogo(normalizeAbbrev(thisPick))}" style="width:20px;height:20px;object-fit:contain" />${normalizeAbbrev(thisPick)}</div>
+        <span class="${getPickResult(thisPick,currentWeekGames)==='win'?'s-result-win':'s-result-pending'}">${resultLabel}</span>
+      </div>`;
+    } else {
+      pickHTML=deadlinePassed
+        ? `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Deadline passed — no pick made this week.</span></div>`
+        : `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive this week.</span></div>`;
+    }
+
+    // Used teams set (excluding current week for re-pick)
+    const usedSet = new Set(Object.entries(usedPicks).filter(([k])=>k!==`week-${currentWeek}`).map(([,v])=>normalizeAbbrev(v)));
+
+    // Team grid
+    let gridHTML='';
+    if(canPick){
+      const playingTeams = [...new Set(currentWeekGames.flatMap(g=>[normalizeAbbrev(g.awayTeam?.abbrev),normalizeAbbrev(g.homeTeam?.abbrev)]))].sort();
+      gridHTML=`<div class="s-team-grid" id="sTeamGrid">
+        ${playingTeams.map(abbrev=>{
+          const used=usedSet.has(abbrev);
+          const started=currentWeekGames.some(g=>(normalizeAbbrev(g.awayTeam?.abbrev)===abbrev||normalizeAbbrev(g.homeTeam?.abbrev)===abbrev)&&new Date()>=new Date(g.startTime));
+          const isCurrent=normalizeAbbrev(thisPick||'')===abbrev;
+          const disabled=used||started;
+          let cls='s-team-tile';
+          if(used)cls+=' s-used';
+          else if(started)cls+=' s-started';
+          if(isCurrent)cls+=' s-selected';
+          const badge=used?'✓':started?'🔒':'';
+          return `<button class="${cls}" data-abbrev="${abbrev}" ${disabled?'disabled':''}><img src="${espnLogo(abbrev)}" onerror="this.style.display='none'" /><span>${abbrev}</span>${badge?`<span class="s-tile-badge">${badge}</span>`:''}</button>`;
+        }).join('')}
+      </div>
+      <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
+        <span id="sSelectedLabel" class="s-selected-label"></span>
+        <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
+        <button class="s-cancel-btn" id="sCancelBtn">Cancel</button>
+      </div>
+      <div class="s-msg" id="sMsg"></div>`;
+    }
+
+    const fpNote = freePassUsed
+      ? `<span class="s-fp-note">🎟️ Free pass used (Week ${freePassWeek})</span>`
+      : fpRequested
+        ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
+        : myState.alive
+          ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
+          : '';
+
+    card.innerHTML=`
+      <div class="s-status-header">
+        <div class="s-top-left"><span class="s-icon">${icon}</span><div><div class="s-title">${title}</div><div class="s-sub">${sub}</div></div></div>
+        <div style="display:flex;align-items:center;gap:8px">${fpNote}</div>
+      </div>
+      ${pickHTML}
+      ${gridHTML}`;
+
+    // Wire FP request
+    document.getElementById('reqFPBtn')?.addEventListener('click',async()=>{
+      const btn=document.getElementById('reqFPBtn');btn.disabled=true;btn.textContent='Requesting…';
+      try{
+        await update(ref(db),{[`survivor/2025/${currentUser.uid}/freePassRequested`]:true,[`survivor/2025/${currentUser.uid}/freePassWeek`]:myState.eliminatedWeek});
+        myState.freePassRequested=true;
+        await loadSurvivor();
+      }catch(e){btn.disabled=false;btn.textContent='🎟️ Request Free Pass';}
+    });
+
+    // Wire team grid
+    if(canPick){
+      document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          document.querySelectorAll('.s-team-tile').forEach(b=>b.classList.remove('s-selected'));
+          btn.classList.add('s-selected');
+          survivorSelected=btn.dataset.abbrev;
+          document.getElementById('sPickConfirmRow').style.display='flex';
+          document.getElementById('sSelectedLabel').textContent=`Pick: ${survivorSelected}`;
+        });
+      });
+      document.getElementById('sConfirmBtn')?.addEventListener('click',()=>confirmSurvivorPick(currentWeek));
+      document.getElementById('sCancelBtn')?.addEventListener('click',()=>{
+        survivorSelected=null;
+        document.getElementById('sPickConfirmRow').style.display='none';
+        document.querySelectorAll('.s-team-tile').forEach(b=>{if(b.dataset.abbrev!==normalizeAbbrev(thisPick||''))b.classList.remove('s-selected');});
+      });
+    }
+  }
+
+  async function confirmSurvivorPick(week){
+    if(!survivorSelected)return;
+    const btn=document.getElementById('sConfirmBtn');
+    btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await update(ref(db,`survivor/2025/${currentUser.uid}`),{[`usedPicks/week-${week}`]:survivorSelected});
+      survivorSelected=null;
+      await loadSurvivor();
+    }catch(err){
+      const msg=document.getElementById('sMsg');
+      if(msg){msg.textContent='Failed to save. Try again.';msg.className='s-msg error show';}
+      btn.disabled=false;btn.textContent='Confirm Pick';
+    }
+  }
+
+  // ── Render leaderboard ──────────────────────────────────────────────
+  function renderLeaderboard(weekGames, currentWeek){
+    const list=document.getElementById('leaderList');
+    // Compute status for all members
+    const rows=[];
+    for(const m of allMembers){
+      const state=allStates[m.uid]||{};
+      const usedPicks=state.usedPicks||{};
+      const fpu=state.freePassUsed||false;
+      const fpw=state.freePassWeek||null;
+      const hasPicks=Object.keys(usedPicks).length>0;
+      const {alive,eliminatedWeek}=hasPicks?computeStatus(usedPicks,fpu,fpw,weekGames,survivorStartWeek,currentWeek):{alive:true,eliminatedWeek:null};
+      rows.push({uid:m.uid,displayName:m.displayName,alive,eliminatedWeek,weeks:Object.keys(usedPicks).length,fpRequested:state.freePassRequested});
+    }
+    // Sort: alive (by weeks survived desc) then dead
+    rows.sort((a,b)=>{
+      if(a.alive!==b.alive)return a.alive?-1:1;
+      return b.weeks-a.weeks;
+    });
+
+    list.innerHTML=rows.map((r,i)=>{
+      const isYou=r.uid===currentUser.uid;
+      let statusClass,statusText;
+      if(r.alive){statusClass='lstatus-alive';statusText='Alive';}
+      else if(r.fpRequested){statusClass='lstatus-freepass';statusText='⏳ FP Pending';}
+      else{statusClass='lstatus-dead';statusText='Eliminated';}
+      return`<div class="leader-row${isYou?' is-you':''}">
+        <div class="leader-rank">${r.alive?i+1:'✗'}</div>
+        <div class="leader-name">${r.displayName}${isYou?'<span class="leader-you">(you)</span>':''}</div>
+        <span class="lstatus ${statusClass}">${statusText}</span>
+        <div class="leader-picks">${r.weeks} wk${r.weeks!==1?'s':''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Render weekly grid ──────────────────────────────────────────────
+  function renderWeeklyGrid(weekGames, currentWeek){
+    const weeks=Array.from({length:currentWeek},(_,i)=>i+1);
+    const now=new Date();
+
+    const t=document.createElement('table');
+    t.className='wgrid';
+    // Header
+    const thead=t.createTHead();
+    const hr=thead.insertRow();
+    const nth=document.createElement('th');nth.className='wth';nth.textContent='Member';hr.appendChild(nth);
+    for(const w of weeks){
+      const th=document.createElement('th');
+      th.className=`week-hd${w===currentWeek?' current':''}`;
+      th.textContent=`Wk ${w}`;
+      hr.appendChild(th);
+    }
+    const totTh=document.createElement('th');totTh.className='totals-hd';totTh.textContent='W–L';hr.appendChild(totTh);
+
+    const tbody=t.createTBody();
+    for(const m of allMembers){
+      const state=allStates[m.uid]||{};
+      const usedPicks=state.usedPicks||{};
+      const fpu=state.freePassUsed||false;
+      const fpw=state.freePassWeek||null;
+      const isYou=m.uid===currentUser.uid;
+      const row=tbody.insertRow();if(isYou)row.className='is-you';
+      const ntd=row.insertCell();ntd.className='wtd';
+      ntd.innerHTML=`${m.displayName}${isYou?'<span class="you-tag">(you)</span>':''}`;
+
+      let wins=0,losses=0;
+      for(const w of weeks){
+        const td=row.insertCell();
+        const wk=`week-${w}`;
+        const pick=usedPicks[wk];
+        const games=weekGames[wk]||[];
+        const deadline=weekDeadline(games);
+        const deadlinePassed=deadline?now>=new Date(deadline):w<currentWeek;
+        const hasPicks2=Object.keys(usedPicks).length>0;
+
+        if(!pick){
+          if(deadlinePassed&&hasPicks2){td.innerHTML=`<span class="gc gc-loss" title="Missed pick">✗</span>`;losses++;}
+          else{td.innerHTML=`<span class="gc-blank">—</span>`;}
+        } else if(!deadlinePassed){
+          td.innerHTML=`<span class="gc gc-pending">🔒</span>`;
+        } else {
+          const r=getPickResult(pick,games);
+          const label=normalizeAbbrev(pick);
+          const isFPWeek=fpu&&fpw===w;
+          if(r==='win'){wins++;td.innerHTML=`<span class="gc gc-win">${label}</span>`;}
+          else if(r==='loss'){
+            losses++;
+            td.innerHTML=isFPWeek?`<span class="gc gc-fp">🎟️${label}</span>`:`<span class="gc gc-loss">${label}</span>`;
+          } else {
+            td.innerHTML=`<span class="gc gc-pending">${label}</span>`;
+          }
+        }
+      }
+      const totTd=row.insertCell();totTd.className='totals-td';
+      totTd.innerHTML=wins>0||losses>0?`<span style="color:var(--green)">${wins}</span><span style="color:var(--ink-faint)">–</span><span style="color:var(--red)">${losses}</span>`:`<span style="color:var(--ink-faint)">—</span>`;
+    }
+
+    const grid=document.getElementById('weeklyGrid');grid.innerHTML='';grid.appendChild(t);
+  }
+
+  // ── Load everything ──────────────────────────────────────────────────
+  async function loadSurvivor(){
+    try{
+      const settingsSnap=await get(ref(db,'adminConfig/settings'));
+      const settings=settingsSnap.exists()?settingsSnap.val():{};
+      seasonStartDate=settings.seasonStartDate||null;
+      survivorStartWeek=settings.survivorStartWeek||1;
+      const currentWeek=getCurrentWeek();
+
+      const mSnap=await get(ref(db,'adminConfig/members'));
+      allMembers=[];
+      if(mSnap.exists())mSnap.forEach(c=>{if(c.val().approved)allMembers.push({uid:c.key,...c.val()});});
+
+      const svSnap=await get(ref(db,'survivor/2025'));
+      allStates={};
+      if(svSnap.exists())svSnap.forEach(c=>{const v=c.val();if(v&&typeof v==='object')allStates[c.key]=v;});
+
+      // Load games for all weeks up to current
+      const weekGames={};
+      for(let w=survivorStartWeek;w<=currentWeek;w++){
+        weekGames[`week-${w}`]=await fetchWeekGames(w);
+      }
+
+      const myRaw=allStates[currentUser.uid]||{};
+      const usedPicks=myRaw.usedPicks||{};
+      const hasPicks=Object.keys(usedPicks).length>0;
+      const myBase=hasPicks?myRaw:{alive:true,freePassUsed:false,freePassRequested:false,freePassWeek:null,usedPicks:{}};
+      const {alive,eliminatedWeek}=computeStatus(myBase.usedPicks,myBase.freePassUsed,myBase.freePassWeek,weekGames,survivorStartWeek,currentWeek);
+      const myState={...myBase,alive,eliminatedWeek};
+
+      document.getElementById('loadingState').style.display='none';
+      document.getElementById('mainContent').style.display='';
+
+      await renderMyStatus(myState,weekGames[`week-${currentWeek}`]||[],currentWeek);
+      renderLeaderboard(weekGames,currentWeek);
+      renderWeeklyGrid(weekGames,currentWeek);
+
+    }catch(err){
+      console.error(err);
+      document.getElementById('loadingState').innerHTML=`<div style="color:var(--red)">⚠️ Could not load survivor: ${err.message}</div>`;
+    }
+  }
+
+  onAuthStateChanged(auth,async user=>{
+    if(!user){window.location.href='index.html';return;}
+    currentUser=user;
+    const ms=await get(ref(db,`adminConfig/members/${user.uid}`));
+    const member=ms.exists()?ms.val():null;
+    const as=await get(ref(db,`adminConfig/admins/${user.uid}`));
+    isAdmin=as.exists();
+    if(!member?.approved&&!isAdmin){window.location.href='index.html';return;}
+    initNav({activePage:'survivor.html',isAdmin,userName:member?.displayName||user.email});
+    const so=()=>signOut(auth).then(()=>window.location.href='index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click',so);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click',so);
+    await loadSurvivor();
+  });
+</script>
+</body>
+</html>

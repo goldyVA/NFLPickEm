@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#F7F5F0;--cream-dark:#EDEAE2;
+      --ink:#1A1A1A;--ink-light:#555550;--ink-faint:#999990;
+      --charcoal:#1E2530;--red:#C0392B;--green:#27AE60;--accent:#E8A838;--white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px;--radius-sm:8px;
+    }
+    html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink)}
+    body{padding-top:58px}
+    #mainNav{position:fixed;top:0;left:0;right:0;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:200;height:58px}
+    .nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+    .nav-links{display:flex;gap:2px;flex:1;justify-content:center}
+    .nav-link{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-light);text-decoration:none;white-space:nowrap}
+    .nav-link:hover{background:var(--cream);color:var(--ink)}.nav-link.active{background:var(--charcoal);color:var(--white)}
+    .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nav-user{font-size:13px;color:var(--ink-faint);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+    .btn-signout{padding:6px 12px;border:1.5px solid var(--cream-dark);border-radius:6px;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;white-space:nowrap}
+    .btn-signout:hover{border-color:var(--red);color:var(--red)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:36px;height:36px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:8px;cursor:pointer;padding:0;flex-shrink:0}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .2s}
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    .mobile-drawer{position:fixed;top:0;right:0;width:280px;height:100dvh;background:var(--white);z-index:300;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+    .mobile-drawer.open{transform:translateX(0)}
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;opacity:0;pointer-events:none;transition:opacity .28s}
+    .drawer-overlay.show{opacity:1;pointer-events:all}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;border-bottom:1px solid var(--cream-dark);flex-shrink:0}
+    .drawer-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal)}
+    .drawer-close{width:32px;height:32px;border:none;background:var(--cream);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink-light);display:flex;align-items:center;justify-content:center}
+    .drawer-user{padding:12px 20px;font-size:13px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark);background:var(--cream)}
+    .drawer-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .drawer-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none}
+    .drawer-link:hover{background:var(--cream)}.drawer-link.active{background:var(--charcoal);color:var(--white)}
+    .drawer-icon{font-size:20px;width:28px;text-align:center}
+    .drawer-signout{margin:12px;padding:13px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:10px;font-family:inherit;font-size:15px;font-weight:500;color:var(--red);cursor:pointer}
+    .drawer-signout:hover{background:#FDF0EF;border-color:var(--red)}
+    @media(max-width:720px){.nav-links{display:none}.nav-user{display:none}.btn-signout{display:none}.hamburger{display:flex}}
+    button,a,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+    .page-body{max-width:1100px;margin:0 auto;padding:28px 24px 60px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+    .page-header h1{font-family:'DM Serif Display',serif;font-size:32px;color:var(--charcoal);line-height:1.1}
+    .page-header p{font-size:14px;color:var(--ink-faint);margin-top:4px}
+
+    /* Week nav */
+    .week-nav{display:flex;align-items:center;gap:8px}
+    .week-btn{width:34px;height:34px;border:1.5px solid var(--cream-dark);border-radius:8px;background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--ink-light);transition:border-color .15s,color .15s}
+    .week-btn:hover{border-color:var(--charcoal);color:var(--charcoal)}
+    .week-display{padding:7px 16px;background:var(--white);border:1.5px solid var(--cream-dark);border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);min-width:100px;text-align:center}
+
+    /* Leaders bar */
+    .leaders-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--white);border:1.5px solid #C0CEDF;border-radius:var(--radius);padding:12px 20px;margin-bottom:20px}
+    .leaders-bar-label{font-size:12px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em}
+    .leader-chip{background:#EEF2F8;color:var(--charcoal);border-radius:100px;padding:4px 12px;font-size:13px;font-weight:600}
+
+    /* Legend */
+    .legend{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-light)}
+    .legend-swatch{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px}
+    .swatch-correct{background:#D4EDDA}.swatch-wrong{background:#F8D7DA}.swatch-locked{background:var(--cream-dark)}.swatch-none{background:var(--white);border:1.5px solid var(--cream-dark)}
+
+    /* Table */
+    .table-wrapper{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow-x:auto;-webkit-overflow-scrolling:touch}
+    table{width:100%;border-collapse:collapse;min-width:600px}
+    thead th{padding:0;border-bottom:2px solid var(--cream-dark);vertical-align:bottom;background:var(--cream)}
+    thead th:first-child{position:sticky;left:0;z-index:10;background:var(--cream);min-width:140px;padding:12px 16px;text-align:left;font-size:12px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;border-right:2px solid var(--cream-dark)}
+    .game-header{display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:4px;min-width:80px;border-right:1px solid var(--cream-dark)}
+    .game-header:last-child{border-right:none}
+    .game-header-logos{display:flex;align-items:center;gap:3px}
+    .game-header-logo{width:20px;height:20px;object-fit:contain}
+    .game-header-vs{font-size:9px;color:var(--ink-faint);font-weight:600}
+    .game-header-time{font-size:10px;color:var(--ink-faint);white-space:nowrap}
+    .game-header-score{font-family:'DM Serif Display',serif;font-size:13px;color:var(--ink);white-space:nowrap}
+    .game-header-status{font-size:10px;font-weight:600;padding:2px 6px;border-radius:100px;white-space:nowrap}
+    .status-upcoming{background:#EEF2F8;color:var(--charcoal)}
+    .status-live{background:#FDECEA;color:var(--red)}
+    .status-final{background:var(--cream-dark);color:var(--ink-faint)}
+    .mnf-header-badge{font-size:9px;font-weight:700;color:var(--charcoal);background:#E8EDF3;padding:1px 5px;border-radius:3px}
+
+    tbody tr{border-bottom:1px solid var(--cream-dark);transition:background .1s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#FAFAF8}
+    .member-cell{position:sticky;left:0;background:var(--white);border-right:2px solid var(--cream-dark);z-index:5;padding:10px 16px;min-width:140px}
+    tbody tr:hover .member-cell{background:#FAFAF8}
+    .member-name{font-size:14px;font-weight:600;color:var(--ink)}
+    .member-you{font-size:11px;color:var(--ink-faint);font-weight:400;margin-left:4px}
+    .member-score{font-size:12px;color:var(--ink-faint);display:block;margin-top:2px}
+    .member-score.has-score{color:var(--green);font-weight:600}
+
+    .pick-cell{padding:6px 8px;text-align:center;border-right:1px solid var(--cream-dark)}
+    .pick-cell:last-child{border-right:none}
+    .pick-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700}
+    .pick-chip img{width:16px;height:16px;object-fit:contain}
+    .chip-correct{background:#D4EDDA;color:#155724}
+    .chip-wrong{background:#F8D7DA;color:#721C24}
+    .chip-revealed{background:var(--cream-dark);color:var(--ink)}
+    .chip-locked{background:var(--cream-dark);color:var(--ink-faint)}
+    .chip-none{font-size:13px;color:var(--cream-dark)}
+
+    .totals-th{padding:12px 16px;text-align:center;font-size:12px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;min-width:70px}
+    .totals-cell{padding:8px 16px;text-align:center;font-size:14px}
+    .correct-count{font-family:'DM Serif Display',serif;font-size:16px;color:var(--green)}
+    .slash{color:var(--ink-faint);margin:0 1px}
+
+    .trophy-badge{font-size:16px;margin-left:4px}
+
+    /* Tiebreaker row */
+    .tb-row{background:#F5F8FF}
+    .tb-cell{padding:6px 8px;text-align:center;border-right:1px solid var(--cream-dark);font-size:12px;color:var(--ink-faint)}
+    .tb-cell-name{position:sticky;left:0;background:#F5F8FF;border-right:2px solid var(--cream-dark);z-index:5;padding:10px 16px;font-size:12px;font-weight:600;color:var(--ink-faint);letter-spacing:.03em}
+
+    .spinner{width:28px;height:28px;border:3px solid var(--cream-dark);border-top-color:var(--charcoal);border-radius:50%;animation:spin .7s linear infinite;margin:60px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .state-box{text-align:center;padding:60px 20px;color:var(--ink-faint)}
+    .state-box .icon{font-size:48px;margin-bottom:16px}
+    .state-box h3{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div id="mobileDrawer" class="mobile-drawer">
+  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+  <div class="drawer-user" id="drawerUser"></div>
+  <div class="drawer-nav" id="drawerNav"></div>
+  <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-body">
+  <div class="page-header">
+    <div>
+      <h1>Results</h1>
+      <p id="resultsSubtitle">All picks, all members</p>
+    </div>
+    <div class="week-nav">
+      <button class="week-btn" id="prevWeek">‹</button>
+      <div class="week-display" id="weekDisplay">Week —</div>
+      <button class="week-btn" id="nextWeek">›</button>
+    </div>
+  </div>
+
+  <div id="leadersBar" class="leaders-bar" style="display:none">
+    <span class="leaders-bar-label">🏆 Week Winner</span>
+    <div id="leaderChips"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch swatch-correct">✓</div>Correct</div>
+    <div class="legend-item"><div class="legend-swatch swatch-wrong">✗</div>Wrong</div>
+    <div class="legend-item"><div class="legend-swatch swatch-locked">🔒</div>Locked</div>
+    <div class="legend-item"><div class="legend-swatch swatch-none">—</div>No pick</div>
+  </div>
+
+  <div id="resultsContainer"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let currentWeek = 1;
+  let seasonStartDate = null;
+  let pollInterval = null;
+
+  function initNav({activePage, isAdmin, userName}) {
+    const links = [
+      {href:'picks.html',label:'Picks',icon:'📋'},{href:'results.html',label:'Results',icon:'📊'},
+      {href:'standings.html',label:'Standings',icon:'🏆'},{href:'survivor.html',label:'Survivor',icon:'💀'},
+      {href:'profile.html',label:'Profile',icon:'👤'},
+    ];
+    if (isAdmin) links.push({href:'admin.html',label:'Admin',icon:'⚙️'});
+    document.getElementById('mainNav').innerHTML = `<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick'em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
+    document.getElementById('drawerUser').textContent = userName;
+    document.getElementById('drawerNav').innerHTML = links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
+    const h=document.getElementById('hamburgerBtn'),dr=document.getElementById('mobileDrawer'),ov=document.getElementById('drawerOverlay'),cl=document.getElementById('drawerClose');
+    const open=()=>{dr.classList.add('open');ov.classList.add('show');h.setAttribute('aria-expanded','true');document.body.style.overflow='hidden'};
+    const close=()=>{dr.classList.remove('open');ov.classList.remove('show');h.setAttribute('aria-expanded','false');document.body.style.overflow=''};
+    h.addEventListener('click',open);cl?.addEventListener('click',close);ov?.addEventListener('click',close);
+  }
+
+  function espnLogo(abbrev) { return `https://a.espncdn.com/i/teamlogos/nfl/500/${(abbrev||'').toLowerCase()}.png`; }
+
+  function normalizeAbbrev(a){const m={'WAS':'WSH','JAC':'JAX','KAN':'KC','NEP':'NE','NOS':'NO','GNB':'GB','SFO':'SF','TAM':'TB'};return m[a?.toUpperCase()]||a?.toUpperCase()||'??';}
+
+  function gameIsLocked(t){return t?new Date()>=new Date(t):false;}
+  function formatGameTime(t){if(!t)return'';return new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York',timeZoneName:'short'});}
+
+  function getCurrentWeek(){
+    if(!seasonStartDate)return 1;
+    const start=new Date(seasonStartDate+'T00:00:00');
+    const diff=Math.floor((new Date()-start)/86400000);
+    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
+  }
+
+  function findMNFGame(games){
+    const mon=games.filter(g=>{const d=new Date(g.startTime);return d.toLocaleDateString('en-US',{weekday:'short',timeZone:'America/New_York'})==='Mon';});
+    if(!mon.length)return null;
+    return mon.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b);
+  }
+
+  function didPickWin(pick, game) {
+    if (!pick || !game.winnerId) return false;
+    return String(pick) === String(game.winnerId);
+  }
+
+  function pickAbbrev(pick, game) {
+    if (String(pick) === String(game.awayTeam.id)) return game.awayTeam.abbrev;
+    if (String(pick) === String(game.homeTeam.id))  return game.homeTeam.abbrev;
+    return '??';
+  }
+
+  // ── Determine weekly winner with tiebreakers ──────────────────────────
+  function determineWeekWinner(members, games, allPicks, allTiebreakers) {
+    const mnfGame = findMNFGame(games);
+    const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL' && g.winnerId);
+    if (!finalGames.length) return [];
+
+    // Compute each member's correct count + MNF info
+    const scores = members.map(m => {
+      const correct = finalGames.filter(g => {
+        const pick = allPicks[m.uid]?.[g.id]?.teamId;
+        return pick && String(pick) === String(g.winnerId);
+      }).length;
+
+      const mnfPick = mnfGame ? allPicks[m.uid]?.[mnfGame.id]?.teamId : null;
+      const mnfCorrect = mnfGame && mnfGame.winnerId && mnfPick
+        ? String(mnfPick) === String(mnfGame.winnerId) : false;
+      const tbGuess = allTiebreakers[m.uid] ?? null;
+      const tbActual = mnfGame && mnfGame.statusName === 'STATUS_FINAL'
+        ? (mnfGame.awayScore + mnfGame.homeScore) : null;
+      const tbDiff = tbGuess != null && tbActual != null ? Math.abs(tbGuess - tbActual) : Infinity;
+
+      return { uid: m.uid, displayName: m.displayName, correct, mnfCorrect, tbDiff };
+    });
+
+    // All games must be final to declare a winner
+    if (games.some(g => g.statusName !== 'STATUS_FINAL')) return [];
+
+    const maxCorrect = Math.max(...scores.map(s => s.correct));
+    let contenders = scores.filter(s => s.correct === maxCorrect);
+    if (contenders.length === 1) return [contenders[0]];
+
+    // TB1: correctly picked MNF winner
+    const mnfWinners = contenders.filter(s => s.mnfCorrect);
+    if (mnfWinners.length === 1) return [mnfWinners[0]];
+    if (mnfWinners.length > 1) contenders = mnfWinners;
+
+    // TB2: closest total points guess
+    const minDiff = Math.min(...contenders.map(s => s.tbDiff));
+    return contenders.filter(s => s.tbDiff === minDiff);
+  }
+
+  async function loadResults(week) {
+    currentWeek = week;
+    document.getElementById('weekDisplay').textContent = `Week ${week}`;
+    document.getElementById('resultsSubtitle').textContent = `All picks — Week ${week}`;
+    document.getElementById('resultsContainer').innerHTML = '<div class="spinner"></div>';
+    document.getElementById('leadersBar').style.display = 'none';
+
+    try {
+      // Games
+      const gSnap = await get(ref(db, `games/week-${week}`));
+      let games = [];
+      if (gSnap.exists()) {
+        games = Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
+      }
+
+      if (!games.length) {
+        // Try ESPN directly
+        try {
+          const resp = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`);
+          const data = await resp.json();
+          for (const event of (data.events||[])) {
+            const comp=event.competitions?.[0];
+            const away=comp?.competitors?.find(c=>c.homeAway==='away');
+            const home=comp?.competitors?.find(c=>c.homeAway==='home');
+            const status=comp?.status?.type;
+            games.push({
+              id:event.id,startTime:comp?.date||event.date,
+              statusName:status?.name,statusShort:status?.shortDetail,
+              awayScore:parseInt(away?.score)||0,homeScore:parseInt(home?.score)||0,
+              awayTeam:{id:away?.team?.id,abbrev:normalizeAbbrev(away?.team?.abbreviation),name:away?.team?.displayName},
+              homeTeam:{id:home?.team?.id,abbrev:normalizeAbbrev(home?.team?.abbreviation),name:home?.team?.displayName},
+              winnerId:status?.name==='STATUS_FINAL'?(parseInt(away?.score)>parseInt(home?.score)?away?.team?.id:home?.team?.id):null,
+            });
+          }
+        } catch(e){}
+      }
+
+      games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
+
+      // Members
+      const mSnap = await get(ref(db, 'adminConfig/members'));
+      let members = [];
+      if (mSnap.exists()) mSnap.forEach(c=>{ if(c.val().approved) members.push({uid:c.key,...c.val()}); });
+
+      // All picks for this week
+      const allPicks = {};
+      for (const m of members) {
+        const pSnap = await get(ref(db, `picks/${m.uid}/week-${week}`));
+        allPicks[m.uid] = pSnap.exists() ? pSnap.val() : {};
+      }
+
+      // Tiebreakers
+      const allTiebreakers = {};
+      for (const m of members) {
+        const tbSnap = await get(ref(db, `tiebreakers/${m.uid}/week-${week}`));
+        allTiebreakers[m.uid] = tbSnap.exists() ? tbSnap.val() : null;
+      }
+
+      // Compute totals
+      const memberTotals = {};
+      const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL' && g.winnerId);
+      for (const m of members) {
+        let correct = 0, total = 0;
+        for (const g of finalGames) {
+          const pick = allPicks[m.uid]?.[g.id]?.teamId;
+          if (!pick) continue;
+          total++;
+          if (didPickWin(pick, g)) correct++;
+        }
+        memberTotals[m.uid] = { correct, total };
+      }
+
+      // Sort members
+      const anyStarted = games.some(g => gameIsLocked(g.startTime));
+      members.sort((a,b)=>{
+        if (!anyStarted) {
+          const aP = games.filter(g=>allPicks[a.uid]?.[g.id]?.teamId).length > 0;
+          const bP = games.filter(g=>allPicks[b.uid]?.[g.id]?.teamId).length > 0;
+          if (aP!==bP) return aP?-1:1;
+          return a.displayName.localeCompare(b.displayName);
+        }
+        const diff = memberTotals[b.uid].correct - memberTotals[a.uid].correct;
+        return diff !== 0 ? diff : a.displayName.localeCompare(b.displayName);
+      });
+
+      // Weekly winners
+      const winners = determineWeekWinner(members, games, allPicks, allTiebreakers);
+      const winnerSet = new Set(winners.map(w=>w.uid));
+      if (winners.length > 0 && games.every(g=>g.statusName==='STATUS_FINAL')) {
+        const bar = document.getElementById('leadersBar');
+        const chips = document.getElementById('leaderChips');
+        chips.innerHTML = winners.map(w=>`<span class="leader-chip">🏆 ${w.displayName} — ${w.correct} correct</span>`).join(' ');
+        bar.style.display = 'flex';
+      }
+
+      // MNF game
+      const mnfGame = findMNFGame(games);
+
+      // Build table
+      const wrapper = document.createElement('div');
+      wrapper.className = 'table-wrapper';
+      const table = document.createElement('table');
+
+      // thead
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const memberTh = document.createElement('th');
+      memberTh.textContent = 'Member';
+      headerRow.appendChild(memberTh);
+
+      for (const game of games) {
+        const th = document.createElement('th');
+        const locked = gameIsLocked(game.startTime);
+        const isFinal = game.statusName === 'STATUS_FINAL';
+        const isLive  = game.statusName === 'STATUS_IN_PROGRESS';
+        const isMNF   = mnfGame && game.id === mnfGame.id;
+
+        let statusClass = 'status-upcoming', statusText = formatGameTime(game.startTime);
+        if (isFinal)     { statusClass='status-final'; statusText='Final'; }
+        else if (isLive) { statusClass='status-live';  statusText=game.statusShort||'Live'; }
+
+        const showScore = (isLive||isFinal) && game.awayScore!=null;
+        const scoreHTML = showScore ? `<div class="game-header-score">${game.awayScore}–${game.homeScore}</div>` : '';
+
+        th.innerHTML = `<div class="game-header">
+          ${isMNF?'<span class="mnf-header-badge">MNF</span>':''}
+          <div class="game-header-logos">
+            <img class="game-header-logo" src="${espnLogo(game.awayTeam.abbrev)}" alt="${game.awayTeam.abbrev}" onerror="this.style.display='none'" />
+            <span class="game-header-vs">@</span>
+            <img class="game-header-logo" src="${espnLogo(game.homeTeam.abbrev)}" alt="${game.homeTeam.abbrev}" onerror="this.style.display='none'" />
+          </div>
+          ${scoreHTML}
+          <span class="game-header-status ${statusClass}">${statusText}</span>
+        </div>`;
+        headerRow.appendChild(th);
+      }
+
+      const totalsTh = document.createElement('th');
+      totalsTh.className = 'totals-th';
+      totalsTh.textContent = finalGames.length > 0 ? 'Score' : 'Picks';
+      headerRow.appendChild(totalsTh);
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      // tbody
+      const tbody = document.createElement('tbody');
+
+      for (const member of members) {
+        const row = document.createElement('tr');
+        const isWinner = winnerSet.has(member.uid) && games.every(g=>g.statusName==='STATUS_FINAL');
+
+        const nameTd = document.createElement('td');
+        nameTd.className = 'member-cell';
+        const {correct:mCorrect, total:mTotal} = memberTotals[member.uid];
+        nameTd.innerHTML = `<div class="member-name">${member.displayName}${isWinner?'<span class="trophy-badge">🏆</span>':''}${member.uid===currentUser.uid?'<span class="member-you">(you)</span>':''}</div>${mTotal>0?`<span class="member-score has-score">${mCorrect}/${mTotal}</span>`:''}`;
+        row.appendChild(nameTd);
+
+        for (const game of games) {
+          const td = document.createElement('td');
+          td.className = 'pick-cell';
+          const locked = gameIsLocked(game.startTime);
+          const isFinal = game.statusName === 'STATUS_FINAL';
+          const pick = allPicks[member.uid]?.[game.id]?.teamId || null;
+
+          if (!locked) {
+            td.innerHTML = pick ? `<span class="pick-chip chip-locked">🔒</span>` : `<span class="chip-none">—</span>`;
+          } else if (!pick) {
+            td.innerHTML = `<span class="chip-none">—</span>`;
+          } else if (isFinal && game.winnerId) {
+            const correct = didPickWin(pick, game);
+            const abbrev  = pickAbbrev(pick, game);
+            const isAuto  = allPicks[member.uid]?.[game.id]?.auto === true;
+            td.innerHTML = `<span class="pick-chip ${correct?'chip-correct':'chip-wrong'}"><img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />${abbrev}${isAuto?' 🤖':''}</span>`;
+          } else {
+            const abbrev = pickAbbrev(pick, game);
+            const isAuto = allPicks[member.uid]?.[game.id]?.auto === true;
+            td.innerHTML = `<span class="pick-chip chip-revealed"><img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />${abbrev}${isAuto?' 🤖':''}</span>`;
+          }
+          row.appendChild(td);
+        }
+
+        const totalsTd = document.createElement('td');
+        totalsTd.className = 'totals-cell';
+        const {correct, total} = memberTotals[member.uid];
+        const pickedCount = games.filter(g=>allPicks[member.uid]?.[g.id]?.teamId).length;
+        totalsTd.innerHTML = finalGames.length > 0
+          ? `<span class="correct-count">${correct}</span><span class="slash">/</span>${total}`
+          : `<span style="color:var(--ink-faint)">${pickedCount}</span>`;
+        row.appendChild(totalsTd);
+        tbody.appendChild(row);
+      }
+
+      // MNF tiebreaker guess row (if MNF game)
+      if (mnfGame && mnfGame.statusName === 'STATUS_FINAL') {
+        const tbRow = document.createElement('tr');
+        tbRow.className = 'tb-row';
+        const tbNameTd = document.createElement('td');
+        tbNameTd.className = 'tb-cell-name';
+        tbNameTd.textContent = 'MNF Guess';
+        tbRow.appendChild(tbNameTd);
+
+        const actual = mnfGame.awayScore + mnfGame.homeScore;
+        for (const game of games) {
+          const td = document.createElement('td');
+          td.className = 'tb-cell';
+          if (game.id === mnfGame.id) {
+            // Show each member's guess — loop happens below
+            td.innerHTML = `<span style="font-size:10px;color:var(--ink-faint)">actual: ${actual}</span>`;
+          }
+          tbRow.appendChild(td);
+        }
+        // placeholder totals
+        const tbTotalsTd = document.createElement('td');
+        tbTotalsTd.className = 'totals-cell';
+        tbRow.appendChild(tbTotalsTd);
+        tbody.appendChild(tbRow);
+      }
+
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      document.getElementById('resultsContainer').innerHTML = '';
+      document.getElementById('resultsContainer').appendChild(wrapper);
+
+    } catch(err) {
+      document.getElementById('resultsContainer').innerHTML = `<div class="state-box"><div class="icon">⚠️</div><h3>Could not load results</h3><p>${err.message}</p></div>`;
+    }
+  }
+
+  document.getElementById('prevWeek').addEventListener('click', () => { if (currentWeek>1) { clearInterval(pollInterval); loadResults(currentWeek-1); } });
+  document.getElementById('nextWeek').addEventListener('click', () => { if (currentWeek<18) { clearInterval(pollInterval); loadResults(currentWeek+1); } });
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='index.html'; return; }
+    currentUser = user;
+    const snap = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member = snap.exists()?snap.val():null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin = adminSnap.exists()&&adminSnap.val()===true;
+    if (!member?.approved&&!isAdmin) { window.location.href='index.html'; return; }
+
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const settings = settingsSnap.exists()?settingsSnap.val():{};
+    seasonStartDate = settings.seasonStartDate || null;
+
+    initNav({activePage:'results.html',isAdmin,userName:member?.displayName||user.email});
+    const so=()=>signOut(auth).then(()=>window.location.href='index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click',so);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click',so);
+
+    const week = getCurrentWeek();
+    await loadResults(week);
+
+    // Poll every 3 min if current week
+    pollInterval = setInterval(()=>loadResults(currentWeek), 3*60*1000);
+  });
+
+  function getCurrentWeek(){
+    if(!seasonStartDate)return 1;
+    const diff=Math.floor((new Date()-new Date(seasonStartDate+'T00:00:00'))/86400000);
+    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
+  }
+</script>
+</body>
+</html>

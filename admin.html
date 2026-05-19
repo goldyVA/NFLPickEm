@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:#F7F5F0; --cream-dark:#EDEAE2;
+      --ink:#1A1A1A; --ink-light:#555550; --ink-faint:#999990;
+      --charcoal:#1E2A38; --red:#C0392B; --green:#27AE60; --accent:#E8A838;
+      --white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px; --radius-sm:8px;
+    }
+    html,body { min-height:100%; font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); }
+    body { padding-top:58px; }
+
+    /* Nav shared */
+    #mainNav { position:fixed; top:0; left:0; right:0; background:var(--white); box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:200; height:58px; }
+    .nav-inner { max-width:1100px; margin:0 auto; padding:0 24px; height:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .nav-links { display:flex; gap:2px; flex:1; justify-content:center; }
+    .nav-link { padding:6px 12px; border-radius:6px; font-size:14px; font-weight:500; color:var(--ink-light); text-decoration:none; white-space:nowrap; }
+    .nav-link:hover { background:var(--cream); color:var(--ink); }
+    .nav-link.active { background:var(--charcoal); color:var(--white); }
+    .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .nav-user { font-size:13px; color:var(--ink-faint); white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+    .btn-signout { padding:6px 12px; border:1.5px solid var(--cream-dark); border-radius:6px; background:transparent; font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; }
+    .btn-signout:hover { border-color:var(--red); color:var(--red); }
+    .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px; width:36px; height:36px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:8px; cursor:pointer; padding:0; flex-shrink:0; }
+    .hamburger span { display:block; width:18px; height:2px; background:var(--ink); border-radius:2px; transition:all .2s; }
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0;}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+    .mobile-drawer { position:fixed; top:0; right:0; width:280px; height:100dvh; background:var(--white); z-index:300; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; box-shadow:-4px 0 24px rgba(0,0,0,.12); }
+    .mobile-drawer.open { transform:translateX(0); }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299; opacity:0; pointer-events:none; transition:opacity .28s; }
+    .drawer-overlay.show { opacity:1; pointer-events:all; }
+    .drawer-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:58px; border-bottom:1px solid var(--cream-dark); flex-shrink:0; }
+    .drawer-title { font-family:'DM Serif Display',serif; font-size:20px; color:var(--charcoal); }
+    .drawer-close { width:32px; height:32px; border:none; background:var(--cream); border-radius:8px; font-size:16px; cursor:pointer; color:var(--ink-light); display:flex; align-items:center; justify-content:center; }
+    .drawer-user { padding:12px 20px; font-size:13px; color:var(--ink-faint); border-bottom:1px solid var(--cream-dark); background:var(--cream); }
+    .drawer-nav { flex:1; padding:12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
+    .drawer-link { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); text-decoration:none; }
+    .drawer-link:hover { background:var(--cream); }
+    .drawer-link.active { background:var(--charcoal); color:var(--white); }
+    .drawer-icon { font-size:20px; width:28px; text-align:center; }
+    .drawer-signout { margin:12px; padding:13px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:10px; font-family:inherit; font-size:15px; font-weight:500; color:var(--red); cursor:pointer; flex-shrink:0; }
+    .drawer-signout:hover { background:#FDF0EF; border-color:var(--red); }
+    button,a,[role=button] { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+    @media(max-width:720px) { .nav-links{display:none} .nav-user{display:none} .btn-signout{display:none} .hamburger{display:flex} }
+
+    /* Page */
+    .page-body { max-width:880px; margin:0 auto; padding:32px 24px 60px; }
+    h1 { font-family:'DM Serif Display',serif; font-size:32px; color:var(--charcoal); margin-bottom:6px; }
+    .page-meta { font-size:14px; color:var(--ink-faint); margin-bottom:32px; }
+
+    /* Admin tabs */
+    .admin-tabs { display:flex; gap:6px; margin-bottom:28px; flex-wrap:wrap; }
+    .atab { padding:8px 16px; border:1.5px solid var(--cream-dark); border-radius:100px; background:var(--white); font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; transition:all .15s; }
+    .atab:hover { border-color:var(--charcoal); color:var(--charcoal); }
+    .atab.active { background:var(--charcoal); border-color:var(--charcoal); color:var(--white); }
+
+    /* Panel */
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    /* Section */
+    .section { background:var(--white); border:1.5px solid var(--cream-dark); border-radius:var(--radius); padding:24px; margin-bottom:20px; box-shadow:var(--shadow-sm); }
+    .section-title { font-size:16px; font-weight:700; color:var(--charcoal); margin-bottom:6px; }
+    .section-sub   { font-size:13px; color:var(--ink-faint); margin-bottom:18px; line-height:1.5; }
+
+    /* Toggle row */
+    .toggle-row { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--cream-dark); }
+    .toggle-row:last-child { border-bottom:none; padding-bottom:0; }
+    .toggle-text strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:4px; }
+    .toggle-text span { font-size:13px; color:var(--ink-faint); line-height:1.45; }
+    .toggle { position:relative; width:46px; height:26px; flex-shrink:0; margin-top:2px; }
+    .toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .toggle-slider { position:absolute; inset:0; background:var(--cream-dark); border-radius:100px; cursor:pointer; transition:background .2s; }
+    .toggle-slider::before { content:''; position:absolute; left:3px; top:3px; width:20px; height:20px; border-radius:50%; background:var(--white); transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+    .toggle input:checked + .toggle-slider { background:var(--charcoal); }
+    .toggle input:checked + .toggle-slider::before { transform:translateX(20px); }
+
+    /* Inputs */
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+    .field label { font-size:13px; font-weight:500; color:var(--ink-light); }
+    .field input,.field select { width:100%; padding:10px 14px; border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); background:var(--white); font-family:inherit; font-size:14px; color:var(--ink); outline:none; transition:border-color .15s; }
+    .field input:focus,.field select:focus { border-color:var(--charcoal); }
+    .inline-fields { display:flex; gap:12px; flex-wrap:wrap; }
+    .inline-fields .field { flex:1; min-width:160px; }
+
+    /* Buttons */
+    .btn-primary { padding:10px 20px; background:var(--charcoal); color:var(--white); border:none; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .15s; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-secondary { padding:10px 18px; background:transparent; color:var(--ink-light); border:1.5px solid var(--cream-dark); border-radius:var(--radius-sm); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+    .btn-secondary:hover { border-color:var(--charcoal); color:var(--ink); }
+    .btn-danger { padding:10px 18px; background:transparent; color:var(--red); border:1.5px solid #F0C4C0; border-radius:var(--radius-sm); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; transition:all .15s; }
+    .btn-danger:hover { background:#FDF0EF; border-color:var(--red); }
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+
+    /* Members table */
+    .members-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .members-table th { padding:10px 12px; text-align:left; font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid var(--cream-dark); background:var(--cream); }
+    .members-table td { padding:10px 12px; border-bottom:1px solid var(--cream-dark); vertical-align:middle; }
+    .members-table tr:last-child td { border-bottom:none; }
+    .member-email { color:var(--ink-faint); font-size:12px; display:block; }
+    .badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:100px; }
+    .badge-green   { background:#D4EDDA; color:#155724; }
+    .badge-red     { background:#F8D7DA; color:#721C24; }
+    .badge-yellow  { background:#FEF9EE; color:#7A5A10; }
+    .badge-grey    { background:var(--cream-dark); color:var(--ink-faint); }
+    .action-btns   { display:flex; gap:6px; flex-wrap:wrap; }
+    .mini-btn { padding:5px 10px; border-radius:6px; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; border:1.5px solid var(--cream-dark); background:var(--white); color:var(--ink-light); transition:all .12s; }
+    .mini-btn:hover { border-color:var(--charcoal); color:var(--charcoal); }
+    .mini-btn.red { border-color:#F0C4C0; color:var(--red); }
+    .mini-btn.red:hover { background:#FDF0EF; }
+    .mini-btn.green { border-color:#B8DFCA; color:var(--green); }
+    .mini-btn.green:hover { background:#EFF8F2; }
+
+    /* Free pass queue */
+    .fp-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--cream-dark); flex-wrap:wrap; }
+    .fp-row:last-child { border-bottom:none; }
+    .fp-name { font-weight:600; font-size:14px; }
+    .fp-week { font-size:12px; color:var(--ink-faint); }
+
+    /* Auto-pick / data viewer */
+    .data-row { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--cream-dark); font-size:13px; }
+    .data-row:last-child { border-bottom:none; }
+    .data-label { color:var(--ink-light); }
+    .data-val   { font-weight:600; }
+
+    /* Msgs */
+    .msg { display:none; font-size:13px; padding:10px 14px; border-radius:var(--radius-sm); margin-top:12px; }
+    .msg.show { display:block; }
+    .msg.error { background:#FDF0EF; color:var(--red); border:1px solid #F5C6C2; }
+    .msg.info  { background:#EFF8F2; color:#1D6A3E; border:1px solid #B8DFCA; }
+    .msg.warn  { background:#FEF9EE; color:#7A5A10; border:1px solid #F5DFA0; }
+
+    .spinner { width:24px; height:24px; border:3px solid var(--cream-dark); border-top-color:var(--charcoal); border-radius:50%; animation:spin .7s linear infinite; margin:20px auto; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .empty-state { text-align:center; padding:32px; color:var(--ink-faint); font-size:14px; }
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div class="mobile-drawer" id="mobileDrawer"></div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-body">
+  <h1>⚙️ Admin</h1>
+  <div class="page-meta">League administration — only visible to you</div>
+
+  <div class="admin-tabs">
+    <button class="atab active" data-panel="members">Members</button>
+    <button class="atab" data-panel="settings">Settings</button>
+    <button class="atab" data-panel="autopick">Auto-Pick</button>
+    <button class="atab" data-panel="survivor">Survivor</button>
+    <button class="atab" data-panel="tools">Tools</button>
+  </div>
+
+  <!-- ── Members panel ── -->
+  <div class="panel active" id="panel-members">
+    <div class="section">
+      <div class="section-title">League Members</div>
+      <div class="section-sub">Toggle donation status, remove members, or view their email.</div>
+      <div id="membersTableWrap"><div class="spinner"></div></div>
+      <div class="msg" id="membersMsg"></div>
+    </div>
+
+    <div class="section" id="fpSection" style="display:none">
+      <div class="section-title">🎟️ Free Pass Requests</div>
+      <div class="section-sub">Members who lost a survivor pick and are requesting a free pass to stay alive.</div>
+      <div id="fpList"><div class="spinner"></div></div>
+      <div class="msg" id="fpMsg"></div>
+    </div>
+  </div>
+
+  <!-- ── Settings panel ── -->
+  <div class="panel" id="panel-settings">
+    <div class="section">
+      <div class="section-title">Season Settings</div>
+      <div class="section-sub">Configure the NFL season start. These values drive week detection across the app.</div>
+      <div class="inline-fields">
+        <div class="field">
+          <label for="settingSeasonStart">Season Start Date (Week 1 kickoff)</label>
+          <input type="date" id="settingSeasonStart" />
+        </div>
+        <div class="field">
+          <label for="settingSeasonWeek">Start at Week #</label>
+          <input type="number" id="settingSeasonWeek" min="1" max="18" value="1" />
+        </div>
+        <div class="field">
+          <label for="settingSurvivorWeek">Survivor Starts Week #</label>
+          <input type="number" id="settingSurvivorWeek" min="1" max="18" value="1" />
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveSettings()">Save Season Settings</button>
+      </div>
+      <div class="msg" id="settingsMsg"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Registration</div>
+      <div class="toggle-row">
+        <div class="toggle-text">
+          <strong>Open Registration</strong>
+          <span>When on, new users can create accounts. Turn off to lock out new sign-ups.</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="regToggle" onchange="saveToggle('registrationOpen', this.checked)" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Auto-pick panel ── -->
+  <div class="panel" id="panel-autopick">
+    <div class="section">
+      <div class="section-title">Auto-Pick for Week</div>
+      <div class="section-sub">Fill in picks for any member who hasn't submitted for the selected week. Only games that have already started (locked) will be auto-filled using a random team. Auto-picks are flagged with <strong>auto: true</strong> in the database.</div>
+      <div class="field">
+        <label for="autoPickWeek">Week</label>
+        <select id="autoPickWeek">
+          <option value="">Select week…</option>
+          <!-- Populated dynamically -->
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="runAutoPick()">Run Auto-Pick</button>
+      </div>
+      <div class="msg" id="autoPickMsg"></div>
+    </div>
+  </div>
+
+  <!-- ── Survivor panel ── -->
+  <div class="panel" id="panel-survivor">
+    <div class="section">
+      <div class="section-title">Survivor Status</div>
+      <div class="section-sub">Current survivor status for all members this season.</div>
+      <div id="survivorAdminList"><div class="spinner"></div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Reset Survivor Season</div>
+      <div class="section-sub">Clears all survivor data for the 2025 season. Use with caution — this cannot be undone.</div>
+      <div class="btn-row">
+        <button class="btn-danger" onclick="resetSurvivor()">🗑️ Reset Survivor Season</button>
+      </div>
+      <div class="msg" id="survivorResetMsg"></div>
+    </div>
+  </div>
+
+  <!-- ── Tools panel ── -->
+  <div class="panel" id="panel-tools">
+    <div class="section">
+      <div class="section-title">Data Viewer</div>
+      <div class="section-sub">Quick stats for the selected week.</div>
+      <div class="field">
+        <label for="toolWeek">Week</label>
+        <select id="toolWeek">
+          <option value="">Select week…</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="loadDataViewer()">Load Week Data</button>
+      </div>
+      <div id="dataViewerOutput" style="margin-top:16px"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Refresh ESPN Games</div>
+      <div class="section-sub">Force-fetch game data from ESPN for the selected week and write it to Firebase.</div>
+      <div class="field">
+        <label for="espnWeek">Week</label>
+        <select id="espnWeek">
+          <option value="">Select week…</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="refreshESPN()">Refresh Games from ESPN</button>
+      </div>
+      <div class="msg" id="espnMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut }
+    from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get, set, update, remove }
+    from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+  import { initNav } from './nav.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let allMembers  = [];
+  let allSurvivor = {};
+  let settings    = {};
+
+  function normalizeAbbrev(abbrev) {
+    if (!abbrev) return '';
+    const map = { 'WSH':'WAS','JAC':'JAX','LAR':'LA','SD':'LAC','OAK':'LV','STL':'LA','BLT':'BAL','CLV':'CLE','HST':'HOU','ARZ':'ARI' };
+    return map[abbrev.toUpperCase()] || abbrev.toUpperCase();
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className   = `msg ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+  // ── Tab switching ────────────────────────────────────────────────────
+  document.querySelectorAll('.atab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
+    });
+  });
+
+  // ── Load members ─────────────────────────────────────────────────────
+  async function loadMembers() {
+    const snap = await get(ref(db, 'adminConfig/members'));
+    allMembers  = [];
+    if (snap.exists()) snap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
+    allMembers.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
+
+    const wrap = document.getElementById('membersTableWrap');
+    if (!allMembers.length) { wrap.innerHTML = '<div class="empty-state">No members yet.</div>'; return; }
+
+    wrap.innerHTML = `
+      <table class="members-table">
+        <thead>
+          <tr><th>Name / Email</th><th>Joined</th><th>Donated</th><th>Auth</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="membersTbody"></tbody>
+      </table>`;
+    const tbody = document.getElementById('membersTbody');
+    for (const m of allMembers) {
+      const tr = document.createElement('tr');
+      const joined = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '—';
+      const donatedBadge = m.donated
+        ? '<span class="badge badge-green">✓ Donated</span>'
+        : '<span class="badge badge-grey">No</span>';
+      const provider = m.authProvider === 'google' ? '🔵 Google' : '📧 PIN';
+      tr.innerHTML = `
+        <td><strong>${m.displayName || '—'}</strong><span class="member-email">${m.email || ''}</span></td>
+        <td style="color:var(--ink-faint);font-size:12px">${joined}</td>
+        <td>${donatedBadge}</td>
+        <td style="font-size:12px">${provider}</td>
+        <td>
+          <div class="action-btns">
+            <button class="mini-btn ${m.donated ? 'red' : 'green'}" onclick="toggleDonation('${m.uid}', ${!m.donated})">
+              ${m.donated ? 'Mark unpaid' : '✓ Mark paid'}
+            </button>
+            ${m.uid !== currentUser.uid ? `<button class="mini-btn red" onclick="removeMember('${m.uid}', '${m.displayName}')">Remove</button>` : ''}
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  // ── Load free pass queue ──────────────────────────────────────────────
+  async function loadFreePassQueue() {
+    const snap = await get(ref(db, 'survivor/2025'));
+    allSurvivor = {};
+    if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
+
+    const pending = Object.entries(allSurvivor).filter(([, v]) => v?.freePassRequested && !v?.freePassUsed);
+    const section = document.getElementById('fpSection');
+    const list    = document.getElementById('fpList');
+
+    if (!pending.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    list.innerHTML = pending.map(([uid, v]) => {
+      const m = allMembers.find(x => x.uid === uid);
+      return `<div class="fp-row">
+        <div>
+          <div class="fp-name">${m?.displayName || uid}</div>
+          <div class="fp-week">Requested for Week ${v.freePassWeek || '?'}</div>
+        </div>
+        <div class="action-btns">
+          <button class="mini-btn green" onclick="approveFreePass('${uid}', ${v.freePassWeek || 0})">✓ Approve</button>
+          <button class="mini-btn red" onclick="denyFreePass('${uid}')">Deny</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Toggle donation ───────────────────────────────────────────────────
+  window.toggleDonation = async (uid, val) => {
+    await update(ref(db, `adminConfig/members/${uid}`), { donated: val });
+    loadMembers();
+  };
+
+  // ── Remove member ─────────────────────────────────────────────────────
+  window.removeMember = async (uid, name) => {
+    if (!confirm(`Remove ${name} from the league? This will delete their member record.`)) return;
+    await remove(ref(db, `adminConfig/members/${uid}`));
+    showMsg('membersMsg', `${name} removed.`, 'info');
+    loadMembers();
+  };
+
+  // ── Approve free pass ─────────────────────────────────────────────────
+  window.approveFreePass = async (uid, week) => {
+    await update(ref(db, `survivor/2025/${uid}`), {
+      freePassRequested: false, freePassUsed: true, freePassWeek: week, alive: true, eliminatedWeek: null,
+    });
+    showMsg('fpMsg', '✓ Free pass approved — member restored to alive.', 'info');
+    loadFreePassQueue();
+  };
+
+  // ── Deny free pass ────────────────────────────────────────────────────
+  window.denyFreePass = async (uid) => {
+    await update(ref(db, `survivor/2025/${uid}`), { freePassRequested: false });
+    showMsg('fpMsg', 'Free pass denied.', 'warn');
+    loadFreePassQueue();
+  };
+
+  // ── Save settings ─────────────────────────────────────────────────────
+  window.saveSettings = async () => {
+    const startDate   = document.getElementById('settingSeasonStart').value;
+    const startWeek   = parseInt(document.getElementById('settingSeasonWeek').value) || 1;
+    const survivorWk  = parseInt(document.getElementById('settingSurvivorWeek').value) || 1;
+    await update(ref(db, 'adminConfig/settings'), {
+      seasonStartDate: startDate, seasonStartWeek: startWeek, survivorStartWeek: survivorWk,
+    });
+    showMsg('settingsMsg', '✓ Settings saved.', 'info');
+  };
+
+  window.saveToggle = async (key, val) => {
+    await update(ref(db, 'adminConfig/settings'), { [key]: val });
+  };
+
+  // ── Auto-pick ─────────────────────────────────────────────────────────
+  window.runAutoPick = async () => {
+    const week = document.getElementById('autoPickWeek').value;
+    if (!week) { showMsg('autoPickMsg','Select a week first.','error'); return; }
+    const wk   = `week-${week}`;
+    const btn  = document.querySelector('#panel-autopick .btn-primary');
+    btn.disabled = true; btn.textContent = 'Running…';
+
+    try {
+      const gamesSnap = await get(ref(db, `games/${wk}`));
+      if (!gamesSnap.exists()) { showMsg('autoPickMsg','No games found. Refresh ESPN data first.','error'); btn.disabled=false; btn.textContent='Run Auto-Pick'; return; }
+      const games = gamesSnap.val();
+      const now   = new Date();
+
+      let count = 0;
+      for (const m of allMembers) {
+        const picksSnap = await get(ref(db, `picks/${m.uid}/${wk}`));
+        const myPicks   = picksSnap.exists() ? picksSnap.val() : {};
+        const updates   = {};
+        for (const [gameId, game] of Object.entries(games)) {
+          if (myPicks[gameId]?.teamId) continue; // already picked
+          if (!game.startTime || new Date(game.startTime) > now) continue; // not started
+          // Random team: home or away
+          const pick = Math.random() < 0.5 ? game.homeTeam?.id : game.awayTeam?.id;
+          if (pick) { updates[gameId] = { teamId: pick, auto: true }; count++; }
+        }
+        if (Object.keys(updates).length) await update(ref(db, `picks/${m.uid}/${wk}`), updates);
+      }
+      showMsg('autoPickMsg', `✓ Auto-pick complete — ${count} picks inserted.`, 'info');
+    } catch(e) {
+      showMsg('autoPickMsg', `Error: ${e.message}`, 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Run Auto-Pick';
+  };
+
+  // ── Survivor admin list ───────────────────────────────────────────────
+  async function loadSurvivorAdmin() {
+    const snap = await get(ref(db, 'survivor/2025'));
+    allSurvivor = {};
+    if (snap.exists()) snap.forEach(c => { allSurvivor[c.key] = c.val(); });
+
+    const list = document.getElementById('survivorAdminList');
+    list.innerHTML = allMembers.map(m => {
+      const s    = allSurvivor[m.uid] || {};
+      const alive = s.alive !== false;
+      const weeks = Object.keys(s.usedTeams || {}).length;
+      const fp    = s.freePassUsed ? ` 🎟️ FP W${s.freePassWeek}` : s.freePassRequested ? ' ⏳ FP Req' : '';
+      return `<div class="data-row">
+        <span class="data-label">${m.displayName}</span>
+        <span>
+          <span class="badge ${alive ? 'badge-green' : 'badge-red'}">${alive ? '✅ Alive' : `💀 Out W${s.eliminatedWeek||'?'}`}</span>
+          <span style="font-size:12px;color:var(--ink-faint);margin-left:6px">${weeks} wk${weeks!==1?'s':''}${fp}</span>
+        </span>
+      </div>`;
+    }).join('') || '<div class="empty-state">No survivor data.</div>';
+  }
+
+  // ── Reset survivor ────────────────────────────────────────────────────
+  window.resetSurvivor = async () => {
+    if (!confirm('Reset the entire 2025 survivor season? All picks and statuses will be deleted. This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure? Type OK in your mind and click again.')) return;
+    await remove(ref(db, 'survivor/2025'));
+    showMsg('survivorResetMsg', '✓ Survivor season reset.', 'info');
+    loadSurvivorAdmin();
+    loadFreePassQueue();
+  };
+
+  // ── Data viewer ───────────────────────────────────────────────────────
+  window.loadDataViewer = async () => {
+    const week = document.getElementById('toolWeek').value;
+    if (!week) return;
+    const wk  = `week-${week}`;
+    const out = document.getElementById('dataViewerOutput');
+    out.innerHTML = '<div class="spinner"></div>';
+
+    const gSnap = await get(ref(db, `games/${wk}`));
+    const games = gSnap.exists() ? gSnap.val() : {};
+    const gameCount = Object.keys(games).length;
+    const finalCount = Object.values(games).filter(g => g.statusName === 'STATUS_FINAL').length;
+
+    let picksCount = 0;
+    for (const m of allMembers) {
+      const ps = await get(ref(db, `picks/${m.uid}/${wk}`));
+      if (ps.exists()) {
+        const v = ps.val();
+        picksCount += Object.keys(v).filter(k => k !== 'mnfTiebreaker').length;
+      }
+    }
+
+    out.innerHTML = `
+      <div class="data-row"><span class="data-label">Games scheduled</span><span class="data-val">${gameCount}</span></div>
+      <div class="data-row"><span class="data-label">Games final</span><span class="data-val">${finalCount}</span></div>
+      <div class="data-row"><span class="data-label">Total picks submitted</span><span class="data-val">${picksCount}</span></div>
+      <div class="data-row"><span class="data-label">Members with picks</span><span class="data-val">${allMembers.length}</span></div>`;
+  };
+
+  // ── Refresh ESPN ──────────────────────────────────────────────────────
+  window.refreshESPN = async () => {
+    const week = document.getElementById('espnWeek').value;
+    if (!week) { showMsg('espnMsg','Select a week first.','error'); return; }
+    const btn = document.querySelector('#panel-tools .btn-primary');
+    btn.disabled = true; btn.textContent = 'Fetching…';
+    try {
+      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const events = data.events || [];
+      const games = {};
+      for (const ev of events) {
+        const comp   = ev.competitions?.[0];
+        if (!comp) continue;
+        const home   = comp.competitors?.find(c => c.homeAway === 'home');
+        const away   = comp.competitors?.find(c => c.homeAway === 'away');
+        const status = comp.status;
+        const isFinal = status?.type?.completed === true;
+        let winnerId = null;
+        if (isFinal) {
+          const hs = parseInt(home?.score || '0');
+          const as = parseInt(away?.score || '0');
+          if (hs > as) winnerId = home?.team?.id;
+          else if (as > hs) winnerId = away?.team?.id;
+        }
+        games[ev.id] = {
+          id: ev.id,
+          homeTeam: { id: home?.team?.id, abbrev: normalizeAbbrev(home?.team?.abbreviation), name: home?.team?.displayName },
+          awayTeam: { id: away?.team?.id, abbrev: normalizeAbbrev(away?.team?.abbreviation), name: away?.team?.displayName },
+          startTime: comp.date, statusName: status?.type?.name, statusShort: status?.type?.shortDetail,
+          homeScore: home?.score ?? null, awayScore: away?.score ?? null, winnerId,
+          isMNF: new Date(comp.date).getDay() === 1,
+        };
+      }
+      // Mark last Monday game as MNF tiebreaker
+      const mondays = Object.values(games).filter(g => g.isMNF).sort((a,b) => new Date(b.startTime) - new Date(a.startTime));
+      if (mondays.length) { Object.values(games).forEach(g => g.isMNF = false); games[mondays[0].id].isMNF = true; }
+      await set(ref(db, `games/week-${week}`), games);
+      showMsg('espnMsg', `✓ Week ${week}: ${Object.keys(games).length} games written to Firebase.`, 'info');
+    } catch(e) {
+      showMsg('espnMsg', `Error: ${e.message}`, 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Refresh Games from ESPN';
+  };
+
+  // ── Populate week dropdowns ───────────────────────────────────────────
+  function populateWeekSelects(maxWeek) {
+    for (const id of ['autoPickWeek','toolWeek','espnWeek']) {
+      const el = document.getElementById(id);
+      for (let w = 1; w <= maxWeek; w++) {
+        const o = document.createElement('option');
+        o.value = w; o.textContent = `Week ${w}`;
+        el.appendChild(o);
+      }
+      el.value = maxWeek;
+    }
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    if (!adminSnap.exists() || adminSnap.val() !== true) { window.location.href = 'index.html'; return; }
+
+    const snap   = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member = snap.exists() ? snap.val() : null;
+    initNav({ activePage: 'admin.html', isAdmin: true, userName: member?.displayName || user.email });
+    const _so = () => signOut(auth).then(() => window.location.href = 'index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click', _so);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _so);
+
+    // Load settings
+    const ss = await get(ref(db, 'adminConfig/settings'));
+    settings  = ss.exists() ? ss.val() : {};
+    document.getElementById('settingSeasonStart').value  = settings.seasonStartDate  || '';
+    document.getElementById('settingSeasonWeek').value   = settings.seasonStartWeek  || 1;
+    document.getElementById('settingSurvivorWeek').value = settings.survivorStartWeek || 1;
+    document.getElementById('regToggle').checked         = settings.registrationOpen !== false;
+
+    // Detect max week
+    const startDate = settings.seasonStartDate;
+    let maxWeek = 18;
+    if (startDate) {
+      const start  = new Date(startDate + 'T00:00:00-05:00');
+      const diffMs = new Date() - start;
+      maxWeek = diffMs < 0 ? 1 : Math.min(18, Math.max(1, Math.floor(diffMs / (7*24*60*60*1000)) + 1));
+    }
+    populateWeekSelects(maxWeek);
+
+    await loadMembers();
+    loadFreePassQueue();
+    loadSurvivorAdmin();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Standings · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#F7F5F0;--cream-dark:#EDEAE2;
+      --ink:#1A1A1A;--ink-light:#555550;--ink-faint:#999990;
+      --charcoal:#1E2530;--red:#C0392B;--green:#27AE60;--accent:#E8A838;--white:#FFFFFF;
+      --gold:#F0C040;--silver:#C0C0C0;--bronze:#CD7F32;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px;--radius-sm:8px;
+    }
+    html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink)}
+    body{padding-top:58px}
+    #mainNav{position:fixed;top:0;left:0;right:0;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:200;height:58px}
+    .nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+    .nav-links{display:flex;gap:2px;flex:1;justify-content:center}
+    .nav-link{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-light);text-decoration:none;white-space:nowrap}
+    .nav-link:hover{background:var(--cream);color:var(--ink)}.nav-link.active{background:var(--charcoal);color:var(--white)}
+    .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nav-user{font-size:13px;color:var(--ink-faint);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+    .btn-signout{padding:6px 12px;border:1.5px solid var(--cream-dark);border-radius:6px;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;white-space:nowrap}
+    .btn-signout:hover{border-color:var(--red);color:var(--red)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:36px;height:36px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:8px;cursor:pointer;padding:0;flex-shrink:0}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .2s}
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    .mobile-drawer{position:fixed;top:0;right:0;width:280px;height:100dvh;background:var(--white);z-index:300;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+    .mobile-drawer.open{transform:translateX(0)}
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;opacity:0;pointer-events:none;transition:opacity .28s}
+    .drawer-overlay.show{opacity:1;pointer-events:all}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;border-bottom:1px solid var(--cream-dark);flex-shrink:0}
+    .drawer-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal)}
+    .drawer-close{width:32px;height:32px;border:none;background:var(--cream);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink-light);display:flex;align-items:center;justify-content:center}
+    .drawer-user{padding:12px 20px;font-size:13px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark);background:var(--cream)}
+    .drawer-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .drawer-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none}
+    .drawer-link:hover{background:var(--cream)}.drawer-link.active{background:var(--charcoal);color:var(--white)}
+    .drawer-icon{font-size:20px;width:28px;text-align:center}
+    .drawer-signout{margin:12px;padding:13px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:10px;font-family:inherit;font-size:15px;font-weight:500;color:var(--red);cursor:pointer}
+    .drawer-signout:hover{background:#FDF0EF;border-color:var(--red)}
+    @media(max-width:720px){.nav-links{display:none}.nav-user{display:none}.btn-signout{display:none}.hamburger{display:flex}}
+    button,a,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+    .page-body{max-width:860px;margin:0 auto;padding:28px 24px 60px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+    .page-header h1{font-family:'DM Serif Display',serif;font-size:32px;color:var(--charcoal);line-height:1.1}
+    .page-header p{font-size:14px;color:var(--ink-faint);margin-top:4px}
+
+    /* Filter bar */
+    .filter-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;align-items:center}
+    .filter-label{font-size:13px;font-weight:500;color:var(--ink-faint);margin-right:4px}
+    .filter-btn{padding:7px 16px;border:1.5px solid var(--cream-dark);border-radius:100px;background:var(--white);font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;transition:all .15s}
+    .filter-btn:hover{border-color:var(--charcoal);color:var(--charcoal)}
+    .filter-btn.active{background:var(--charcoal);border-color:var(--charcoal);color:var(--white)}
+    .week-select{padding:7px 12px;border:1.5px solid var(--cream-dark);border-radius:100px;background:var(--white);font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;outline:none;transition:border-color .15s}
+    .week-select:focus{border-color:var(--charcoal)}
+
+    /* Summary chips */
+    .summary-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .sum-chip{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius);padding:14px 18px;text-align:center}
+    .sum-chip-num{font-family:'DM Serif Display',serif;font-size:24px;color:var(--charcoal)}
+    .sum-chip-label{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+    /* Podium */
+    .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+    .podium-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius);padding:20px 16px;text-align:center;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+    .podium-card.rank-1{border-color:var(--gold);background:linear-gradient(160deg,#FFFDF0 0%,var(--white) 60%)}
+    .podium-card.rank-2{border-color:var(--silver);background:linear-gradient(160deg,#F8F8F8 0%,var(--white) 60%)}
+    .podium-card.rank-3{border-color:var(--bronze);background:linear-gradient(160deg,#FFF5EE 0%,var(--white) 60%)}
+    .podium-card.is-you{box-shadow:0 0 0 3px rgba(30,37,48,.15),var(--shadow-md)}
+    .podium-medal{font-size:28px;margin-bottom:8px}
+    .podium-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px}
+    .podium-you{font-size:11px;color:var(--ink-faint);font-weight:400}
+    .podium-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--charcoal);margin:8px 0 4px}
+    .podium-record{font-size:12px;color:var(--ink-faint)}
+
+    /* Table */
+    .standings-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead th{padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;background:var(--cream);border-bottom:2px solid var(--cream-dark);white-space:nowrap}
+    thead th.num{text-align:right}
+    tbody tr{border-bottom:1px solid var(--cream-dark);transition:background .1s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#FAFAF8}
+    tbody tr.is-you{background:#F0F4FA}
+    td{padding:12px 16px;font-size:14px}
+    .rank-cell{width:40px;text-align:center;font-size:14px;color:var(--ink-faint)}
+    .rank-medal{font-size:18px}
+    .member-info{display:flex;flex-direction:column;gap:3px}
+    .member-name{font-weight:600;color:var(--ink)}
+    .you-tag{display:inline-block;background:#EEF2F8;color:var(--charcoal);border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle}
+    .weeks-badge{font-size:11px;color:var(--ink-faint)}
+    td.num{text-align:right}
+    .pct-bar-wrap{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+    .pct-bar{height:6px;background:var(--cream-dark);border-radius:3px;width:60px;overflow:hidden;flex-shrink:0}
+    .pct-bar-fill{height:100%;background:var(--charcoal);border-radius:3px;transition:width .3s}
+    .pct-text{font-size:13px;font-weight:600;color:var(--ink);min-width:38px;text-align:right}
+
+    .spinner{width:28px;height:28px;border:3px solid var(--cream-dark);border-top-color:var(--charcoal);border-radius:50%;animation:spin .7s linear infinite;margin:60px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .state-box{text-align:center;padding:60px 20px;color:var(--ink-faint)}
+    .state-box .icon{font-size:48px;margin-bottom:16px}
+    .state-box h3{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+    .state-box p{font-size:14px;line-height:1.6;max-width:340px;margin:0 auto}
+
+    @media(max-width:600px){.podium{grid-template-columns:1fr}.sum-chip-num{font-size:20px}}
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div id="mobileDrawer" class="mobile-drawer">
+  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+  <div class="drawer-user" id="drawerUser"></div>
+  <div class="drawer-nav" id="drawerNav"></div>
+  <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-body">
+  <div class="page-header">
+    <div>
+      <h1>Standings</h1>
+      <p id="standingsSubtitle">2025 season</p>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">View:</span>
+    <button class="filter-btn active" data-tab="season" id="tabSeason">Full Season</button>
+    <button class="filter-btn" data-tab="week" id="tabWeek">By Week</button>
+    <select class="week-select" id="weekSelect" style="display:none">
+      <option value="1">Week 1</option>
+    </select>
+  </div>
+
+  <div class="summary-row" id="summaryRow" style="display:none">
+    <div class="sum-chip"><div class="sum-chip-num" id="sumMembers">—</div><div class="sum-chip-label">Members</div></div>
+    <div class="sum-chip"><div class="sum-chip-num" id="sumTotalPicks">—</div><div class="sum-chip-label">Total Picks</div></div>
+    <div class="sum-chip"><div class="sum-chip-num" id="sumTotalCorrect">—</div><div class="sum-chip-label">Correct</div></div>
+    <div class="sum-chip"><div class="sum-chip-num" id="sumOverallPct">—</div><div class="sum-chip-label">Group %</div></div>
+  </div>
+
+  <div id="podium" class="podium" style="display:none"></div>
+  <div id="standingsContainer"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  const MEDALS = ['🥇','🥈','🥉'];
+  let currentUser = null;
+  let currentFilter = 'season';
+  let currentWeek = 1;
+  let allMembers = [];
+  let allGames   = {};  // { 'week-N': { gameId: game } }
+  let allPicks   = {};  // { uid: { 'week-N': { gameId: pick } } }
+  let seasonStartDate = null;
+  let maxWeek = 1;
+
+  function initNav({activePage,isAdmin,userName}){
+    const links=[{href:'picks.html',label:'Picks',icon:'📋'},{href:'results.html',label:'Results',icon:'📊'},{href:'standings.html',label:'Standings',icon:'🏆'},{href:'survivor.html',label:'Survivor',icon:'💀'},{href:'profile.html',label:'Profile',icon:'👤'}];
+    if(isAdmin)links.push({href:'admin.html',label:'Admin',icon:'⚙️'});
+    document.getElementById('mainNav').innerHTML=`<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick'em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
+    document.getElementById('drawerUser').textContent=userName;
+    document.getElementById('drawerNav').innerHTML=links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
+    const h=document.getElementById('hamburgerBtn'),dr=document.getElementById('mobileDrawer'),ov=document.getElementById('drawerOverlay'),cl=document.getElementById('drawerClose');
+    const open=()=>{dr.classList.add('open');ov.classList.add('show');h.setAttribute('aria-expanded','true');document.body.style.overflow='hidden'};
+    const close=()=>{dr.classList.remove('open');ov.classList.remove('show');h.setAttribute('aria-expanded','false');document.body.style.overflow=''};
+    h.addEventListener('click',open);cl?.addEventListener('click',close);ov?.addEventListener('click',close);
+  }
+
+  function getCurrentWeek(){
+    if(!seasonStartDate)return 1;
+    const diff=Math.floor((new Date()-new Date(seasonStartDate+'T00:00:00'))/86400000);
+    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
+  }
+
+  function pct(c,t){return t>0?Math.round((c/t)*100):0;}
+
+  async function loadAll(){
+    const settingsSnap = await get(ref(db,'adminConfig/settings'));
+    const settings = settingsSnap.exists()?settingsSnap.val():{};
+    seasonStartDate = settings.seasonStartDate||null;
+    maxWeek = getCurrentWeek();
+
+    // Populate week selector
+    const sel = document.getElementById('weekSelect');
+    sel.innerHTML = Array.from({length:maxWeek},(_,i)=>`<option value="${i+1}">Week ${i+1}</option>`).join('');
+    currentWeek = maxWeek;
+    sel.value = currentWeek;
+
+    // Members
+    const mSnap = await get(ref(db,'adminConfig/members'));
+    allMembers=[];
+    if(mSnap.exists()) mSnap.forEach(c=>{if(c.val().approved)allMembers.push({uid:c.key,...c.val()});});
+
+    // Load all games + picks for all weeks up to current
+    for(let w=1;w<=maxWeek;w++){
+      const gSnap = await get(ref(db,`games/week-${w}`));
+      if(gSnap.exists()) {
+        allGames[`week-${w}`] = Object.fromEntries(
+          Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt')
+        );
+      }
+    }
+
+    // Load all picks
+    for(const m of allMembers){
+      allPicks[m.uid]={};
+      for(let w=1;w<=maxWeek;w++){
+        const pSnap=await get(ref(db,`picks/${m.uid}/week-${w}`));
+        if(pSnap.exists()) allPicks[m.uid][`week-${w}`]=pSnap.val();
+      }
+    }
+
+    renderStandings();
+  }
+
+  function computeStandings(){
+    const rows=[];
+    for(const member of allMembers){
+      let totalPicks=0,totalCorrect=0,weeksActive=0;
+      const weeks = currentFilter==='season'
+        ? Object.keys(allGames)
+        : [`week-${currentWeek}`];
+
+      for(const wk of weeks){
+        const games = allGames[wk]||{};
+        const picks  = allPicks[member.uid]?.[wk]||{};
+        let wkHasPick=false;
+        for(const [gid,game] of Object.entries(games)){
+          if(game.statusName!=='STATUS_FINAL'||!game.winnerId)continue;
+          const pick=picks[gid]?.teamId;
+          if(!pick)continue;
+          wkHasPick=true;
+          totalPicks++;
+          if(String(pick)===String(game.winnerId))totalCorrect++;
+        }
+        if(wkHasPick)weeksActive++;
+      }
+
+      rows.push({uid:member.uid,displayName:member.displayName,donated:member.donated||false,totalPicks,totalCorrect,weeksActive,percentage:pct(totalCorrect,totalPicks)});
+    }
+
+    rows.sort((a,b)=>{
+      if(b.totalCorrect!==a.totalCorrect)return b.totalCorrect-a.totalCorrect;
+      if(b.percentage!==a.percentage)return b.percentage-a.percentage;
+      return a.displayName.localeCompare(b.displayName);
+    });
+    return rows;
+  }
+
+  function renderStandings(){
+    const rows=computeStandings();
+    const container=document.getElementById('standingsContainer');
+    const podiumEl=document.getElementById('podium');
+
+    // Subtitle
+    document.getElementById('standingsSubtitle').textContent = currentFilter==='season'
+      ? '2025 season · all 18 weeks'
+      : `Week ${currentWeek} only`;
+
+    // Summary (season only)
+    if(currentFilter==='season'){
+      const totalPicks=rows.reduce((s,r)=>s+r.totalPicks,0);
+      const totalCorrect=rows.reduce((s,r)=>s+r.totalCorrect,0);
+      document.getElementById('sumMembers').textContent=allMembers.length;
+      document.getElementById('sumTotalPicks').textContent=totalPicks;
+      document.getElementById('sumTotalCorrect').textContent=totalCorrect;
+      document.getElementById('sumOverallPct').textContent=totalPicks>0?pct(totalCorrect,totalPicks)+'%':'—';
+      document.getElementById('summaryRow').style.display='flex';
+    } else {
+      document.getElementById('summaryRow').style.display='none';
+    }
+
+    const hasData=rows.some(r=>r.totalPicks>0);
+    if(!hasData){
+      podiumEl.style.display='none';
+      container.innerHTML=`<div class="state-box"><div class="icon">📊</div><h3>No picks recorded yet</h3><p>Standings appear once games are final.</p></div>`;
+      return;
+    }
+
+    // Podium
+    const podiumRows=rows.filter(r=>r.totalPicks>0).slice(0,3);
+    if(podiumRows.length>=2){
+      podiumEl.style.display='grid';
+      podiumEl.innerHTML=podiumRows.map((r,i)=>`
+        <div class="podium-card rank-${i+1} ${r.uid===currentUser.uid?'is-you':''}">
+          <div class="podium-medal">${MEDALS[i]}</div>
+          <div class="podium-name" style="${currentFilter==='season'&&!r.donated?'color:var(--red)':''}">
+            ${r.displayName}${r.uid===currentUser.uid?'<span class="podium-you">(you)</span>':''}
+          </div>
+          <div class="podium-num">${r.totalCorrect}</div>
+          <div class="podium-record">${r.totalCorrect} / ${r.totalPicks} correct</div>
+        </div>`).join('');
+    } else {
+      podiumEl.style.display='none';
+    }
+
+    // Full table
+    const maxCorrect=Math.max(...rows.map(r=>r.totalCorrect),1);
+    let rank=0,lastCorrect=-1;
+    const tableHTML=`
+      <div class="standings-card">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center">#</th>
+              <th>Member</th>
+              <th class="num">Picks</th>
+              <th class="num">Correct</th>
+              <th class="num">Win %</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r,i)=>{
+              if(r.totalCorrect!==lastCorrect){rank=i+1;lastCorrect=r.totalCorrect;}
+              const isYou=r.uid===currentUser.uid;
+              const barPct=maxCorrect>0?Math.round((r.totalCorrect/maxCorrect)*100):0;
+              return `<tr class="${isYou?'is-you':''}">
+                <td class="rank-cell">${rank<=3&&r.totalPicks>0?`<span class="rank-medal">${MEDALS[rank-1]}</span>`:`<span>${rank}</span>`}</td>
+                <td>
+                  <div class="member-info">
+                    <span class="member-name" style="${currentFilter==='season'&&!r.donated?'color:var(--red)':''}">${r.displayName}${isYou?'<span class="you-tag">YOU</span>':''}</span>
+                    <span class="weeks-badge">${r.weeksActive} week${r.weeksActive!==1?'s':''} active</span>
+                  </div>
+                </td>
+                <td class="num">${r.totalPicks}</td>
+                <td class="num">${r.totalCorrect}</td>
+                <td class="num">
+                  <div class="pct-bar-wrap">
+                    <div class="pct-bar"><div class="pct-bar-fill" style="width:${barPct}%"></div></div>
+                    <span class="pct-text">${r.totalPicks>0?r.percentage+'%':'—'}</span>
+                  </div>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    container.innerHTML=tableHTML;
+  }
+
+  // Tab controls
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter=btn.dataset.tab;
+      document.getElementById('weekSelect').style.display=currentFilter==='week'?'':'none';
+      renderStandings();
+    });
+  });
+
+  document.getElementById('weekSelect').addEventListener('change',e=>{
+    currentWeek=parseInt(e.target.value);
+    renderStandings();
+  });
+
+  onAuthStateChanged(auth,async user=>{
+    if(!user){window.location.href='index.html';return;}
+    currentUser=user;
+    const snap=await get(ref(db,`adminConfig/members/${user.uid}`));
+    const member=snap.exists()?snap.val():null;
+    const adminSnap=await get(ref(db,`adminConfig/admins/${user.uid}`));
+    const isAdmin=adminSnap.exists()&&adminSnap.val()===true;
+    if(!member?.approved&&!isAdmin){window.location.href='index.html';return;}
+    initNav({activePage:'standings.html',isAdmin,userName:member?.displayName||user.email});
+    const so=()=>signOut(auth).then(()=>window.location.href='index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click',so);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click',so);
+    await loadAll();
+  });
+</script>
+</body>
+</html>

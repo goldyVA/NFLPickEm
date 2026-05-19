@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Picks · NFL Pick'em</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cream:#F7F5F0;--cream-dark:#EDEAE2;
+      --ink:#1A1A1A;--ink-light:#555550;--ink-faint:#999990;
+      --charcoal:#1E2530;--red:#C0392B;--green:#27AE60;--accent:#E8A838;--white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px;--radius-sm:8px;
+    }
+    html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink)}
+    body{padding-top:58px}
+    /* ── Nav ── */
+    #mainNav{position:fixed;top:0;left:0;right:0;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:200;height:58px}
+    .nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);text-decoration:none;white-space:nowrap;flex-shrink:0}
+    .nav-links{display:flex;gap:2px;flex:1;justify-content:center}
+    .nav-link{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-light);text-decoration:none;white-space:nowrap}
+    .nav-link:hover{background:var(--cream);color:var(--ink)}
+    .nav-link.active{background:var(--charcoal);color:var(--white)}
+    .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .nav-user{font-size:13px;color:var(--ink-faint);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
+    .btn-signout{padding:6px 12px;border:1.5px solid var(--cream-dark);border-radius:6px;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;white-space:nowrap}
+    .btn-signout:hover{border-color:var(--red);color:var(--red)}
+    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:36px;height:36px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:8px;cursor:pointer;padding:0;flex-shrink:0}
+    .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .2s}
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+    .mobile-drawer{position:fixed;top:0;right:0;width:280px;height:100dvh;background:var(--white);z-index:300;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
+    .mobile-drawer.open{transform:translateX(0)}
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;opacity:0;pointer-events:none;transition:opacity .28s}
+    .drawer-overlay.show{opacity:1;pointer-events:all}
+    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;border-bottom:1px solid var(--cream-dark);flex-shrink:0}
+    .drawer-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal)}
+    .drawer-close{width:32px;height:32px;border:none;background:var(--cream);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink-light);display:flex;align-items:center;justify-content:center}
+    .drawer-user{padding:12px 20px;font-size:13px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark);background:var(--cream)}
+    .drawer-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+    .drawer-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none}
+    .drawer-link:hover{background:var(--cream)}.drawer-link.active{background:var(--charcoal);color:var(--white)}
+    .drawer-icon{font-size:20px;width:28px;text-align:center}
+    .drawer-signout{margin:12px;padding:13px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:10px;font-family:inherit;font-size:15px;font-weight:500;color:var(--red);cursor:pointer}
+    .drawer-signout:hover{background:#FDF0EF;border-color:var(--red)}
+    @media(max-width:720px){.nav-links{display:none}.nav-user{display:none}.btn-signout{display:none}.hamburger{display:flex}}
+    button,a,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+    /* ── Page ── */
+    .page-body{max-width:860px;margin:0 auto;padding:28px 24px 60px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+    .page-header h1{font-family:'DM Serif Display',serif;font-size:32px;color:var(--charcoal);line-height:1.1}
+    .page-header p{font-size:14px;color:var(--ink-faint);margin-top:4px}
+
+    /* ── Week nav ── */
+    .week-nav{display:flex;align-items:center;gap:8px}
+    .week-btn{width:34px;height:34px;border:1.5px solid var(--cream-dark);border-radius:8px;background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--ink-light);transition:border-color .15s,color .15s}
+    .week-btn:hover{border-color:var(--charcoal);color:var(--charcoal)}
+    .week-display{padding:7px 16px;background:var(--white);border:1.5px solid var(--cream-dark);border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);min-width:100px;text-align:center}
+
+    /* ── Summary chips ── */
+    .summary-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+    .summary-chip{display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--cream-dark);border-radius:100px;padding:6px 16px;font-size:13px;color:var(--ink-light)}
+    .summary-chip strong{color:var(--ink)}
+
+    /* ── Game cards ── */
+    .games-grid{display:flex;flex-direction:column;gap:16px}
+    .game-card{background:var(--white);border:1.5px solid var(--cream-dark);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:box-shadow .2s}
+    .game-card:hover{box-shadow:var(--shadow-md)}
+    .game-card.locked{border-color:#D4CAB8}
+    .game-card.correct{border-color:#A8D5B5;background:#F4FBF6}
+    .game-card.wrong{border-color:#F0C4C0;background:#FDF5F4}
+    .game-card.mnf-card{border-color:#C0CEDF}
+
+    .card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--cream-dark);background:var(--cream)}
+    .game-time{font-size:12px;font-weight:600;color:var(--ink-light);text-transform:uppercase;letter-spacing:.04em}
+    .game-day-label{font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+    .mnf-label{font-size:11px;font-weight:700;color:var(--charcoal);background:#E8EDF3;padding:2px 8px;border-radius:100px}
+    .game-status-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:.04em}
+    .badge-upcoming{background:#EEF2F8;color:var(--charcoal)}
+    .badge-live{background:#FDECEA;color:var(--red)}
+    .badge-final{background:var(--cream-dark);color:var(--ink-faint)}
+
+    .card-body{padding:16px;display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center}
+    .team-side{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+    .team-logo{width:56px;height:56px;object-fit:contain}
+    .team-logo-placeholder{width:56px;height:56px;border-radius:50%;background:var(--cream-dark);display:flex;align-items:center;justify-content:center;font-size:22px}
+    .team-name{font-size:14px;font-weight:700;color:var(--ink)}
+    .team-record{font-size:12px;color:var(--ink-faint)}
+
+    /* pick buttons */
+    .pick-btn{width:100%;padding:8px 12px;border:2px solid var(--cream-dark);border-radius:var(--radius-sm);background:transparent;font-family:inherit;font-size:13px;font-weight:600;color:var(--ink-light);cursor:pointer;transition:all .15s}
+    .pick-btn:hover:not(:disabled){border-color:var(--charcoal);color:var(--charcoal);background:#F0F3F7}
+    .pick-btn.selected{border-color:var(--charcoal);background:var(--charcoal);color:var(--white)}
+    .pick-btn.correct{border-color:var(--green);background:#EFF9F3;color:var(--green)}
+    .pick-btn.wrong{border-color:var(--red);background:#FDF0EF;color:var(--red)}
+    .pick-btn:disabled{opacity:.5;cursor:not-allowed}
+
+    .vs-col{display:flex;flex-direction:column;align-items:center;gap:6px}
+    .vs-label{font-size:12px;font-weight:700;color:var(--ink-faint)}
+    .score-display{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);white-space:nowrap;text-align:center}
+    .score-sep{color:var(--ink-faint);margin:0 2px}
+
+    /* ── MNF tiebreaker card ── */
+    .mnf-tiebreaker-card{background:var(--white);border:1.5px solid #C0CEDF;border-radius:var(--radius);padding:20px 24px;margin-top:0}
+    .mnf-tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--charcoal);margin-bottom:6px}
+    .mnf-tb-sub{font-size:13px;color:var(--ink-faint);margin-bottom:16px;line-height:1.5}
+    .mnf-tb-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .mnf-tb-input{padding:10px 14px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-family:inherit;font-size:16px;font-weight:600;color:var(--ink);width:120px;outline:none;text-align:center;background:var(--cream)}
+    .mnf-tb-input:focus{border-color:var(--charcoal);background:var(--white)}
+    .mnf-tb-btn{padding:10px 20px;background:var(--charcoal);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}
+    .mnf-tb-btn:hover{opacity:.85}
+    .mnf-tb-btn:disabled{opacity:.5;cursor:not-allowed}
+    .mnf-tb-saved{font-size:13px;color:var(--green);font-weight:600}
+    .mnf-tb-locked{font-size:13px;color:var(--ink-faint);font-style:italic}
+
+    /* ── State boxes ── */
+    .state-box{text-align:center;padding:60px 20px;color:var(--ink-faint)}
+    .state-box .icon{font-size:48px;margin-bottom:16px}
+    .state-box h3{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink);margin-bottom:8px}
+    .state-box p{font-size:14px;line-height:1.6;max-width:340px;margin:0 auto}
+    .spinner{width:28px;height:28px;border:3px solid var(--cream-dark);border-top-color:var(--charcoal);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── Day divider ── */
+    .day-divider{display:flex;align-items:center;gap:12px;margin:24px 0 12px;font-size:12px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em}
+    .day-divider::before,.day-divider::after{content:'';flex:1;height:1px;background:var(--cream-dark)}
+
+    /* ── Locked chip ── */
+    .locked-chip{display:inline-flex;align-items:center;gap:6px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);padding:7px 14px;font-size:13px;color:var(--ink-faint);font-weight:500}
+  </style>
+</head>
+<body>
+
+<nav id="mainNav"></nav>
+<div id="mobileDrawer" class="mobile-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title">🏈 NFL Pick'em</span>
+    <button class="drawer-close" id="drawerClose">✕</button>
+  </div>
+  <div class="drawer-user" id="drawerUser"></div>
+  <div class="drawer-nav" id="drawerNav"></div>
+  <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
+</div>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<div class="page-body">
+  <div class="page-header">
+    <div>
+      <h1>My Picks</h1>
+      <p id="weekSubtitle">Loading…</p>
+    </div>
+    <div class="week-nav">
+      <button class="week-btn" id="prevWeek">‹</button>
+      <div class="week-display" id="weekDisplay">Week —</div>
+      <button class="week-btn" id="nextWeek">›</button>
+    </div>
+  </div>
+
+  <div class="summary-bar" id="summaryBar" style="display:none">
+    <div class="summary-chip">Picked <strong id="sumPicked">—</strong> of <strong id="sumTotal">—</strong></div>
+    <div class="summary-chip" id="sumCorrectChip" style="display:none">✅ <strong id="sumCorrect">—</strong> correct</div>
+  </div>
+
+  <div id="gamesContainer"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+  import { getDatabase, ref, get, set, update, child }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+  authDomain: "nflpickem1728.firebaseapp.com",
+  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com/"
+  projectId: "nflpickem1728",
+  storageBucket: "nflpickem1728.firebasestorage.app",
+  messagingSenderId: "752271833942",
+  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
+};
+
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getDatabase(app);
+
+  let currentUser = null;
+  let currentWeek = 1;
+  let gamesCache  = {};
+  let picksCache  = {};
+  let seasonStartDate = null; // 'YYYY-MM-DD'
+
+  // ── Nav ───────────────────────────────────────────────────────────────
+  function initNav({activePage, isAdmin, userName}) {
+    const links = [
+      {href:'picks.html',    label:'Picks',     icon:'📋'},
+      {href:'results.html',  label:'Results',   icon:'📊'},
+      {href:'standings.html',label:'Standings', icon:'🏆'},
+      {href:'survivor.html', label:'Survivor',  icon:'💀'},
+      {href:'profile.html',  label:'Profile',   icon:'👤'},
+    ];
+    if (isAdmin) links.push({href:'admin.html', label:'Admin', icon:'⚙️'});
+
+    document.getElementById('mainNav').innerHTML = `
+      <div class="nav-inner">
+        <a class="nav-logo" href="index.html">🏈 NFL Pick'em</a>
+        <div class="nav-links">
+          ${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}
+        </div>
+        <div class="nav-right">
+          <span class="nav-user">${userName}</span>
+          <button class="btn-signout" id="signOutBtn">Sign Out</button>
+          <button class="hamburger" id="hamburgerBtn" aria-expanded="false" aria-label="Menu">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </div>`;
+
+    document.getElementById('drawerUser').textContent = userName;
+    document.getElementById('drawerNav').innerHTML =
+      links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
+
+    const hamburger = document.getElementById('hamburgerBtn');
+    const drawer    = document.getElementById('mobileDrawer');
+    const overlay   = document.getElementById('drawerOverlay');
+    const closeBtn  = document.getElementById('drawerClose');
+    const open  = () => { drawer.classList.add('open'); overlay.classList.add('show'); hamburger.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+    const close = () => { drawer.classList.remove('open'); overlay.classList.remove('show'); hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+    hamburger.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+    overlay?.addEventListener('click', close);
+  }
+
+  // ── ESPN helpers ──────────────────────────────────────────────────────
+  function espnLogo(abbrev) {
+    return `https://a.espncdn.com/i/teamlogos/nfl/500/${(abbrev||'').toLowerCase()}.png`;
+  }
+
+  // Normalize ESPN abbreviation inconsistencies
+  function normalizeAbbrev(abbrev) {
+    const map = {
+      'WSH':'WSH','WAS':'WSH',
+      'JAX':'JAX','JAC':'JAX',
+      'KC':'KC','KAN':'KC',
+      'NE':'NE','NEP':'NE',
+      'NO':'NO','NOS':'NO',
+      'NYG':'NYG','NY':'NYG',
+      'NYJ':'NYJ',
+      'LV':'LV','OAK':'LV',
+      'LAR':'LAR','LA':'LAR',
+      'LAC':'LAC',
+      'GB':'GB','GNB':'GB',
+      'SF':'SF','SFO':'SF',
+      'TB':'TB','TAM':'TB',
+      'TEN':'TEN',
+      'ARI':'ARI',
+      'ATL':'ATL',
+      'BAL':'BAL',
+      'BUF':'BUF',
+      'CAR':'CAR',
+      'CHI':'CHI',
+      'CIN':'CIN',
+      'CLE':'CLE',
+      'DAL':'DAL',
+      'DEN':'DEN',
+      'DET':'DET',
+      'HOU':'HOU',
+      'IND':'IND',
+      'MIN':'MIN',
+      'MIA':'MIA',
+      'PHI':'PHI',
+      'PIT':'PIT',
+      'SEA':'SEA',
+    };
+    return map[abbrev?.toUpperCase()] || abbrev?.toUpperCase() || '??';
+  }
+
+  // ── Week calculation ──────────────────────────────────────────────────
+  function getCurrentWeek() {
+    if (!seasonStartDate) return 1;
+    const start = new Date(seasonStartDate + 'T00:00:00');
+    const now   = new Date();
+    const diffMs = now - start;
+    const diffDays = Math.floor(diffMs / 86400000);
+    const week = Math.floor(diffDays / 7) + 1;
+    return Math.max(1, Math.min(18, week));
+  }
+
+  function weekLabel(w) { return `Week ${w}`; }
+
+  function formatGameTime(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' });
+  }
+
+  function formatGameDay(isoStr) {
+    if (!isoStr) return '';
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+  }
+
+  function gameIsLocked(startTimeStr) {
+    if (!startTimeStr) return false;
+    return new Date() >= new Date(startTimeStr);
+  }
+
+  // ── ESPN game fetch ───────────────────────────────────────────────────
+  async function fetchGamesFromESPN(week) {
+    const url = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const games = [];
+    for (const event of (data.events || [])) {
+      const comp   = event.competitions?.[0];
+      const away   = comp?.competitors?.find(c => c.homeAway === 'away');
+      const home   = comp?.competitors?.find(c => c.homeAway === 'home');
+      const status = comp?.status?.type;
+
+      const awayAbbrev = normalizeAbbrev(away?.team?.abbreviation);
+      const homeAbbrev = normalizeAbbrev(home?.team?.abbreviation);
+
+      games.push({
+        id:          event.id,
+        startTime:   comp?.date || event.date,
+        statusName:  status?.name,
+        statusShort: status?.shortDetail,
+        awayScore:   parseInt(away?.score) || 0,
+        homeScore:   parseInt(home?.score) || 0,
+        awayTeam: {
+          id:     away?.team?.id,
+          abbrev: awayAbbrev,
+          name:   away?.team?.displayName || away?.team?.name,
+          record: away?.records?.[0]?.summary || '',
+        },
+        homeTeam: {
+          id:     home?.team?.id,
+          abbrev: homeAbbrev,
+          name:   home?.team?.displayName || home?.team?.name,
+          record: home?.records?.[0]?.summary || '',
+        },
+        winnerId: status?.name === 'STATUS_FINAL'
+          ? (parseInt(away?.score) > parseInt(home?.score) ? away?.team?.id : home?.team?.id)
+          : null,
+        broadcast: comp?.broadcasts?.[0]?.names?.[0] || '',
+      });
+    }
+    return games;
+  }
+
+  async function loadGames(week) {
+    // Try cache first
+    const cacheSnap = await get(ref(db, `games/week-${week}`));
+    if (cacheSnap.exists()) {
+      const cached = cacheSnap.val();
+      // Refresh if any game is live or if cache is stale (> 3 min)
+      const cacheTime = cached._cachedAt || 0;
+      const hasLive = Object.values(cached).some(g => g.statusName === 'STATUS_IN_PROGRESS');
+      const stale   = Date.now() - cacheTime > 3 * 60 * 1000;
+      if (!hasLive && !stale) {
+        const games = Object.entries(cached)
+          .filter(([k]) => k !== '_cachedAt')
+          .map(([,v]) => v);
+        return games;
+      }
+    }
+    // Fetch from ESPN
+    const games = await fetchGamesFromESPN(week);
+    if (games.length > 0) {
+      const obj = { _cachedAt: Date.now() };
+      games.forEach(g => { obj[g.id] = g; });
+      await set(ref(db, `games/week-${week}`), obj).catch(() => {});
+    }
+    return games;
+  }
+
+  // ── Identify MNF game (last game of the week by start time) ──────────
+  function findMNFGame(games) {
+    // Monday Night Football = game(s) on Monday
+    const monday = games.filter(g => {
+      const d = new Date(g.startTime);
+      const day = d.toLocaleDateString('en-US', { weekday:'short', timeZone:'America/New_York' });
+      return day === 'Mon';
+    });
+    if (!monday.length) return null;
+    // Return the latest Monday game by start time
+    return monday.reduce((a, b) => new Date(a.startTime) > new Date(b.startTime) ? a : b);
+  }
+
+  // ── Group games by day ────────────────────────────────────────────────
+  function groupByDay(games) {
+    const days = {};
+    for (const g of games) {
+      const dayKey = formatGameDay(g.startTime);
+      if (!days[dayKey]) days[dayKey] = [];
+      days[dayKey].push(g);
+    }
+    // Sort each day's games by start time
+    for (const k of Object.keys(days)) days[k].sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+    // Sort day keys by first game's start time
+    return Object.entries(days).sort(([,a],[,b]) => new Date(a[0].startTime) - new Date(b[0].startTime));
+  }
+
+  // ── Render picks page ─────────────────────────────────────────────────
+  async function loadWeek(week) {
+    currentWeek = week;
+    document.getElementById('weekDisplay').textContent = weekLabel(week);
+    document.getElementById('weekSubtitle').textContent = `Pick every game — locks at kickoff`;
+    document.getElementById('gamesContainer').innerHTML = '<div class="spinner"></div>';
+    document.getElementById('summaryBar').style.display = 'none';
+
+    try {
+      const games = await loadGames(week);
+      gamesCache = {};
+      games.forEach(g => { gamesCache[g.id] = g; });
+
+      // Load my picks for this week
+      const picksSnap = await get(ref(db, `picks/${currentUser.uid}/week-${week}`));
+      picksCache = picksSnap.exists() ? picksSnap.val() : {};
+
+      // Load MNF tiebreaker
+      const tbSnap = await get(ref(db, `tiebreakers/${currentUser.uid}/week-${week}`));
+      const tbValue = tbSnap.exists() ? tbSnap.val() : null;
+
+      if (!games.length) {
+        document.getElementById('gamesContainer').innerHTML = `
+          <div class="state-box">
+            <div class="icon">🏈</div>
+            <h3>No games this week</h3>
+            <p>Check back when the schedule is released.</p>
+          </div>`;
+        return;
+      }
+
+      renderGames(games, picksCache, tbValue);
+    } catch(err) {
+      document.getElementById('gamesContainer').innerHTML = `
+        <div class="state-box">
+          <div class="icon">⚠️</div>
+          <h3>Could not load games</h3>
+          <p>${err.message}</p>
+        </div>`;
+    }
+  }
+
+  function renderGames(games, picks, tbValue) {
+    const mnfGame    = findMNFGame(games);
+    const dayGroups  = groupByDay(games);
+    const container  = document.getElementById('gamesContainer');
+    const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL');
+
+    // Summary bar
+    const picked    = games.filter(g => picks[g.id]?.teamId).length;
+    const correct   = finalGames.filter(g => picks[g.id]?.teamId && String(picks[g.id].teamId) === String(g.winnerId)).length;
+    document.getElementById('sumPicked').textContent  = picked;
+    document.getElementById('sumTotal').textContent   = games.length;
+    document.getElementById('summaryBar').style.display = 'flex';
+    if (finalGames.length > 0) {
+      document.getElementById('sumCorrect').textContent = correct;
+      document.getElementById('sumCorrectChip').style.display = 'flex';
+    } else {
+      document.getElementById('sumCorrectChip').style.display = 'none';
+    }
+
+    let html = '';
+
+    for (const [dayLabel, dayGames] of dayGroups) {
+      html += `<div class="day-divider">${dayLabel}</div>`;
+      for (const game of dayGames) {
+        const isMNF    = mnfGame && game.id === mnfGame.id;
+        const locked   = gameIsLocked(game.startTime);
+        const isFinal  = game.statusName === 'STATUS_FINAL';
+        const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
+        const myPickId = picks[game.id]?.teamId || null;
+
+        const awayPicked  = myPickId && String(myPickId) === String(game.awayTeam.id);
+        const homePicked  = myPickId && String(myPickId) === String(game.homeTeam.id);
+        const awayCorrect = isFinal && game.winnerId && String(game.winnerId) === String(game.awayTeam.id);
+        const homeCorrect = isFinal && game.winnerId && String(game.winnerId) === String(game.homeTeam.id);
+
+        let cardClass = 'game-card';
+        if (isMNF) cardClass += ' mnf-card';
+        if (locked && !isFinal && !isLive) cardClass += ' locked';
+        if (isFinal && myPickId) cardClass += awayCorrect && awayPicked || homeCorrect && homePicked ? ' correct' : ' wrong';
+
+        let statusBadge = '';
+        if (isFinal)      statusBadge = `<span class="game-status-badge badge-final">Final</span>`;
+        else if (isLive)  statusBadge = `<span class="game-status-badge badge-live">🔴 ${game.statusShort || 'Live'}</span>`;
+        else              statusBadge = `<span class="game-status-badge badge-upcoming">Upcoming</span>`;
+
+        const scoreHTML = (isLive || isFinal)
+          ? `<div class="score-display">${game.awayScore}<span class="score-sep">–</span>${game.homeScore}</div>`
+          : `<div class="vs-label">vs</div>`;
+
+        // pick buttons
+        function pickBtnClass(isThisTeamPicked, isThisTeamWinner) {
+          if (!locked) return isThisTeamPicked ? 'pick-btn selected' : 'pick-btn';
+          if (isFinal && isThisTeamWinner && isThisTeamPicked) return 'pick-btn correct';
+          if (isFinal && !isThisTeamWinner && isThisTeamPicked) return 'pick-btn wrong';
+          return 'pick-btn';
+        }
+
+        const awayBtn = pickBtnClass(awayPicked, awayCorrect);
+        const homeBtn = pickBtnClass(homePicked, homeCorrect);
+        const disabledAttr = locked ? 'disabled' : '';
+
+        html += `
+          <div class="${cardClass}" data-gameid="${game.id}">
+            <div class="card-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="game-time">${formatGameTime(game.startTime)}</span>
+                ${isMNF ? '<span class="mnf-label">MNF 🏈</span>' : ''}
+                ${game.broadcast ? `<span style="font-size:11px;color:var(--ink-faint)">${game.broadcast}</span>` : ''}
+              </div>
+              ${statusBadge}
+            </div>
+            <div class="card-body">
+              <div class="team-side">
+                <img class="team-logo" src="${espnLogo(game.awayTeam.abbrev)}" alt="${game.awayTeam.abbrev}" onerror="this.style.display='none'" />
+                <div class="team-name">${game.awayTeam.abbrev}</div>
+                <div class="team-record">${game.awayTeam.record || ''}</div>
+                <button class="${awayBtn}" data-gameid="${game.id}" data-teamid="${game.awayTeam.id}" ${disabledAttr}>
+                  ${awayPicked && !locked ? '✓ ' : ''}${locked ? (awayPicked ? '✓ Picked' : 'Away') : 'Pick'}
+                </button>
+              </div>
+              <div class="vs-col">
+                ${scoreHTML}
+              </div>
+              <div class="team-side">
+                <img class="team-logo" src="${espnLogo(game.homeTeam.abbrev)}" alt="${game.homeTeam.abbrev}" onerror="this.style.display='none'" />
+                <div class="team-name">${game.homeTeam.abbrev}</div>
+                <div class="team-record">${game.homeTeam.record || ''}</div>
+                <button class="${homeBtn}" data-gameid="${game.id}" data-teamid="${game.homeTeam.id}" ${disabledAttr}>
+                  ${homePicked && !locked ? '✓ ' : ''}${locked ? (homePicked ? '✓ Picked' : 'Home') : 'Pick'}
+                </button>
+              </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    // MNF Tiebreaker section
+    if (mnfGame) {
+      const mnfLocked = gameIsLocked(mnfGame.startTime);
+      html += `
+        <div class="mnf-tiebreaker-card" style="margin-top:24px">
+          <div class="mnf-tb-title">🏈 MNF Tiebreaker</div>
+          <div class="mnf-tb-sub">
+            ${mnfGame.awayTeam.name} @ ${mnfGame.homeTeam.name} — predict the total combined points scored.<br/>
+            Used to break weekly ties: most correct picks wins; tiebreakers are (1) correctly picked MNF winner, then (2) closest total points guess.
+          </div>
+          ${mnfLocked
+            ? `<div class="mnf-tb-locked">🔒 Tiebreaker locked — game has started.${tbValue != null ? ` Your guess: <strong>${tbValue}</strong>` : ' No guess submitted.'}</div>`
+            : `<div class="mnf-tb-row">
+                <input type="number" class="mnf-tb-input" id="tbInput" min="0" max="150" placeholder="e.g. 48" value="${tbValue != null ? tbValue : ''}" />
+                <button class="mnf-tb-btn" id="tbSaveBtn">Save Guess</button>
+                <span class="mnf-tb-saved" id="tbSaved" style="display:none">✓ Saved</span>
+              </div>`}
+        </div>`;
+    }
+
+    container.innerHTML = html;
+
+    // Wire pick buttons
+    container.querySelectorAll('.pick-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => handlePick(btn.dataset.gameid, btn.dataset.teamid));
+    });
+
+    // Wire tiebreaker save
+    const tbSaveBtn = document.getElementById('tbSaveBtn');
+    if (tbSaveBtn) {
+      tbSaveBtn.addEventListener('click', async () => {
+        const val = parseInt(document.getElementById('tbInput').value);
+        if (isNaN(val) || val < 0) return;
+        tbSaveBtn.disabled = true; tbSaveBtn.textContent = 'Saving…';
+        try {
+          await set(ref(db, `tiebreakers/${currentUser.uid}/week-${currentWeek}`), val);
+          document.getElementById('tbSaved').style.display = '';
+          tbSaveBtn.textContent = 'Save Guess';
+          setTimeout(() => { document.getElementById('tbSaved').style.display = 'none'; }, 2500);
+        } catch(e) {
+          tbSaveBtn.textContent = 'Save Guess';
+        }
+        tbSaveBtn.disabled = false;
+      });
+    }
+  }
+
+  async function handlePick(gameId, teamId) {
+    const game = gamesCache[gameId];
+    if (!game || gameIsLocked(game.startTime)) return;
+
+    // Optimistic UI update
+    picksCache[gameId] = { teamId };
+    renderGames(Object.values(gamesCache), picksCache,
+      document.getElementById('tbInput')?.value ? parseInt(document.getElementById('tbInput').value) : null);
+
+    try {
+      await set(ref(db, `picks/${currentUser.uid}/week-${currentWeek}/${gameId}`), { teamId, pickedAt: new Date().toISOString() });
+    } catch(err) {
+      // Revert on failure
+      delete picksCache[gameId];
+      renderGames(Object.values(gamesCache), picksCache, null);
+    }
+  }
+
+  // ── Week nav ──────────────────────────────────────────────────────────
+  document.getElementById('prevWeek').addEventListener('click', () => {
+    if (currentWeek > 1) loadWeek(currentWeek - 1);
+  });
+  document.getElementById('nextWeek').addEventListener('click', () => {
+    if (currentWeek < 18) loadWeek(currentWeek + 1);
+  });
+
+  // ── Auth gate ──────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser = user;
+
+    const snap      = await get(ref(db, `adminConfig/members/${user.uid}`));
+    const member    = snap.exists() ? snap.val() : null;
+    const adminSnap = await get(ref(db, `adminConfig/admins/${user.uid}`));
+    const isAdmin   = adminSnap.exists() && adminSnap.val() === true;
+    if (!member?.approved && !isAdmin) { window.location.href = 'index.html'; return; }
+
+    // Load season start date
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
+    seasonStartDate = settings.seasonStartDate || null;
+
+    initNav({ activePage: 'picks.html', isAdmin, userName: member?.displayName || user.email });
+
+    const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
+    document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
+    document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
+
+    loadWeek(getCurrentWeek());
+  });
+</script>
+</body>
+</html>
