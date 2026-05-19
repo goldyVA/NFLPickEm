@@ -136,6 +136,38 @@
 
     /* ── Locked chip ── */
     .locked-chip{display:inline-flex;align-items:center;gap:6px;background:var(--cream);border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);padding:7px 14px;font-size:13px;color:var(--ink-faint);font-weight:500}
+
+    /* ── Survivor section on picks page ───────────────────────────── */
+    .survivor-section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;margin-top:32px;border-top:3px solid var(--charcoal)}
+    .survivor-section-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+    .survivor-section-sub{font-size:13px;color:var(--ink-faint);margin-bottom:16px}
+    .sv-status-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .sv-badge{font-size:13px;font-weight:600;padding:4px 12px;border-radius:100px}
+    .sv-badge-alive{background:#D4EDDA;color:#155724}
+    .sv-badge-dead{background:#F8D7DA;color:#721C24}
+    .sv-badge-fp{background:#FEF9EE;color:#7A5A10}
+    .sv-current-pick{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;background:var(--cream-dark);color:var(--ink)}
+    .sv-current-pick.win{background:#D4EDDA;color:#155724}
+    .sv-current-pick.loss{background:#F8D7DA;color:#721C24}
+    .sv-team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-top:12px}
+    .sv-tile{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;transition:all .15s;position:relative;font-family:inherit}
+    .sv-tile:hover:not([disabled]){border-color:var(--charcoal);background:#F0F3F7}
+    .sv-tile.sv-selected{border-color:var(--charcoal);background:var(--charcoal);color:var(--white)}
+    .sv-tile.sv-used{opacity:.4;cursor:not-allowed;background:var(--cream)}
+    .sv-tile.sv-started{opacity:.55;cursor:not-allowed}
+    .sv-tile img{width:32px;height:32px;object-fit:contain}
+    .sv-tile span{font-size:10px;font-weight:700;text-transform:uppercase}
+    .sv-tile-badge{position:absolute;top:2px;right:2px;font-size:8px;background:rgba(0,0,0,.18);color:white;border-radius:3px;padding:1px 3px}
+    .sv-selected .sv-tile-badge{background:rgba(255,255,255,.3)}
+    .sv-confirm-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+    .sv-confirm-btn{padding:9px 18px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .sv-cancel-btn{padding:9px 14px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--ink-light);cursor:pointer}
+    .sv-msg{font-size:13px;padding:8px 12px;border-radius:var(--radius-sm);margin-top:8px;display:none}
+    .sv-msg.show{display:block}
+    .sv-msg.error{background:#FDF0EF;color:var(--red)}
+    .sv-msg.info{background:#EFF6F2;color:#1D6A3E}
+    .sv-fp-btn{margin-top:10px;padding:9px 18px;background:var(--accent);color:var(--ink);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+    .sv-fp-pending{margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px}
   </style>
 </head>
 <body>
@@ -171,6 +203,19 @@
   </div>
 
   <div id="gamesContainer"><div class="spinner"></div></div>
+  <!-- Survivor section -->
+  <div class="survivor-section" id="survivorSection" style="display:none">
+    <div class="survivor-section-title">💀 Survivor Pick</div>
+    <div class="survivor-section-sub">One team per week — can't reuse. Wrong pick = eliminated (one free pass available).</div>
+    <div id="svStatusRow" class="sv-status-row"></div>
+    <div id="svTeamGrid"></div>
+    <div id="svConfirmRow" class="sv-confirm-row" style="display:none">
+      <span id="svSelectedLabel" style="font-size:14px;font-weight:600"></span>
+      <button class="sv-confirm-btn" id="svConfirmBtn">Confirm Pick</button>
+      <button class="sv-cancel-btn" id="svCancelBtn">Cancel</button>
+    </div>
+    <div class="sv-msg" id="svMsg"></div>
+  </div>
 </div>
 
 <script type="module">
@@ -198,7 +243,11 @@
   let currentWeek = 1;
   let gamesCache  = {};
   let picksCache  = {};
-  let seasonStartDate = null; // 'YYYY-MM-DD'
+  let seasonStartDate = null;
+  let survivorStartWeek = 1;
+  let svSelected = null;
+  let svState = null;
+  let svWeekGames = []; // 'YYYY-MM-DD'
 
   // ── Nav ───────────────────────────────────────────────────────────────
   function initNav({activePage, isAdmin, userName}) {
@@ -446,6 +495,7 @@
       }
 
       renderGames(games, picksCache, tbValue);
+      await loadSurvivorSection(week, games);
     } catch(err) {
       document.getElementById('gamesContainer').innerHTML = `
         <div class="state-box">
@@ -618,6 +668,193 @@
     }
   }
 
+
+  // ── Survivor helpers ─────────────────────────────────────────────────
+  function svNorm(a){const m={'WAS':'WSH','JAC':'JAX','KAN':'KC','NEP':'NE','NOS':'NO','GNB':'GB','SFO':'SF','TAM':'TB'};return m[a?.toUpperCase()]||a?.toUpperCase()||'??';}
+
+  function svGetPickResult(abbrev, games){
+    for(const g of games){
+      const isAway=svNorm(g.awayTeam?.abbrev)===svNorm(abbrev);
+      const isHome=svNorm(g.homeTeam?.abbrev)===svNorm(abbrev);
+      if(!isAway&&!isHome)continue;
+      if(g.statusName!=='STATUS_FINAL'||!g.winnerId)return'pending';
+      const winnerIsAway=String(g.winnerId)===String(g.awayTeam?.id);
+      return(isAway&&winnerIsAway)||(isHome&&!winnerIsAway)?'win':'loss';
+    }
+    return'pending';
+  }
+
+  function svMNFKickoff(games){
+    const mondays=games.filter(g=>new Date(g.startTime).getDay()===1);
+    if(!mondays.length)return games.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b,games[0])?.startTime||null;
+    return mondays.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b).startTime;
+  }
+
+  async function loadSurvivorSection(week, games){
+    const section = document.getElementById('survivorSection');
+    if(!games.length){section.style.display='none';return;}
+
+    // Only show survivor section during/after survivor start week
+    if(week < survivorStartWeek){section.style.display='none';return;}
+    section.style.display='';
+    svWeekGames = games;
+
+    const snap = await get(ref(db, `survivor/2026/${currentUser.uid}`));
+    const raw = snap.exists() ? snap.val() : {};
+    const usedPicks = raw.usedPicks || {};
+    const freePassUsed = raw.freePassUsed || false;
+    const freePassWeek = raw.freePassWeek || null;
+    const fpRequested  = raw.freePassRequested || false;
+    const thisPick = usedPicks[`week-${week}`] || null;
+
+    // Compute alive status
+    const mnfTime = svMNFKickoff(games);
+    const mnfLocked = mnfTime ? new Date() >= new Date(mnfTime) : false;
+
+    // Determine if eliminated
+    let alive = raw.alive !== undefined ? raw.alive : true;
+    let eliminatedWeek = raw.eliminatedWeek || null;
+    let missedElim = false;
+
+    // Check if missed this week's deadline
+    if(alive && mnfLocked && !thisPick){
+      alive = false; eliminatedWeek = week; missedElim = true;
+    }
+
+    // Check if lost pick
+    if(alive && thisPick){
+      const result = svGetPickResult(thisPick, games);
+      if(result === 'loss' && !freePassUsed){
+        alive = false; eliminatedWeek = week;
+      }
+    }
+
+    svState = { ...raw, alive, eliminatedWeek, usedPicks, freePassUsed, freePassWeek, fpRequested, missedElim };
+
+    const statusRow = document.getElementById('svStatusRow');
+    const gridDiv   = document.getElementById('svTeamGrid');
+    const confirmRow = document.getElementById('svConfirmRow');
+    confirmRow.style.display = 'none';
+    svSelected = null;
+
+    // Status badge
+    let badgeHTML = '';
+    if(alive){
+      const wks = Object.keys(usedPicks).length;
+      badgeHTML = `<span class="sv-badge sv-badge-alive">✅ Alive — ${wks} week${wks!==1?'s':''} survived</span>`;
+      if(freePassUsed) badgeHTML += `<span style="font-size:12px;color:#7A5A10">🎟️ Free pass used (Wk ${freePassWeek})</span>`;
+    } else {
+      const losingPick = usedPicks[`week-${eliminatedWeek}`];
+      if(losingPick){
+        badgeHTML = `<span class="sv-badge sv-badge-dead">💀 Eliminated Wk ${eliminatedWeek} — ${svNorm(losingPick)} lost</span>`;
+        if(!freePassUsed && !fpRequested){
+          badgeHTML += `<button class="sv-fp-btn" id="svFPBtn">🎟️ Request Free Pass</button>`;
+        } else if(fpRequested){
+          badgeHTML += `<div class="sv-fp-pending">⏳ Free pass requested — awaiting admin approval.</div>`;
+        }
+      } else {
+        badgeHTML = `<span class="sv-badge sv-badge-dead">💀 Eliminated Wk ${eliminatedWeek} — missed deadline</span>`;
+      }
+    }
+
+    // Current pick chip
+    if(thisPick && alive){
+      const result = svGetPickResult(thisPick, games);
+      const chipClass = result==='win'?'win':result==='loss'?'loss':'';
+      const label = result==='win'?'✅ Won':result==='loss'?'❌ Lost':'⏳ Pending';
+      badgeHTML += `<span class="sv-current-pick ${chipClass}"><img src="${espnLogo(svNorm(thisPick))}" style="width:18px;height:18px;object-fit:contain" />${svNorm(thisPick)} — ${label}</span>`;
+    }
+
+    statusRow.innerHTML = badgeHTML;
+
+    // Wire FP request button
+    document.getElementById('svFPBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('svFPBtn');
+      btn.disabled=true; btn.textContent='Requesting…';
+      try{
+        await update(ref(db), {
+          [`survivor/2026/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/2026/${currentUser.uid}/freePassWeek`]: eliminatedWeek
+        });
+        await loadSurvivorSection(week, games);
+      } catch(e){ btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
+    });
+
+    // Team grid — show if alive
+    if(!alive){ gridDiv.innerHTML=''; return; }
+
+    const canPick = !mnfLocked;
+    const usedSet = new Set(Object.entries(usedPicks).filter(([k])=>k!==`week-${week}`).map(([,v])=>svNorm(v)));
+    const playingTeams = [...new Set(games.flatMap(g=>[svNorm(g.awayTeam?.abbrev),svNorm(g.homeTeam?.abbrev)]))].filter(Boolean).sort();
+
+    if(!canPick){
+      // After MNF kickoff — show their pick or "no pick" message, no grid
+      if(!thisPick){
+        gridDiv.innerHTML = `<div style="font-size:13px;color:var(--red);padding:8px 0">⚠️ Deadline passed — no survivor pick made this week.</div>`;
+      } else {
+        gridDiv.innerHTML = '';
+      }
+      return;
+    }
+
+    // Build grid
+    let gridHTML = `<div class="sv-team-grid" id="svTileGrid">`;
+    for(const abbrev of playingTeams){
+      const used = usedSet.has(abbrev);
+      const started = games.some(g=>(svNorm(g.awayTeam?.abbrev)===abbrev||svNorm(g.homeTeam?.abbrev)===abbrev)&&new Date()>=new Date(g.startTime));
+      const isCurrent = svNorm(thisPick||'')===abbrev;
+      const disabled = used || started;
+      let cls = 'sv-tile';
+      if(used) cls += ' sv-used';
+      else if(started) cls += ' sv-started';
+      if(isCurrent) cls += ' sv-selected';
+      const badge = used ? '✓' : started ? '🔒' : '';
+      gridHTML += `<button class="${cls}" data-abbrev="${abbrev}" ${disabled?'disabled':''}><img src="${espnLogo(abbrev)}" onerror="this.style.display='none'" /><span>${abbrev}</span>${badge?`<span class="sv-tile-badge">${badge}</span>`:''}</button>`;
+    }
+    gridHTML += '</div>';
+    gridDiv.innerHTML = gridHTML;
+
+    // Wire tile clicks
+    gridDiv.querySelectorAll('.sv-tile:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => {
+        gridDiv.querySelectorAll('.sv-tile').forEach(b => b.classList.remove('sv-selected'));
+        btn.classList.add('sv-selected');
+        svSelected = btn.dataset.abbrev;
+        document.getElementById('svConfirmRow').style.display = 'flex';
+        document.getElementById('svSelectedLabel').textContent = `Pick: ${svSelected}`;
+      });
+    });
+
+    document.getElementById('svConfirmBtn').onclick = async () => {
+      if(!svSelected) return;
+      const btn = document.getElementById('svConfirmBtn');
+      btn.disabled=true; btn.textContent='Saving…';
+      try{
+        await update(ref(db, `survivor/2026/${currentUser.uid}`), {
+          [`usedPicks/week-${week}`]: svSelected,
+          alive: true
+        });
+        svSelected = null;
+        document.getElementById('svMsg').className='sv-msg info show';
+        document.getElementById('svMsg').textContent='✓ Survivor pick saved!';
+        setTimeout(()=>{ document.getElementById('svMsg').className='sv-msg'; }, 2500);
+        await loadSurvivorSection(week, games);
+      } catch(e){
+        document.getElementById('svMsg').className='sv-msg error show';
+        document.getElementById('svMsg').textContent='Failed to save. Try again.';
+        btn.disabled=false; btn.textContent='Confirm Pick';
+      }
+    };
+
+    document.getElementById('svCancelBtn').onclick = () => {
+      svSelected = null;
+      document.getElementById('svConfirmRow').style.display='none';
+      gridDiv.querySelectorAll('.sv-tile').forEach(b=>{
+        if(b.dataset.abbrev !== svNorm(thisPick||'')) b.classList.remove('sv-selected');
+      });
+    };
+  }
+
   // ── Week nav ──────────────────────────────────────────────────────────
   document.getElementById('prevWeek').addEventListener('click', () => {
     if (currentWeek > 1) loadWeek(currentWeek - 1);
@@ -641,6 +878,7 @@
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
     const settings = settingsSnap.exists() ? settingsSnap.val() : {};
     seasonStartDate = settings.seasonStartDate || null;
+    survivorStartWeek = settings.survivorStartWeek || 1;
 
     initNav({ activePage: 'picks.html', isAdmin, userName: member?.displayName || user.email });
 
