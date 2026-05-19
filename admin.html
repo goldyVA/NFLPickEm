@@ -565,7 +565,9 @@
     const btn = document.querySelector('#panel-tools .btn-primary');
     btn.disabled = true; btn.textContent = 'Fetching…';
     try {
-      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}`;
+      const seasonStart = document.getElementById('settingSeasonStart')?.value || '';
+      const year = seasonStart ? seasonStart.slice(0,4) : new Date().getFullYear();
+      const url  = `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`;
       const res  = await fetch(url);
       const data = await res.json();
       const events = data.events || [];
