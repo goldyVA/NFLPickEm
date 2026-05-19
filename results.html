@@ -449,6 +449,17 @@
         headerRow.appendChild(th);
       }
 
+      // MNF Points column header
+      if (mnfGame) {
+        const mnfTh = document.createElement('th');
+        mnfTh.className = 'totals-th';
+        const mnfActual = mnfGame.statusName === 'STATUS_FINAL'
+          ? (parseInt(mnfGame.awayScore||0) + parseInt(mnfGame.homeScore||0)) : null;
+        mnfTh.innerHTML = gameIsLocked(mnfGame.startTime)
+          ? `MNF Points${mnfActual != null ? `<br><span style="font-size:10px;font-weight:400;color:var(--ink-faint)">actual: ${mnfActual}</span>` : ''}`
+          : 'MNF Points';
+        headerRow.appendChild(mnfTh);
+      }
 
       thead.appendChild(headerRow);
       table.appendChild(thead);
