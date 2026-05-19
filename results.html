@@ -436,8 +436,8 @@
         const mnfLocked = gameIsLocked(mnfGame.startTime);
         const actual = mnfGame.statusName === 'STATUS_FINAL' ? (mnfGame.awayScore + mnfGame.homeScore) : null;
         tbTh.innerHTML = mnfLocked
-          ? `MNF TB${actual != null ? `<br><span style="font-size:10px;font-weight:400;color:var(--ink-faint)">actual: ${actual}</span>` : ''}`
-          : 'MNF TB';
+          ? `MNF Points${actual != null ? `<br><span style="font-size:10px;font-weight:400;color:var(--ink-faint)">actual: ${actual}</span>` : ''}`
+          : 'MNF Points';
         headerRow.appendChild(tbTh);
       }
       thead.appendChild(headerRow);
