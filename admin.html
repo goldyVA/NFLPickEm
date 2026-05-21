@@ -289,7 +289,7 @@
   import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signOut }
     from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-  import { getDatabase, ref, get, set, update, remove }
+  import { getDatabase, ref, get, set, update, remove, query, orderByKey }
     from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
   function initNav({activePage, isAdmin, userName}) {
     const links = [
@@ -370,7 +370,7 @@
 
   // ── Load members ─────────────────────────────────────────────────────
   async function loadMembers() {
-    const snap = await get(ref(db, 'adminConfig/members'));
+    const snap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
     allMembers  = [];
     if (snap.exists()) snap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
     allMembers.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
