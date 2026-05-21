@@ -393,20 +393,36 @@
         ? '<span class="badge badge-green">✓ Donated</span>'
         : '<span class="badge badge-grey">No</span>';
       const provider = m.authProvider === 'google' ? '🔵 Google' : '📧 PIN';
+      // Build row safely using DOM methods to avoid quote/character issues
       tr.innerHTML = `
         <td><strong>${m.displayName || '—'}</strong><span class="member-email">${m.email || ''}</span></td>
         <td style="color:var(--ink-faint);font-size:12px">${joined}</td>
         <td>${donatedBadge}</td>
         <td style="font-size:12px">${provider}</td>
-        <td>
-          <div class="action-btns">
-            <button class="mini-btn ${m.donated ? 'red' : 'green'}" onclick="toggleDonation('${m.uid}', ${!m.donated})">
-              ${m.donated ? 'Mark unpaid' : '✓ Mark paid'}
-            </button>
-            <button class="mini-btn" onclick="renameMember('${m.uid}', '${m.displayName}')">Rename</button>
-            ${m.uid !== currentUser.uid ? '<button class="mini-btn red" onclick="removeMember(\''+m.uid+'\', \''+m.displayName+'\')">Remove</button>' : ''}
-          </div>
-        </td>`;
+        <td><div class="action-btns" id="actions-${m.uid}"></div></td>`;
+
+      const actionsDiv = tr.querySelector(`#actions-${m.uid}`);
+
+      const donateBtn = document.createElement('button');
+      donateBtn.className = `mini-btn ${m.donated ? 'red' : 'green'}`;
+      donateBtn.textContent = m.donated ? 'Mark unpaid' : '✓ Mark paid';
+      donateBtn.addEventListener('click', () => toggleDonation(m.uid, !m.donated));
+      actionsDiv.appendChild(donateBtn);
+
+      const renameBtn = document.createElement('button');
+      renameBtn.className = 'mini-btn';
+      renameBtn.textContent = 'Rename';
+      renameBtn.addEventListener('click', () => renameMember(m.uid, m.displayName));
+      actionsDiv.appendChild(renameBtn);
+
+      if (m.uid !== currentUser.uid) {
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'mini-btn red';
+        removeBtn.textContent = 'Remove';
+        removeBtn.addEventListener('click', () => removeMember(m.uid, m.displayName));
+        actionsDiv.appendChild(removeBtn);
+      }
+
       tbody.appendChild(tr);
     }
   }
