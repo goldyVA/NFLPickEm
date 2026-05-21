@@ -404,7 +404,7 @@
               ${m.donated ? 'Mark unpaid' : '✓ Mark paid'}
             </button>
             <button class="mini-btn" onclick="renameMember('${m.uid}', '${m.displayName}')">Rename</button>
-            ${m.uid !== currentUser.uid ? `<button class="mini-btn red" onclick="removeMember('${m.uid}', '${m.displayName}')">Remove</button>` : ''}
+            ${m.uid !== currentUser.uid ? '<button class="mini-btn red" onclick="removeMember(\''+m.uid+'\', \''+m.displayName+'\')">Remove</button>' : ''}
           </div>
         </td>`;
       tbody.appendChild(tr);
