@@ -374,7 +374,11 @@
     allMembers  = [];
     if (snap.exists()) snap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
     allMembers.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
+    renderMembersList(); return;
 
+  }
+
+  function renderMembersList() {
     const wrap = document.getElementById('membersTableWrap');
     if (!allMembers.length) { wrap.innerHTML = '<div class="empty-state">No members yet.</div>'; return; }
 
@@ -425,6 +429,8 @@
 
       tbody.appendChild(tr);
     }
+  }
+
   }
 
   // ── Load free pass queue ──────────────────────────────────────────────
@@ -665,7 +671,14 @@
 
     populateWeekSelects(18);
 
-    await loadMembers();
+    // Read members inline inside onAuthStateChanged (avoids SDK cache issue)
+    const membersSnap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
+    allMembers = [];
+    if (membersSnap.exists()) {
+      membersSnap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
+    }
+    allMembers.sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
+    renderMembersList();
     loadFreePassQueue();
     loadSurvivorAdmin();
   });
