@@ -370,12 +370,21 @@
 
   // ── Load members ─────────────────────────────────────────────────────
   async function loadMembers() {
-    const snap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
-    allMembers  = [];
-    if (snap.exists()) snap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
-    allMembers.sort((a,b) => (a.displayName || '').localeCompare(b.displayName || ''));
-    renderMembersList(); return;
-
+    try {
+      const token = await auth.currentUser.getIdToken(true);
+      const resp = await fetch(
+        'https://nflpickem1728-default-rtdb.firebaseio.com/adminConfig/members.json?auth=' + token
+      );
+      const data = await resp.json();
+      allMembers = [];
+      if (data) {
+        for (const [uid, val] of Object.entries(data)) {
+          allMembers.push({ uid, ...val });
+        }
+      }
+      allMembers.sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
+    } catch(e) { console.error('loadMembers error:', e); }
+    renderMembersList();
   }
 
   function renderMembersList() {
@@ -669,11 +678,17 @@
 
     populateWeekSelects(18);
 
-    // Read members inline inside onAuthStateChanged (avoids SDK cache issue)
-    const membersSnap = await get(query(ref(db, 'adminConfig/members'), orderByKey()));
+    // Use REST API to bypass SDK cache
+    const token = await user.getIdToken(true);
+    const restResp = await fetch(
+      'https://nflpickem1728-default-rtdb.firebaseio.com/adminConfig/members.json?auth=' + token
+    );
+    const membersData = await restResp.json();
     allMembers = [];
-    if (membersSnap.exists()) {
-      membersSnap.forEach(c => allMembers.push({ uid: c.key, ...c.val() }));
+    if (membersData) {
+      for (const [uid, val] of Object.entries(membersData)) {
+        allMembers.push({ uid, ...val });
+      }
     }
     allMembers.sort((a,b) => (a.displayName||'').localeCompare(b.displayName||''));
     renderMembersList();
