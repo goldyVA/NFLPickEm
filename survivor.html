@@ -82,14 +82,7 @@
     .s-fp-pending{margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px}
 
     /* Team grid */
-    .s-team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--cream-dark)}
-    .s-team-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;transition:all .15s;position:relative;font-family:inherit}
-    .s-team-tile:hover:not([disabled]){border-color:var(--charcoal);background:#F0F3F7}
-    .s-team-tile.s-selected{border-color:var(--charcoal);background:var(--charcoal);color:var(--white)}
-    .s-team-tile.s-used{opacity:.4;cursor:not-allowed;background:var(--cream)}
-    .s-team-tile.s-started{opacity:.6;cursor:not-allowed}
-    .s-team-tile img{width:36px;height:36px;object-fit:contain}
-    .s-team-tile span{font-size:10px;font-weight:700;text-transform:uppercase}
+    
     .s-tile-badge{position:absolute;top:2px;right:2px;font-size:9px;background:var(--ink-faint);color:white;border-radius:3px;padding:1px 3px}
     .s-selected .s-tile-badge{background:rgba(255,255,255,.3)}
     .s-confirm-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
@@ -286,82 +279,24 @@
     const freePassUsed = myState.freePassUsed || false;
     const freePassWeek = myState.freePassWeek || null;
     const fpRequested  = myState.freePassRequested || false;
-
     const thisPick = usedPicks[`week-${currentWeek}`] || null;
-    const deadline = weekDeadline(currentWeekGames);
-    const deadlinePassed = deadline ? new Date() >= new Date(deadline) : false;
-    const canPick = myState.alive && !deadlinePassed;
 
-    // Game started for this pick?
-    const pickGameStarted = thisPick && currentWeekGames.some(g =>
-      (normalizeAbbrev(g.awayTeam?.abbrev)===normalizeAbbrev(thisPick)||normalizeAbbrev(g.homeTeam?.abbrev)===normalizeAbbrev(thisPick))
-      && new Date() >= new Date(g.startTime)
-    );
+    const mnfGame = currentWeekGames.length
+      ? currentWeekGames.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b)
+      : null;
+    const mnfLocked = mnfGame ? new Date() >= new Date(mnfGame.startTime) : false;
+    const missedElim = myState.alive === false && !usedPicks[`week-${myState.eliminatedWeek}`];
 
     let icon, title, sub;
     if(myState.alive){
       icon='💪'; title='Still Alive';
       const wkCount = Object.keys(usedPicks).length;
       sub = `${wkCount} week${wkCount!==1?'s':''} survived`;
+      card.style.borderLeftColor = 'var(--green)';
     } else {
-      icon='💀'; title=`Eliminated — Week ${myState.eliminatedWeek}`;
-      sub='Better luck next season';
-      card.classList.add('dead');
-    }
-
-    let pickHTML='';
-    if(!myState.alive){
-      const losingPick = usedPicks[`week-${myState.eliminatedWeek}`];
-      const showReqBtn = !freePassUsed && !fpRequested;
-      pickHTML=`
-        <div class="s-pick-row">
-          ${losingPick?`<div class="s-current-pick pick-loss"><img src="${espnLogo(normalizeAbbrev(losingPick))}" style="width:20px;height:20px;object-fit:contain" />${normalizeAbbrev(losingPick)}</div><span class="s-result-loss">❌ Team lost</span>`:'<span style="font-size:13px;color:var(--red)">⚠️ Missed pick deadline</span>'}
-        </div>
-        ${showReqBtn?`<button class="s-freepass-btn" id="reqFPBtn">🎟️ Request Free Pass</button>`:''}
-        ${fpRequested?`<div class="s-fp-pending">⏳ Free pass requested — awaiting admin approval.</div>`:''}`;
-    } else if(thisPick){
-      const chipClass = pickGameStarted ? (getPickResult(thisPick,currentWeekGames)==='win'?'pick-win':getPickResult(thisPick,currentWeekGames)==='loss'?'pick-loss':'pick-pending') : 'pick-pending';
-      const resultLabel = getPickResult(thisPick,currentWeekGames)==='win' ? '✅ Survived!'
-        : pickGameStarted ? '⏳ Game in progress…'
-        : '🔓 Pick saved';
-      pickHTML=`<div class="s-pick-row">
-        <span class="s-pick-label">Week ${currentWeek} pick:${canPick?' <span style="font-size:12px;font-weight:400;color:var(--ink-faint)">(tap below to change)</span>':''}</span>
-        <div class="s-current-pick ${chipClass}"><img src="${espnLogo(normalizeAbbrev(thisPick))}" style="width:20px;height:20px;object-fit:contain" />${normalizeAbbrev(thisPick)}</div>
-        <span class="${getPickResult(thisPick,currentWeekGames)==='win'?'s-result-win':'s-result-pending'}">${resultLabel}</span>
-      </div>`;
-    } else {
-      pickHTML=deadlinePassed
-        ? `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Deadline passed — no pick made this week.</span></div>`
-        : `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive this week.</span></div>`;
-    }
-
-    // Used teams set (excluding current week for re-pick)
-    const usedSet = new Set(Object.entries(usedPicks).filter(([k])=>k!==`week-${currentWeek}`).map(([,v])=>normalizeAbbrev(v)));
-
-    // Team grid
-    let gridHTML='';
-    if(canPick){
-      const playingTeams = [...new Set(currentWeekGames.flatMap(g=>[normalizeAbbrev(g.awayTeam?.abbrev),normalizeAbbrev(g.homeTeam?.abbrev)]))].sort();
-      gridHTML=`<div class="s-team-grid" id="sTeamGrid">
-        ${playingTeams.map(abbrev=>{
-          const used=usedSet.has(abbrev);
-          const started=currentWeekGames.some(g=>(normalizeAbbrev(g.awayTeam?.abbrev)===abbrev||normalizeAbbrev(g.homeTeam?.abbrev)===abbrev)&&new Date()>=new Date(g.startTime));
-          const isCurrent=normalizeAbbrev(thisPick||'')===abbrev;
-          const disabled=used||started;
-          let cls='s-team-tile';
-          if(used)cls+=' s-used';
-          else if(started)cls+=' s-started';
-          if(isCurrent)cls+=' s-selected';
-          const badge=used?'✓':started?'🔒':'';
-          return `<button class="${cls}" data-abbrev="${abbrev}" ${disabled?'disabled':''}><img src="${espnLogo(abbrev)}" onerror="this.style.display='none'" /><span>${abbrev}</span>${badge?`<span class="s-tile-badge">${badge}</span>`:''}</button>`;
-        }).join('')}
-      </div>
-      <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
-        <span id="sSelectedLabel" class="s-selected-label"></span>
-        <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-        <button class="s-cancel-btn" id="sCancelBtn">Cancel</button>
-      </div>
-      <div class="s-msg" id="sMsg"></div>`;
+      icon='💀'; title=`Eliminated — Week ${myState.eliminatedWeek||'?'}`;
+      sub = missedElim ? 'Missed pick deadline' : 'Team lost';
+      card.style.borderLeftColor = 'var(--red)';
     }
 
     const fpNote = freePassUsed
@@ -372,57 +307,54 @@
           ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
           : '';
 
-    card.innerHTML=`
+    let pickHTML = '';
+    if(thisPick){
+      const result = getPickResult(thisPick, currentWeekGames);
+      const chipClass = result==='win'?'pick-win':result==='loss'?'pick-loss':'pick-pending';
+      const label = result==='win'?'✅ Survived!':result==='loss'?'❌ Team lost':mnfLocked?'⏳ In progress…':'🔓 Pick saved — game not started';
+      pickHTML = `<div class="s-pick-row">
+        <span class="s-pick-label">Week ${currentWeek} pick:</span>
+        <div class="s-current-pick ${chipClass}">
+          <img src="${espnLogo(normalizeAbbrev(thisPick))}" style="width:20px;height:20px;object-fit:contain" />
+          ${normalizeAbbrev(thisPick)}
+        </div>
+        <span style="font-size:13px">${label}</span>
+      </div>`;
+    } else if(myState.alive){
+      pickHTML = mnfLocked
+        ? `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Deadline passed — no pick made this week.</span></div>`
+        : `<div class="s-pick-row"><span style="font-size:13px;color:var(--ink-faint)">No pick yet this week — <a href="picks.html" style="color:var(--charcoal);font-weight:600">go to Picks page</a> to make your survivor pick.</span></div>`;
+    }
+
+    let fpRequestHTML = '';
+    if(!myState.alive && !freePassUsed && !fpRequested && !missedElim){
+      fpRequestHTML = `<button class="s-freepass-btn" id="reqFPBtn">🎟️ Request Free Pass</button>`;
+    } else if(fpRequested){
+      fpRequestHTML = `<div class="s-fp-pending">⏳ Free pass requested — awaiting admin approval.</div>`;
+    }
+
+    card.innerHTML = `
       <div class="s-status-header">
-        <div class="s-top-left"><span class="s-icon">${icon}</span><div><div class="s-title">${title}</div><div class="s-sub">${sub}</div></div></div>
+        <div class="s-top-left">
+          <span class="s-icon">${icon}</span>
+          <div><div class="s-title">${title}</div><div class="s-sub">${sub}</div></div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px">${fpNote}</div>
       </div>
       ${pickHTML}
-      ${gridHTML}`;
+      ${fpRequestHTML}`;
 
-    // Wire FP request
-    document.getElementById('reqFPBtn')?.addEventListener('click',async()=>{
-      const btn=document.getElementById('reqFPBtn');btn.disabled=true;btn.textContent='Requesting…';
+    document.getElementById('reqFPBtn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('reqFPBtn');
+      btn.disabled=true; btn.textContent='Requesting…';
       try{
-        await update(ref(db),{[`survivor/2026/${currentUser.uid}/freePassRequested`]:true,[`survivor/2026/${currentUser.uid}/freePassWeek`]:myState.eliminatedWeek});
-        myState.freePassRequested=true;
-        await loadSurvivor();
-      }catch(e){btn.disabled=false;btn.textContent='🎟️ Request Free Pass';}
-    });
-
-    // Wire team grid
-    if(canPick){
-      document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          document.querySelectorAll('.s-team-tile').forEach(b=>b.classList.remove('s-selected'));
-          btn.classList.add('s-selected');
-          survivorSelected=btn.dataset.abbrev;
-          document.getElementById('sPickConfirmRow').style.display='flex';
-          document.getElementById('sSelectedLabel').textContent=`Pick: ${survivorSelected}`;
+        await update(ref(db), {
+          [`survivor/2026/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/2026/${currentUser.uid}/freePassWeek`]: myState.eliminatedWeek
         });
-      });
-      document.getElementById('sConfirmBtn')?.addEventListener('click',()=>confirmSurvivorPick(currentWeek));
-      document.getElementById('sCancelBtn')?.addEventListener('click',()=>{
-        survivorSelected=null;
-        document.getElementById('sPickConfirmRow').style.display='none';
-        document.querySelectorAll('.s-team-tile').forEach(b=>{if(b.dataset.abbrev!==normalizeAbbrev(thisPick||''))b.classList.remove('s-selected');});
-      });
-    }
-  }
-
-  async function confirmSurvivorPick(week){
-    if(!survivorSelected)return;
-    const btn=document.getElementById('sConfirmBtn');
-    btn.disabled=true;btn.textContent='Saving…';
-    try{
-      await update(ref(db,`survivor/2026/${currentUser.uid}`),{[`usedPicks/week-${week}`]:survivorSelected});
-      survivorSelected=null;
-      await loadSurvivor();
-    }catch(err){
-      const msg=document.getElementById('sMsg');
-      if(msg){msg.textContent='Failed to save. Try again.';msg.className='s-msg error show';}
-      btn.disabled=false;btn.textContent='Confirm Pick';
-    }
+        await loadSurvivor();
+      } catch(e){ btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
+    });
   }
 
   // ── Render leaderboard ──────────────────────────────────────────────
