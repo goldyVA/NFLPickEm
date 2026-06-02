@@ -3,513 +3,626 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Survivor · NFL Pick Em</title>
+  <title>Survivor · MLB Pick'em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --cream:#F7F5F0;--cream-dark:#EDEAE2;
-      --ink:#1A1A1A;--ink-light:#555550;--ink-faint:#999990;
-      --charcoal:#1E2530;--red:#C0392B;--green:#27AE60;--accent:#E8A838;--white:#FFFFFF;
-      --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
-      --radius:12px;--radius-sm:8px;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cream:#F7F5F0; --cream-dark:#EDEAE2;
+      --ink:#1A1A1A; --ink-light:#555550; --ink-faint:#999990;
+      --navy:#1B3A5C; --red:#C0392B; --green:#27AE60; --accent:#E8A838;
+      --white:#FFFFFF;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08); --shadow-md:0 4px 16px rgba(0,0,0,.10);
+      --radius:12px; --radius-sm:8px;
     }
-    html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink)}
-    body{padding-top:58px}
-    #mainNav{position:fixed;top:0;left:0;right:0;background:var(--white);box-shadow:0 1px 3px rgba(0,0,0,.08);z-index:200;height:58px}
-    .nav-inner{max-width:1100px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .nav-logo{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);text-decoration:none;white-space:nowrap;flex-shrink:0}
-    .nav-links{display:flex;gap:2px;flex:1;justify-content:center}
-    .nav-link{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-light);text-decoration:none;white-space:nowrap}
-    .nav-link:hover{background:var(--cream);color:var(--ink)}.nav-link.active{background:var(--charcoal);color:var(--white)}
-    .nav-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
-    .nav-user{font-size:13px;color:var(--ink-faint);white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
-    .btn-signout{padding:6px 12px;border:1.5px solid var(--cream-dark);border-radius:6px;background:transparent;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-light);cursor:pointer;white-space:nowrap}
-    .btn-signout:hover{border-color:var(--red);color:var(--red)}
-    .hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:36px;height:36px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:8px;cursor:pointer;padding:0;flex-shrink:0}
-    .hamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;transition:all .2s}
-    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
-    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0}
-    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-    .mobile-drawer{position:fixed;top:0;right:0;width:280px;height:100dvh;background:var(--white);z-index:300;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
-    .mobile-drawer.open{transform:translateX(0)}
-    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:299;opacity:0;pointer-events:none;transition:opacity .28s}
-    .drawer-overlay.show{opacity:1;pointer-events:all}
-    .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;border-bottom:1px solid var(--cream-dark);flex-shrink:0}
-    .drawer-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal)}
-    .drawer-close{width:32px;height:32px;border:none;background:var(--cream);border-radius:8px;font-size:16px;cursor:pointer;color:var(--ink-light);display:flex;align-items:center;justify-content:center}
-    .drawer-user{padding:12px 20px;font-size:13px;color:var(--ink-faint);border-bottom:1px solid var(--cream-dark);background:var(--cream)}
-    .drawer-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
-    .drawer-link{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:10px;font-size:16px;font-weight:500;color:var(--ink);text-decoration:none}
-    .drawer-link:hover{background:var(--cream)}.drawer-link.active{background:var(--charcoal);color:var(--white)}
-    .drawer-icon{font-size:20px;width:28px;text-align:center}
-    .drawer-signout{margin:12px;padding:13px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:10px;font-family:inherit;font-size:15px;font-weight:500;color:var(--red);cursor:pointer}
-    .drawer-signout:hover{background:#FDF0EF;border-color:var(--red)}
-    @media(max-width:720px){.nav-links{display:none}.nav-user{display:none}.btn-signout{display:none}.hamburger{display:flex}}
-    button,a,[role=button]{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-
-    .page-wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
-    .page-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--charcoal)}
-    .page-subtitle{font-size:14px;color:var(--ink-faint);margin-top:4px;margin-bottom:24px}
-    .spinner{width:28px;height:28px;border:3px solid var(--cream-dark);border-top-color:var(--charcoal);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 12px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .state-box{text-align:center;padding:40px 20px;color:var(--ink-faint)}
+    html,body { min-height:100%; font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--ink); }
+    body { padding-top:58px; }
+    .page-wrap { max-width:900px; margin:0 auto; padding:24px 16px 60px; }
+    .page-title { font-family:'DM Serif Display',serif; font-size:28px; color:var(--navy); }
+    .page-subtitle { font-size:14px; color:var(--ink-faint); margin-top:4px; margin-bottom:24px; }
+    .spinner { width:28px; height:28px; border:3px solid var(--cream-dark); border-top-color:var(--navy); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .state-box { text-align:center; padding:40px 20px; color:var(--ink-faint); }
 
     /* Status card */
-    .status-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;margin-bottom:24px;border-left:4px solid var(--green)}
-    .status-card.dead{border-left-color:var(--red)}
-    .status-card.freepass{border-left-color:var(--accent)}
-    .s-status-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-    .s-top-left{display:flex;align-items:center;gap:14px}
-    .s-icon{font-size:36px;line-height:1}
-    .s-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--charcoal)}
-    .s-sub{font-size:13px;color:var(--ink-faint);margin-top:3px}
-    .s-fp-note{font-size:13px}
-    .s-pick-row{margin-top:16px;padding-top:16px;border-top:1px solid var(--cream-dark);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-    .s-pick-label{font-size:13px;font-weight:600;color:var(--ink-light);flex-shrink:0}
-    .s-current-pick{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-sm);font-size:14px;font-weight:700}
-    .pick-win{background:#D4EDDA;color:#155724}
-    .pick-loss{background:#F8D7DA;color:#721C24}
-    .pick-pending{background:var(--cream-dark);color:var(--ink)}
-    .s-result-win{font-size:13px;font-weight:700;color:var(--green)}
-    .s-result-pending{font-size:13px;color:var(--ink-faint)}
-    .s-result-loss{font-size:13px;font-weight:700;color:var(--red)}
-    .s-freepass-btn{padding:10px 18px;background:var(--accent);color:var(--ink);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:block;margin-top:12px}
-    .s-fp-pending{margin-top:10px;font-size:13px;color:#7A5A10;background:#FEF9EE;border:1px solid #F5DFA0;border-radius:8px;padding:10px 14px}
-
-    /* Team grid */
-    
-    .s-tile-badge{position:absolute;top:2px;right:2px;font-size:9px;background:var(--ink-faint);color:white;border-radius:3px;padding:1px 3px}
-    .s-selected .s-tile-badge{background:rgba(255,255,255,.3)}
-    .s-confirm-row{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
-    .s-selected-label{font-size:14px;font-weight:600;color:var(--ink)}
-    .s-confirm-btn{padding:10px 20px;background:var(--green);color:var(--white);border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
-    .s-cancel-btn{padding:10px 16px;background:transparent;border:1.5px solid var(--cream-dark);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--ink-light);cursor:pointer}
-    .s-msg{font-size:13px;padding:8px 12px;border-radius:var(--radius-sm);display:none}
-    .s-msg.show{display:block}
-    .s-msg.error{background:#FDF0EF;color:var(--red)}
-    .s-msg.info{background:#EFF6F2;color:#1D6A3E}
+    .status-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:20px 24px; margin-bottom:24px; border-left:4px solid var(--green); }
+    .status-card.dead     { border-left-color:var(--red); }
+    .status-card.freepass { border-left-color:var(--accent); }
+    .status-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .status-left { display:flex; align-items:center; gap:14px; }
+    .status-icon { font-size:36px; line-height:1; }
+    .status-title { font-family:'DM Serif Display',serif; font-size:22px; color:var(--navy); }
+    .status-subtitle { font-size:13px; color:var(--ink-faint); margin-top:3px; }
+    .fp-note { font-size:13px; }
+    .pick-result-row { margin-top:16px; padding-top:16px; border-top:1px solid var(--cream-dark); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .pick-logo { width:28px; height:28px; object-fit:contain; }
+    .pick-team-name { font-weight:600; font-size:15px; }
+    .result-badge { font-size:13px; font-weight:700; padding:3px 10px; border-radius:100px; }
+    .result-badge.win     { background:#D4EDDA; color:#155724; }
+    .result-badge.loss    { background:#F8D7DA; color:#721C24; }
+    .result-badge.pending { background:var(--cream-dark); color:var(--ink-faint); }
+    .btn-fp { margin-top:12px; padding:10px 18px; background:var(--accent); color:var(--ink); border:none; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; display:block; }
+    .fp-pending-msg { margin-top:10px; font-size:13px; color:#7A5A10; background:#FEF9EE; border:1px solid #F5DFA0; border-radius:8px; padding:10px 14px; }
+    .picks-link { margin-top:10px; font-size:13px; color:var(--ink-faint); }
+    .picks-link a { color:var(--navy); font-weight:600; }
 
     /* Section */
-    .section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 24px;margin-bottom:24px}
-    .section-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--charcoal);margin-bottom:16px}
+    .section { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:20px 24px; margin-bottom:24px; }
+    .section-title { font-family:'DM Serif Display',serif; font-size:20px; color:var(--navy); margin-bottom:16px; }
 
     /* Leaderboard */
-    .leader-list{display:flex;flex-direction:column;gap:8px}
-    .leader-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--cream);border-radius:var(--radius-sm)}
-    .leader-row.is-you{background:#EEF2F8}
-    .leader-rank{font-size:13px;color:var(--ink-faint);width:20px;text-align:center;flex-shrink:0}
-    .leader-name{flex:1;font-weight:600;font-size:15px}
-    .leader-you{font-size:11px;color:var(--ink-faint);font-weight:400;margin-left:6px}
-    .lstatus{font-size:12px;font-weight:600;padding:3px 10px;border-radius:100px}
-    .lstatus-alive{background:#D4EDDA;color:#155724}
-    .lstatus-dead{background:#F8D7DA;color:#721C24}
-    .lstatus-freepass{background:#FEF9EE;color:#7A5A10}
-    .leader-picks{font-size:12px;color:var(--ink-faint);flex-shrink:0}
+    .leader-list { display:flex; flex-direction:column; gap:8px; }
+    .leader-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--cream); border-radius:var(--radius-sm); }
+    .leader-row.is-you { background:#EEF2F8; }
+    .leader-rank { font-size:13px; color:var(--ink-faint); width:20px; text-align:center; flex-shrink:0; }
+    .leader-name { flex:1; font-weight:600; font-size:15px; }
+    .leader-you  { font-size:11px; color:var(--ink-faint); font-weight:400; margin-left:6px; }
+    .lstatus { font-size:12px; font-weight:600; padding:3px 10px; border-radius:100px; }
+    .lstatus-alive    { background:#D4EDDA; color:#155724; }
+    .lstatus-dead     { background:#F8D7DA; color:#721C24; }
+    .lstatus-freepass { background:#FEF9EE; color:#7A5A10; }
+    .leader-picks { font-size:12px; color:var(--ink-faint); flex-shrink:0; }
 
-    /* Weekly grid */
-    .grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    table.wgrid{border-collapse:collapse;min-width:100%;font-size:12px}
-    .wgrid th,.wgrid td{padding:5px 4px;text-align:center;white-space:nowrap}
-    .wgrid .wth{text-align:left;padding-left:8px;font-weight:600;min-width:100px;position:sticky;left:0;background:var(--white);z-index:1}
-    .wgrid .wtd{text-align:left;padding-left:8px;font-size:13px;position:sticky;left:0;background:var(--white);z-index:1}
-    .wgrid .is-you .wtd{color:var(--charcoal);font-weight:700}
-    .you-tag{font-size:10px;color:var(--ink-faint);font-weight:400;margin-left:4px}
-    .week-hd{color:var(--ink-faint);font-weight:500;font-size:11px}
-    .week-hd.current{color:var(--charcoal);font-weight:700}
-    .totals-hd,.totals-td{font-size:12px;padding-left:8px}
-    .gc{display:inline-block;border-radius:4px;padding:2px 4px;font-size:10px;font-weight:700;min-width:28px;text-align:center}
-    .gc-win{background:#D4EDDA;color:#155724}
-    .gc-loss{background:#F8D7DA;color:#721C24}
-    .gc-fp{background:#FEF9EE;color:#7A5A10;border:1px solid #F5DFA0}
-    .gc-pending{background:var(--cream-dark);color:var(--ink-faint)}
-    .gc-future{color:var(--cream-dark)}
-    .gc-blank{color:var(--cream-dark)}
+    /* Monthly grid */
+    .grid-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    table.mgrid { border-collapse:collapse; min-width:100%; font-size:12px; }
+    .mgrid th,.mgrid td { padding:5px 3px; text-align:center; white-space:nowrap; }
+    .mgrid .mth { text-align:left; padding-left:8px; font-weight:600; min-width:90px; position:sticky; left:0; background:var(--white); z-index:1; }
+    .mgrid .mtd { text-align:left; padding-left:8px; font-size:13px; position:sticky; left:0; background:var(--white); z-index:1; }
+    .mgrid .is-you .mtd { color:var(--navy); font-weight:700; }
+    .you-tag { font-size:10px; color:var(--ink-faint); font-weight:400; margin-left:4px; }
+    .day-hd { color:var(--ink-faint); font-weight:500; font-size:11px; }
+    .day-hd.today { color:var(--navy); font-weight:700; }
+    .totals-hd,.totals-td { font-size:12px; padding-left:8px; }
+    .gc { display:inline-block; border-radius:4px; padding:2px 3px; font-size:10px; font-weight:700; min-width:26px; text-align:center; }
+    .gc-win     { background:#D4EDDA; color:#155724; }
+    .gc-loss    { background:#F8D7DA; color:#721C24; }
+    .gc-fp      { background:#FEF9EE; color:#7A5A10; border:1px solid #F5DFA0; }
+    .gc-pending { background:var(--cream-dark); color:var(--ink-faint); }
+    .gc-future  { color:var(--cream-dark); }
+    .gc-blank   { color:var(--cream-dark); }
+
+    /* iOS touch */
+    button,a,[role=button] { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+
+    /* Nav badges */
+    .nav-badge { display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; border-radius:100px; background:var(--red); color:white; font-size:10px; font-weight:700; padding:0 4px; margin-left:4px; vertical-align:middle; }
+    .drawer-badge { margin-left:auto; background:var(--red); color:white; font-size:11px; font-weight:700; border-radius:100px; padding:1px 7px; }
+
+    /* Nav */
+    #mainNav { position:fixed; top:0; left:0; right:0; background:var(--white); box-shadow:0 1px 3px rgba(0,0,0,.08); z-index:200; height:58px; }
+    .nav-inner { max-width:1100px; margin:0 auto; padding:0 24px; height:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .nav-logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--navy); text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .nav-links { display:flex; gap:2px; flex:1; justify-content:center; }
+    .nav-link { padding:6px 12px; border-radius:6px; font-size:14px; font-weight:500; color:var(--ink-light); text-decoration:none; white-space:nowrap; }
+    @media(hover:hover){.nav-link:hover{background:var(--cream);color:var(--ink);}}
+    .nav-link.active { background:var(--navy); color:var(--white); }
+    .nav-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .nav-user { font-size:13px; color:var(--ink-faint); white-space:nowrap; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+    .btn-signout { padding:6px 12px; border:1.5px solid var(--cream-dark); border-radius:6px; background:transparent; font-family:inherit; font-size:13px; font-weight:500; color:var(--ink-light); cursor:pointer; white-space:nowrap; }
+    @media(hover:hover){.btn-signout:hover{border-color:var(--red);color:var(--red);}}
+    .hamburger { display:none; flex-direction:column; justify-content:center; align-items:center; gap:5px; width:36px; height:36px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:8px; cursor:pointer; padding:0; flex-shrink:0; }
+    .hamburger span { display:block; width:18px; height:2px; background:var(--ink); border-radius:2px; transition:all .2s; }
+    .hamburger[aria-expanded=true] span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+    .hamburger[aria-expanded=true] span:nth-child(2){opacity:0;}
+    .hamburger[aria-expanded=true] span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+    .mobile-drawer { position:fixed; top:0; right:0; width:280px; height:100dvh; background:var(--white); z-index:300; transform:translateX(100%); transition:transform .28s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; box-shadow:-4px 0 24px rgba(0,0,0,.12); }
+    .mobile-drawer.open { transform:translateX(0); }
+    .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:299; opacity:0; pointer-events:none; transition:opacity .28s; }
+    .drawer-overlay.show { opacity:1; pointer-events:all; }
+    .drawer-header { display:flex; align-items:center; justify-content:space-between; padding:0 20px; height:58px; border-bottom:1px solid var(--cream-dark); flex-shrink:0; }
+    .drawer-title { font-family:'DM Serif Display',serif; font-size:20px; color:var(--navy); }
+    .drawer-close { width:32px; height:32px; border:none; background:var(--cream); border-radius:8px; font-size:16px; cursor:pointer; color:var(--ink-light); display:flex; align-items:center; justify-content:center; }
+    .drawer-user { padding:12px 20px; font-size:13px; color:var(--ink-faint); border-bottom:1px solid var(--cream-dark); background:var(--cream); }
+    .drawer-nav { flex:1; padding:12px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; }
+    .drawer-link { display:flex; align-items:center; gap:14px; padding:13px 16px; border-radius:10px; font-size:16px; font-weight:500; color:var(--ink); text-decoration:none; }
+    @media(hover:hover){.drawer-link:hover{background:var(--cream);}}
+    .drawer-link.active { background:var(--navy); color:var(--white); }
+    .drawer-icon { font-size:20px; width:28px; text-align:center; }
+    .drawer-signout { margin:12px; padding:13px; background:transparent; border:1.5px solid var(--cream-dark); border-radius:10px; font-family:inherit; font-size:15px; font-weight:500; color:var(--red); cursor:pointer; flex-shrink:0; }
+    @media(max-width:720px){.nav-links{display:none;}.nav-user{display:none;}.btn-signout{display:none;}.hamburger{display:flex;}}
   </style>
 </head>
 <body>
+  <nav id="mainNav"></nav>
+  <div class="page-wrap">
+    <div class="page-title">💀 Survivor</div>
+    <div class="page-subtitle" id="monthBadge"></div>
 
-<nav id="mainNav"></nav>
-<div id="mobileDrawer" class="mobile-drawer">
-  <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick Em</span><button class="drawer-close" id="drawerClose">✕</button></div>
-  <div class="drawer-user" id="drawerUser"></div>
-  <div class="drawer-nav" id="drawerNav"></div>
-  <button class="drawer-signout" id="drawerSignOutBtn">Sign Out</button>
-</div>
-<div class="drawer-overlay" id="drawerOverlay"></div>
-
-<div class="page-wrap">
-  <div class="page-title">💀 Survivor</div>
-  <div class="page-subtitle">One pick per week. Never reuse a team. One wrong pick = eliminated.</div>
-
-  <div id="loadingState" class="state-box"><div class="spinner"></div><p>Loading survivor…</p></div>
-  <div id="mainContent" style="display:none">
-    <div class="status-card" id="myStatusCard"></div>
-    <div class="section">
-      <div class="section-title">Leaderboard</div>
-      <div class="leader-list" id="leaderList"></div>
+    <div id="loadingState" class="state-box">
+      <div class="spinner"></div>
+      <p>Loading survivor…</p>
     </div>
-    <div class="section">
-      <div class="section-title">Season Grid</div>
-      <div class="grid-wrap" id="weeklyGrid"></div>
+
+    <div id="mainContent" style="display:none">
+      <div id="myStatusSection"></div>
+      <div class="section">
+        <div class="section-title">🏆 Survivor Board</div>
+        <div class="leader-list" id="leaderList"></div>
+      </div>
+      <div class="section">
+        <div class="section-title" id="gridTitle">📅 Monthly Picks</div>
+        <div class="grid-wrap"><div id="monthlyGrid"></div></div>
+      </div>
     </div>
   </div>
-</div>
 
 <script type="module">
-  import { initializeApp }  from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, signOut }
-                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
-  import { getDatabase, ref, get, update }
-                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+  import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+  import { getDatabase, ref, get, set, update }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
-  apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
-  authDomain: "nflpickem1728.firebaseapp.com",
-  databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com",
-  projectId: "nflpickem1728",
-  storageBucket: "nflpickem1728.firebasestorage.app",
-  messagingSenderId: "752271833942",
-  appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
-};
-
-  const app = initializeApp(firebaseConfig);
+    apiKey:"AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
+    authDomain:"mlbpickem-5bc9c.firebaseapp.com",
+    databaseURL:"https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
+    projectId:"mlbpickem-5bc9c",
+    storageBucket:"mlbpickem-5bc9c.firebasestorage.app",
+    messagingSenderId:"699113861941",
+    appId:"1:699113861941:web:5731f1544c1f11a30a927c"
+  };
+  const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getDatabase(app);
 
-  let currentUser = null;
-  let isAdmin = false;
-  let allMembers = [];
-  let allStates  = {};
-  let seasonStartDate = null;
-  let survivorStartWeek = 1;
-  let survivorSelected = null;
-
-  function initNav({activePage,isAdmin,userName}){
-    const links=[{href:'picks.html',label:'Picks',icon:'📋'},{href:'results.html',label:'Results',icon:'📊'},{href:'standings.html',label:'Standings',icon:'🏆'},{href:'survivor.html',label:'Survivor',icon:'💀'},{href:'profile.html',label:'Profile',icon:'👤'}];
-    if(isAdmin)links.push({href:'admin.html',label:'Admin',icon:'⚙️'});
-    document.getElementById('mainNav').innerHTML=`<div class="nav-inner"><a class="nav-logo" href="index.html">🏈 NFL Pick Em</a><div class="nav-links">${links.map(l=>`<a class="nav-link${l.href===activePage?' active':''}" href="${l.href}">${l.label}</a>`).join('')}</div><div class="nav-right"><span class="nav-user">${userName}</span><button class="btn-signout" id="signOutBtn">Sign Out</button><button class="hamburger" id="hamburgerBtn" aria-expanded="false"><span></span><span></span><span></span></button></div></div>`;
-    document.getElementById('drawerUser').textContent=userName;
-    document.getElementById('drawerNav').innerHTML=links.map(l=>`<a class="drawer-link${l.href===activePage?' active':''}" href="${l.href}"><span class="drawer-icon">${l.icon}</span>${l.label}</a>`).join('');
-    const h=document.getElementById('hamburgerBtn'),dr=document.getElementById('mobileDrawer'),ov=document.getElementById('drawerOverlay'),cl=document.getElementById('drawerClose');
-    const open=()=>{dr.classList.add('open');ov.classList.add('show');h.setAttribute('aria-expanded','true');document.body.style.overflow='hidden'};
-    const close=()=>{dr.classList.remove('open');ov.classList.remove('show');h.setAttribute('aria-expanded','false');document.body.style.overflow=''};
-    h.addEventListener('click',open);cl?.addEventListener('click',close);ov?.addEventListener('click',close);
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function yearMonthStr() { return todayStr().substring(0,7); }
+  function monthLabel() { return new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
+  function norm(a) {
+    const s = (a||'').toUpperCase();
+    if (s==='CHW') return 'CWS';
+    if (s==='KCR') return 'KC';
+    if (s==='SDP') return 'SD';
+    if (s==='SFG') return 'SF';
+    if (s==='TBR') return 'TB';
+    if (s==='WSN') return 'WSH';
+    if (s==='OAK') return 'ATH';
+    return s;
+  }
+  function logo(abbrev) {
+    const a = norm(abbrev);
+    return `https://a.espncdn.com/i/teamlogos/mlb/500/${a==='ATH'?'oak':a.toLowerCase()}.png`;
   }
 
-  function espnLogo(abbrev){return`https://a.espncdn.com/i/teamlogos/nfl/500/${(abbrev||'').toLowerCase()}.png`;}
-  function normalizeAbbrev(a){const m={'WAS':'WSH','JAC':'JAX','KAN':'KC','NEP':'NE','NOS':'NO','GNB':'GB','SFO':'SF','TAM':'TB'};return m[a?.toUpperCase()]||a?.toUpperCase()||'??';}
+  // ── State ─────────────────────────────────────────────────────────────
+  let currentUser = null, isAdmin = false;
+  let allMembers = [], allStates = {}, survivorStartDay = 1;
 
-  function getCurrentWeek(){
-    if(!seasonStartDate)return 1;
-    const diff=Math.floor((new Date()-new Date(seasonStartDate+'T00:00:00'))/86400000);
-    return Math.max(1,Math.min(18,Math.floor(diff/7)+1));
+  // ── Nav ───────────────────────────────────────────────────────────────
+  function initNav({ activePage, isAdmin = false, userName = '' }) {
+    const nav = document.getElementById('mainNav');
+    const pages = [
+      { href:'picks.html', label:'My Picks', icon:'🎯' },
+      { href:'results.html', label:'Results', icon:'📋' },
+      { href:'standings.html', label:'Standings', icon:'🏆' },
+      { href:'survivor.html', label:'Survivor', icon:'💀' },
+      { href:'profile.html', label:'Profile', icon:'🔐' },
+    ];
+    if (isAdmin) pages.push({ href:'admin.html', label:'Admin', icon:'⚙️' });
+    nav.innerHTML = `
+      <div class="nav-inner">
+        <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+        <div class="nav-links">${pages.map(p=>`<a href="${p.href}" class="nav-link${p.href===activePage?' active':''}"${p.href==='admin.html'?' id="adminLink"':''}>${p.label}</a>`).join('')}</div>
+        <div class="nav-right">
+          <span class="nav-user">${userName}</span>
+          <button class="btn-signout" id="signOutBtn">Sign out</button>
+          <button class="hamburger" id="hamburgerBtn" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+        </div>
+      </div>
+      <div class="mobile-drawer" id="mobileDrawer">
+        <div class="drawer-header"><span class="drawer-title">⚾ Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+        <div class="drawer-user">${userName}</div>
+        <nav class="drawer-nav">${pages.map(p=>`<a href="${p.href}" class="drawer-link${p.href===activePage?' active':''}"${p.href==='admin.html'?' id="drawerAdminLink"':''}><span class="drawer-icon">${p.icon}</span>${p.label}</a>`).join('')}</nav>
+        <button class="drawer-signout" id="drawerSignOutBtn">Sign out</button>
+      </div>
+      <div class="drawer-overlay" id="drawerOverlay"></div>`;
+    const hb = document.getElementById('hamburgerBtn');
+    const dr = document.getElementById('mobileDrawer');
+    const ov = document.getElementById('drawerOverlay');
+    const cb = document.getElementById('drawerClose');
+    const open  = ()=>{ dr.classList.add('open'); ov.classList.add('show'); hb.setAttribute('aria-expanded','true'); document.body.style.overflow='hidden'; };
+    const close = ()=>{ dr.classList.remove('open'); ov.classList.remove('show'); hb.setAttribute('aria-expanded','false'); document.body.style.overflow=''; };
+    hb.addEventListener('click', open); cb.addEventListener('click', close); ov.addEventListener('click', close);
+    dr.querySelectorAll('.drawer-link').forEach(l=>l.addEventListener('click',close));
   }
 
-  // Get games for a specific week
-  async function fetchWeekGames(week){
-    const snap=await get(ref(db,`games/week-${week}`));
-    if(!snap.exists())return[];
-    return Object.entries(snap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
+  async function checkPendingFP() {
+    try {
+      const snap = await get(ref(db, `survivor/${yearMonthStr()}`));
+      if (!snap.exists()) return;
+      let n = 0;
+      snap.forEach(c=>{ const v=c.val(); if(v&&v.freePassRequested&&!v.freePassUsed) n++; });
+      ['adminLink','drawerAdminLink'].forEach(id=>{
+        const el = document.getElementById(id); if(!el) return;
+        el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b=>b.remove());
+        if(n>0){ const b=document.createElement('span'); b.className=id==='drawerAdminLink'?'drawer-badge':'nav-badge'; b.textContent=n; el.appendChild(b); }
+      });
+    } catch(e){}
   }
 
-  // Get the deadline (latest start time) for a week = MNF kickoff or last game
-  function weekDeadline(games){
-    if(!games.length)return null;
-    return games.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b).startTime;
-  }
+  // ── Compute status (pure function, no Firebase writes) ────────────────
+  function computeStatus(usedTeams, fpUsed, fpDay, monthGames, startDay, today) {
+    if (!usedTeams) usedTeams = {};
+    const now = new Date();
+    const ym  = today.substring(0,7);
+    const [yr, mo] = ym.split('-').map(Number);
+    const dim = new Date(yr, mo, 0).getDate();
+    let alive=true, eliminatedDay=null, eliminatedReason=null;
 
-  // Find result of a pick for a week's games
-  function getPickResult(abbrev, games){
-    for(const g of games){
-      const isAway=normalizeAbbrev(g.awayTeam?.abbrev)===normalizeAbbrev(abbrev);
-      const isHome=normalizeAbbrev(g.homeTeam?.abbrev)===normalizeAbbrev(abbrev);
-      if(!isAway&&!isHome)continue;
-      if(g.statusName!=='STATUS_FINAL'||!g.winnerId)return'pending';
-      const winnerIsAway=String(g.winnerId)===String(g.awayTeam?.id);
-      return(isAway&&winnerIsAway)||(isHome&&!winnerIsAway)?'win':'loss';
-    }
-    return'pending';
-  }
+    // Find the earliest day they actually made a pick — don't penalize for days before that
+    // This handles the case where survivorStartDay is before the user's first pick (e.g. after a reset)
+    const pickDays = Object.keys(usedTeams).map(ds => parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
+    const effectiveStartDay = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
 
-  // Compute survivor status from picks history
-  function computeStatus(usedPicks, freePassUsed, freePassWeek, weekGames, startWeek, currentWeek){
-    // usedPicks: { 'week-N': abbrev }
-    let alive = true;
-    let eliminatedWeek = null;
-
-    for(let w=startWeek; w<=currentWeek; w++){
-      const wk = `week-${w}`;
-      const pick = usedPicks[wk];
-      const games = weekGames[wk] || [];
-      const deadline = weekDeadline(games);
-      const deadlinePassed = deadline ? new Date() >= new Date(deadline) : w < currentWeek;
-
-      if(!pick){
-        if(deadlinePassed){
-          // Missed — eliminated
-          alive = false;
-          eliminatedWeek = w;
-          break;
-        }
-      } else {
-        const result = getPickResult(pick, games);
-        if(result === 'loss'){
-          if(freePassUsed && freePassWeek === w){
-            // Free pass saves them
-          } else {
-            alive = false;
-            eliminatedWeek = w;
-            break;
-          }
-        }
+    for (let d=effectiveStartDay; d<=Math.min(dim,30); d++) {
+      const ds = `${ym}-${String(d).padStart(2,'0')}`;
+      if (ds > today) break;
+      const dd = monthGames[ds]; if (!dd) continue;
+      if (now < dd.lastStartTime) continue;
+      const pick = usedTeams[ds];
+      if (!pick) {
+        // Don't eliminate for today if user has no picks at all — handles post-reset joins
+        if (ds === today && pickDays.length === 0) break;
+        alive=false; eliminatedDay=d; eliminatedReason='missed'; break;
+      }
+      const np = norm(pick);
+      const game = dd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
+      if (!game || game.statusName!=='STATUS_FINAL' || !game.winnerId) continue;
+      const homeWon = String(game.winnerId)===String(game.homeTeam?.id);
+      const won = homeWon ? norm(game.homeTeam.abbrev)===np : norm(game.awayTeam.abbrev)===np;
+      if (!won) {
+        if (fpUsed && Number(fpDay)===d) continue; // FP approved for this day
+        alive=false; eliminatedDay=d; eliminatedReason='loss'; break;
       }
     }
-    return { alive, eliminatedWeek };
+    return { alive, eliminatedDay, eliminatedReason };
   }
 
-  // ── Render my status card ────────────────────────────────────────────
-  async function renderMyStatus(myState, currentWeekGames, currentWeek){
-    const card = document.getElementById('myStatusCard');
-    const usedPicks = myState.usedPicks || {};
-    const freePassUsed = myState.freePassUsed || false;
-    const freePassWeek = myState.freePassWeek || null;
-    const fpRequested  = myState.freePassRequested || false;
-    const thisPick = usedPicks[`week-${currentWeek}`] || null;
+  function getPickResult(pick, games) {
+    if (!pick || !games?.length) return null;
+    const np = norm(pick);
+    const g  = games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
+    if (!g) return null;
+    if (g.statusName!=='STATUS_FINAL') return 'pending';
+    if (!g.winnerId) return 'pending';
+    const homeWon = String(g.winnerId)===String(g.homeTeam?.id);
+    const won = homeWon ? norm(g.homeTeam.abbrev)===np : norm(g.awayTeam.abbrev)===np;
+    return won ? 'win' : 'loss';
+  }
 
-    const mnfGame = currentWeekGames.length
-      ? currentWeekGames.reduce((a,b)=>new Date(a.startTime)>new Date(b.startTime)?a:b)
-      : null;
-    const mnfLocked = mnfGame ? new Date() >= new Date(mnfGame.startTime) : false;
-    const missedElim = myState.alive === false && !usedPicks[`week-${myState.eliminatedWeek}`];
+  // ── Fetch games from ESPN ─────────────────────────────────────────────
+  async function fetchGames(dateStr) {
+    try {
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr.replace(/-/g,'')}`);
+      const data = await res.json();
+      const games = [];
+      for (const ev of (data?.events||[])) {
+        const comp = ev.competitions?.[0]; if (!comp) continue;
+        const home = comp.competitors?.find(c=>c.homeAway==='home');
+        const away = comp.competitors?.find(c=>c.homeAway==='away');
+        if (!home||!away) continue;
+        const statusName = ev.status?.type?.name||'STATUS_SCHEDULED';
+        let winnerId = null;
+        if (statusName==='STATUS_FINAL') {
+          if (home.winner) winnerId=String(home.team.id);
+          else if (away.winner) winnerId=String(away.team.id);
+          else if (home.score!=null&&away.score!=null)
+            winnerId = parseInt(home.score)>parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+        }
+        games.push({ id:ev.id, startTime:ev.date, statusName,
+          homeTeam:{ id:String(home.team.id), abbrev:home.team.abbreviation },
+          awayTeam:{ id:String(away.team.id), abbrev:away.team.abbreviation },
+          homeScore:home.score??null, awayScore:away.score??null, winnerId });
+      }
+      games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
+      if (games.length) {
+        const obj={}; for(const g of games) obj[g.id]=g;
+        await set(ref(db,`games/${dateStr}`),obj).catch(()=>{});
+      }
+      return games;
+    } catch(e) { return []; }
+  }
 
-    let icon, title, sub;
-    if(myState.alive){
-      icon='💪'; title='Still Alive';
-      const wkCount = Object.keys(usedPicks).length;
-      sub = `${wkCount} week${wkCount!==1?'s':''} survived`;
-      card.style.borderLeftColor = 'var(--green)';
-    } else {
-      icon='💀'; title=`Eliminated — Week ${myState.eliminatedWeek||'?'}`;
-      sub = missedElim ? 'Missed pick deadline' : 'Team lost';
-      card.style.borderLeftColor = 'var(--red)';
+  async function loadMonthGames(ym) {
+    const mg = {}, today = todayStr();
+    try {
+      const snap = await get(ref(db,'games'));
+      if (snap.exists()) {
+        snap.forEach(c => {
+          if (!c.key.startsWith(ym)) return;
+          const games = Object.values(c.val()).sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
+          if (!games.length) return;
+          mg[c.key] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
+        });
+      }
+    } catch(e){}
+    // Re-fetch non-final + today + last 3 days
+    const toFetch = new Set([today]);
+    for (const [d,v] of Object.entries(mg)) { if (!v.allFinal && d<=today) toFetch.add(d); }
+    for (let i=1;i<=3;i++) {
+      const d2=new Date(); d2.setDate(d2.getDate()-i);
+      const dk=`${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
+      if (dk>=`${ym}-01`) toFetch.add(dk);
+    }
+    await Promise.all([...toFetch].map(async ds => {
+      const games = await fetchGames(ds);
+      if (games.length) mg[ds] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
+    }));
+    return mg;
+  }
+
+  // ── Render status card ────────────────────────────────────────────────
+  function renderMyStatus(myState, todayGames) {
+    const section  = document.getElementById('myStatusSection');
+    const today    = todayStr();
+    const day      = new Date().getDate();
+    const picks    = myState.usedTeams || {};
+    const todayPick = picks[today];
+    const result   = getPickResult(todayPick, todayGames);
+    const pickCount = Object.keys(picks).length;
+
+    let cardClass='alive', icon='✅', title="You're Alive!";
+    let subtitle = `Day ${day} · ${pickCount} pick${pickCount!==1?'s':''} made`;
+    const lostToday = result === 'loss';
+    const fpUsed    = myState.freePassUsed;
+    const fpReq     = myState.freePassRequested && !myState.freePassUsed;
+
+    if (!myState.alive) {
+      cardClass='dead'; icon='💀'; title='Eliminated';
+      const why = myState.eliminatedReason==='missed' ? 'missed a pick' : 'team lost';
+      subtitle = myState.eliminatedDay ? `Eliminated day ${myState.eliminatedDay} (${why})` : 'Better luck next month';
+    } else if (fpUsed) {
+      cardClass='freepass'; icon='🎟️'; title='Alive — Free Pass Used';
+      subtitle = `Free pass used on day ${myState.freePassDay}`;
+    } else if (lostToday && !fpUsed) {
+      cardClass='dead'; icon='❌';
+      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
+      subtitle = fpReq ? 'Awaiting admin approval' : `Day ${day}`;
     }
 
-    const fpNote = freePassUsed
-      ? `<span class="s-fp-note">🎟️ Free pass used (Week ${freePassWeek})</span>`
-      : fpRequested
-        ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
+    const fpNote = myState.freePassUsed
+      ? `<span class="fp-note" style="color:var(--ink-faint)">🎟️ FP used day ${myState.freePassDay}</span>`
+      : myState.freePassRequested
+        ? `<span class="fp-note" style="color:#7A5A10">⏳ FP requested</span>`
         : myState.alive
-          ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
+          ? `<span class="fp-note" style="color:var(--green)">🎟️ FP available</span>`
           : '';
 
     let pickHTML = '';
-    if(thisPick){
-      const result = getPickResult(thisPick, currentWeekGames);
-      const chipClass = result==='win'?'pick-win':result==='loss'?'pick-loss':'pick-pending';
-      const label = result==='win'?'✅ Survived!':result==='loss'?'❌ Team lost':mnfLocked?'⏳ In progress…':'🔓 Pick saved — game not started';
-      pickHTML = `<div class="s-pick-row">
-        <span class="s-pick-label">Week ${currentWeek} pick:</span>
-        <div class="s-current-pick ${chipClass}">
-          <img src="${espnLogo(normalizeAbbrev(thisPick))}" style="width:20px;height:20px;object-fit:contain" />
-          ${normalizeAbbrev(thisPick)}
+    if (todayPick) {
+      const bc = result==='win' ? 'win' : result==='loss' ? 'loss' : 'pending';
+      const bl = result==='win' ? '✅ Win'
+        : result==='loss'
+          ? (myState.freePassUsed && Number(myState.freePassDay)===day ? '🎟️ FP saved you'
+            : myState.freePassRequested ? '⏳ FP requested' : '❌ Loss')
+          : '⏳ Pending';
+      const showBtn = result==='loss' && myState.alive && !myState.freePassUsed && !myState.freePassRequested;
+      const showMsg = myState.freePassRequested && !myState.freePassUsed;
+      pickHTML = `
+        <div class="pick-result-row">
+          <img class="pick-logo" src="${logo(todayPick)}" onerror="this.style.display='none'" />
+          <span class="pick-team-name">${norm(todayPick)}</span>
+          <span class="result-badge ${bc}">${bl}</span>
         </div>
-        <span style="font-size:13px">${label}</span>
+        ${showBtn ? `<button class="btn-fp" id="reqFPBtn">🎟️ Request Free Pass</button>` : ''}
+        ${showMsg ? `<div class="fp-pending-msg">⏳ Free pass requested — awaiting admin approval</div>` : ''}`;
+    } else {
+      pickHTML = `<div class="picks-link">Make your pick on the <a href="picks.html">My Picks</a> page.</div>`;
+    }
+
+    section.innerHTML = `
+      <div class="status-card ${cardClass}">
+        <div class="status-top">
+          <div class="status-left">
+            <div class="status-icon">${icon}</div>
+            <div><div class="status-title">${title}</div><div class="status-subtitle">${subtitle}</div></div>
+          </div>
+          ${fpNote}
+        </div>
+        ${pickHTML}
       </div>`;
-    } else if(myState.alive){
-      pickHTML = mnfLocked
-        ? `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Deadline passed — no pick made this week.</span></div>`
-        : `<div class="s-pick-row"><span style="font-size:13px;color:var(--ink-faint)">No pick yet this week — <a href="picks.html" style="color:var(--charcoal);font-weight:600">go to Picks page</a> to make your survivor pick.</span></div>`;
-    }
-
-    let fpRequestHTML = '';
-    if(!myState.alive && !freePassUsed && !fpRequested && !missedElim){
-      fpRequestHTML = `<button class="s-freepass-btn" id="reqFPBtn">🎟️ Request Free Pass</button>`;
-    } else if(fpRequested){
-      fpRequestHTML = `<div class="s-fp-pending">⏳ Free pass requested — awaiting admin approval.</div>`;
-    }
-
-    card.innerHTML = `
-      <div class="s-status-header">
-        <div class="s-top-left">
-          <span class="s-icon">${icon}</span>
-          <div><div class="s-title">${title}</div><div class="s-sub">${sub}</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">${fpNote}</div>
-      </div>
-      ${pickHTML}
-      ${fpRequestHTML}`;
 
     document.getElementById('reqFPBtn')?.addEventListener('click', async () => {
       const btn = document.getElementById('reqFPBtn');
       btn.disabled=true; btn.textContent='Requesting…';
-      try{
+      try {
         await update(ref(db), {
-          [`survivor/2026/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/2026/${currentUser.uid}/freePassWeek`]: myState.eliminatedWeek
+          [`survivor/${yearMonthStr()}/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/${yearMonthStr()}/${currentUser.uid}/freePassDay`]: day,
         });
-        await loadSurvivor();
-      } catch(e){ btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
+        myState.freePassRequested=true; myState.freePassDay=day;
+        renderMyStatus(myState, todayGames);
+      } catch(e) { btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
     });
   }
 
-  // ── Render leaderboard ──────────────────────────────────────────────
-  function renderLeaderboard(weekGames, currentWeek){
-    const list=document.getElementById('leaderList');
-    // Compute status for all members
-    const rows=[];
-    for(const m of allMembers){
-      const state=allStates[m.uid]||{};
-      const usedPicks=state.usedPicks||{};
-      const fpu=state.freePassUsed||false;
-      const fpw=state.freePassWeek||null;
-      const hasPicks=Object.keys(usedPicks).length>0;
-      const {alive,eliminatedWeek}=hasPicks?computeStatus(usedPicks,fpu,fpw,weekGames,survivorStartWeek,currentWeek):{alive:true,eliminatedWeek:null};
-      rows.push({uid:m.uid,displayName:m.displayName,alive,eliminatedWeek,weeks:Object.keys(usedPicks).length,fpRequested:state.freePassRequested});
-    }
-    // Sort: alive (by weeks survived desc) then dead
-    rows.sort((a,b)=>{
-      if(a.alive!==b.alive)return a.alive?-1:1;
-      return b.weeks-a.weeks;
+  // ── Render leaderboard ────────────────────────────────────────────────
+  function renderLeaderboard(monthGames) {
+    const today = todayStr();
+    const rows = allMembers.map(m => {
+      const raw = allStates[m.uid] || {};
+      const ut = raw.usedTeams || {};
+      const c  = computeStatus(ut, raw.freePassUsed, raw.freePassDay, monthGames, survivorStartDay, today);
+      return { ...m, alive:c.alive, fpUsed:raw.freePassUsed, fpReq:raw.freePassRequested, picks:Object.keys(ut).length };
     });
-
-    list.innerHTML=rows.map((r,i)=>{
-      const isYou=r.uid===currentUser.uid;
-      let statusClass,statusText;
-      if(r.alive){statusClass='lstatus-alive';statusText='Alive';}
-      else if(r.fpRequested){statusClass='lstatus-freepass';statusText='⏳ FP Pending';}
-      else{statusClass='lstatus-dead';statusText='Eliminated';}
-      return`<div class="leader-row${isYou?' is-you':''}">
-        <div class="leader-rank">${r.alive?i+1:'✗'}</div>
-        <div class="leader-name">${r.displayName}${isYou?'<span class="leader-you">(you)</span>':''}</div>
-        <span class="lstatus ${statusClass}">${statusText}</span>
-        <div class="leader-picks">${r.weeks} wk${r.weeks!==1?'s':''}</div>
+    rows.sort((a,b) => { if(a.alive!==b.alive) return a.alive?-1:1; return b.picks-a.picks; });
+    document.getElementById('leaderList').innerHTML = rows.map((r,i) => {
+      let sc='lstatus-alive', st='✅ Alive';
+      if (!r.alive)   { sc='lstatus-dead'; st='💀 Out'; }
+      else if (r.fpUsed) { sc='lstatus-freepass'; st='🎟️ Alive (FP used)'; }
+      else if (r.fpReq)  { sc='lstatus-freepass'; st='⏳ FP Requested'; }
+      return `<div class="leader-row${r.uid===currentUser.uid?' is-you':''}">
+        <span class="leader-rank">${i+1}</span>
+        <span class="leader-name">${r.displayName||r.email}${r.uid===currentUser.uid?'<span class="leader-you">(you)</span>':''}</span>
+        <span class="lstatus ${sc}">${st}</span>
+        <span class="leader-picks">${r.picks} pick${r.picks!==1?'s':''}</span>
       </div>`;
     }).join('');
   }
 
-  // ── Render weekly grid ──────────────────────────────────────────────
-  function renderWeeklyGrid(weekGames, currentWeek){
-    const weeks=Array.from({length:currentWeek},(_,i)=>i+1);
-    const now=new Date();
+  // ── Render monthly grid ───────────────────────────────────────────────
+  function renderMonthlyGrid(monthGames) {
+    const ym    = yearMonthStr();
+    const today = todayStr();
+    const now   = new Date();
+    const [yr,mo] = ym.split('-').map(Number);
+    const dim = new Date(yr, mo, 0).getDate();
+    const members = [...allMembers].sort((a,b)=>{
+      if(a.uid===currentUser.uid) return -1;
+      if(b.uid===currentUser.uid) return 1;
+      return (a.displayName||'').localeCompare(b.displayName||'');
+    });
 
-    const t=document.createElement('table');
-    t.className='wgrid';
-    // Header
-    const thead=t.createTHead();
-    const hr=thead.insertRow();
-    const nth=document.createElement('th');nth.className='wth';nth.textContent='Member';hr.appendChild(nth);
-    for(const w of weeks){
-      const th=document.createElement('th');
-      th.className=`week-hd${w===currentWeek?' current':''}`;
-      th.textContent=`Wk ${w}`;
-      hr.appendChild(th);
+    // Start grid from earliest actual pick day across all members
+    // If nobody has picks yet, fall back to survivorStartDay
+    const allPickDays = [];
+    for (const m of members) {
+      const ut = allStates[m.uid]?.usedTeams || {};
+      Object.keys(ut).forEach(ds => allPickDays.push(parseInt(ds.split('-')[2])));
     }
-    const totTh=document.createElement('th');totTh.className='totals-hd';totTh.textContent='W–L';hr.appendChild(totTh);
+    const gridStartDay = allPickDays.length > 0
+      ? Math.min(...allPickDays)
+      : survivorStartDay;
+
+    const days = [];
+    for (let d=gridStartDay; d<=Math.min(dim,30); d++)
+      days.push({ d, ds:`${ym}-${String(d).padStart(2,'0')}` });
+
+    const t = document.createElement('table'); t.className='mgrid';
+    const thead = t.createTHead(); const hr = thead.insertRow();
+    const mh = document.createElement('th'); mh.className='mth'; mh.textContent='Member'; hr.appendChild(mh);
+    for (const {d,ds} of days) {
+      const th=document.createElement('th'); th.className=`day-hd${ds===today?' today':''}`;
+      th.textContent=d; hr.appendChild(th);
+    }
+    const tot=document.createElement('th'); tot.className='totals-hd'; tot.textContent='W–L'; hr.appendChild(tot);
 
     const tbody=t.createTBody();
-    for(const m of allMembers){
-      const state=allStates[m.uid]||{};
-      const usedPicks=state.usedPicks||{};
-      const fpu=state.freePassUsed||false;
-      const fpw=state.freePassWeek||null;
-      const isYou=m.uid===currentUser.uid;
-      const row=tbody.insertRow();if(isYou)row.className='is-you';
-      const ntd=row.insertCell();ntd.className='wtd';
-      ntd.innerHTML=`${m.displayName}${isYou?'<span class="you-tag">(you)</span>':''}`;
-
-      let wins=0,losses=0;
-      for(const w of weeks){
+    for (const m of members) {
+      const raw = allStates[m.uid]||{};
+      const hasPicks = raw.usedTeams && Object.keys(raw.usedTeams).length>0;
+      const ut  = hasPicks ? (raw.usedTeams||{}) : {};
+      const fpU = raw.freePassUsed||false;
+      const fpD = raw.freePassDay||null;
+      const fpR = raw.freePassRequested||false;
+      const isYou = m.uid===currentUser.uid;
+      const row=tbody.insertRow(); if(isYou) row.className='is-you';
+      const ntd=row.insertCell(); ntd.className='mtd';
+      ntd.innerHTML=`${m.displayName||m.email}${isYou?'<span class="you-tag">(you)</span>':''}`;
+      let wins=0, losses=0;
+      for (const {d,ds} of days) {
         const td=row.insertCell();
-        const wk=`week-${w}`;
-        const pick=usedPicks[wk];
-        const games=weekGames[wk]||[];
-        const deadline=weekDeadline(games);
-        const deadlinePassed=deadline?now>=new Date(deadline):w<currentWeek;
-        const hasPicks2=Object.keys(usedPicks).length>0;
-
-        if(!pick){
-          if(deadlinePassed&&hasPicks2){td.innerHTML=`<span class="gc gc-loss" title="Missed pick">✗</span>`;losses++;}
-          else{td.innerHTML=`<span class="gc-blank">—</span>`;}
-        } else if(!deadlinePassed){
-          td.innerHTML=`<span class="gc gc-pending">🔒</span>`;
+        const pick=ut[ds];
+        const dd=monthGames[ds];
+        const isFuture=ds>today;
+        // Deadline = last game start time for this day
+      const unlocked = dd ? now >= dd.lastStartTime : ds < today;
+        const fpDateStr=fpD ? `${ym}-${String(fpD).padStart(2,'0')}` : null;
+        let cell='';
+        if (isFuture) {
+          cell=`<span class="gc-future">·</span>`;
+        } else if (!pick) {
+          cell = (unlocked && hasPicks) ? `<span class="gc gc-loss" title="No pick">✗</span>` : `<span class="gc-blank">—</span>`;
+          if (unlocked && hasPicks) losses++;
+        } else if (!unlocked) {
+          cell=`<span class="gc gc-pending">🔒</span>`;
         } else {
-          const r=getPickResult(pick,games);
-          const label=normalizeAbbrev(pick);
-          const isFPWeek=fpu&&fpw===w;
-          if(r==='win'){wins++;td.innerHTML=`<span class="gc gc-win">${label}</span>`;}
-          else if(r==='loss'){
+          const r=getPickResult(pick, dd?.games||[]);
+          const label=norm(pick);
+          if (r==='win') { wins++; cell=`<span class="gc gc-win">${label}</span>`; }
+          else if (r==='loss') {
             losses++;
-            td.innerHTML=isFPWeek?`<span class="gc gc-fp">🎟️${label}</span>`:`<span class="gc gc-loss">${label}</span>`;
-          } else {
-            td.innerHTML=`<span class="gc gc-pending">${label}</span>`;
-          }
+            if (fpDateStr===ds && fpU) cell=`<span class="gc gc-fp">🎟️${label}</span>`;
+            else if (fpDateStr===ds && fpR) cell=`<span class="gc gc-fp">⏳${label}</span>`;
+            else cell=`<span class="gc gc-loss">${label}</span>`;
+          } else { cell=`<span class="gc gc-pending">${label}</span>`; }
         }
+        td.innerHTML=cell;
       }
-      const totTd=row.insertCell();totTd.className='totals-td';
-      totTd.innerHTML=wins>0||losses>0?`<span style="color:var(--green)">${wins}</span><span style="color:var(--ink-faint)">–</span><span style="color:var(--red)">${losses}</span>`:`<span style="color:var(--ink-faint)">—</span>`;
+      const totTd=row.insertCell(); totTd.className='totals-td';
+      totTd.innerHTML = wins>0||losses>0
+        ? `<span style="color:var(--green)">${wins}</span><span style="color:var(--ink-faint)">–</span><span style="color:var(--red)">${losses}</span>`
+        : `<span style="color:var(--ink-faint)">—</span>`;
     }
-
-    const grid=document.getElementById('weeklyGrid');grid.innerHTML='';grid.appendChild(t);
+    const grid=document.getElementById('monthlyGrid'); grid.innerHTML=''; grid.appendChild(t);
   }
 
-  // ── Load everything ──────────────────────────────────────────────────
-  async function loadSurvivor(){
-    try{
-      const settingsSnap=await get(ref(db,'adminConfig/settings'));
-      const settings=settingsSnap.exists()?settingsSnap.val():{};
-      seasonStartDate=settings.seasonStartDate||null;
-      survivorStartWeek=settings.survivorStartWeek||1;
-      const currentWeek=getCurrentWeek();
+  // ── Load everything ───────────────────────────────────────────────────
+  async function loadSurvivor() {
+    const ym    = yearMonthStr();
+    const today = todayStr();
+    document.getElementById('monthBadge').textContent = monthLabel();
+    try {
+      // Settings
+      const ss = await get(ref(db,'adminConfig/settings'));
+      const ss_val = ss.exists() ? ss.val() : {};
+      // survivorStartDay is only valid for the current month.
+      // If it was set in a previous month (via reset), default to 1 for the new month.
+      const storedStartDay = ss_val.survivorStartDay || 1;
+      const storedStartMonth = ss_val.survivorStartMonth || '';
+      const currentYM = yearMonthStr();
+      survivorStartDay = (storedStartMonth === currentYM) ? storedStartDay : 1;
 
-      const mSnap=await get(ref(db,'adminConfig/members'));
+      // Members
+      const ms = await get(ref(db,'adminConfig/members'));
       allMembers=[];
-      if(mSnap.exists())mSnap.forEach(c=>{if(c.val().approved)allMembers.push({uid:c.key,...c.val()});});
+      if (ms.exists()) ms.forEach(c=>{ if(c.val().approved) allMembers.push({uid:c.key,...c.val()}); });
 
-      const svSnap=await get(ref(db,'survivor/2026'));
+      // Survivor states — skip null/empty records from reset
+      const sv = await get(ref(db,`survivor/${ym}`));
       allStates={};
-      if(svSnap.exists())svSnap.forEach(c=>{const v=c.val();if(v&&typeof v==='object')allStates[c.key]=v;});
+      if (sv.exists()) sv.forEach(c=>{ const v=c.val(); if(v&&typeof v==='object') allStates[c.key]=v; });
 
-      // Load games for all weeks up to current
-      const weekGames={};
-      for(let w=survivorStartWeek;w<=currentWeek;w++){
-        weekGames[`week-${w}`]=await fetchWeekGames(w);
-      }
+      // My state
+      const myRaw = allStates[currentUser.uid]||{};
+      const myBase = { 
+        alive: true, freePassUsed: false, freePassRequested: false, 
+        freePassDay: null, usedTeams: {}, 
+        ...myRaw 
+      };
 
-      const myRaw=allStates[currentUser.uid]||{};
-      const usedPicks=myRaw.usedPicks||{};
-      const hasPicks=Object.keys(usedPicks).length>0;
-      const myBase=hasPicks?myRaw:{alive:true,freePassUsed:false,freePassRequested:false,freePassWeek:null,usedPicks:{}};
-      const {alive,eliminatedWeek}=computeStatus(myBase.usedPicks,myBase.freePassUsed,myBase.freePassWeek,weekGames,survivorStartWeek,currentWeek);
-      const myState={...myBase,alive,eliminatedWeek};
+      // Games
+      const todayGames = await fetchGames(today);
+      const monthGames = await loadMonthGames(ym);
 
+      // Compute my status
+      const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassDay, monthGames, survivorStartDay, today);
+      const myState = { ...myBase, ...c };
+      console.log('[Survivor] myState:', JSON.stringify(myState));
+
+      // Show
       document.getElementById('loadingState').style.display='none';
       document.getElementById('mainContent').style.display='';
+      renderMyStatus(myState, todayGames);
+      renderLeaderboard(monthGames);
+      renderMonthlyGrid(monthGames);
 
-      await renderMyStatus(myState,weekGames[`week-${currentWeek}`]||[],currentWeek);
-      renderLeaderboard(weekGames,currentWeek);
-      renderWeeklyGrid(weekGames,currentWeek);
-
-    }catch(err){
+    } catch(err) {
       console.error(err);
-      document.getElementById('loadingState').innerHTML=`<div style="color:var(--red)">⚠️ Could not load survivor: ${err.message}</div>`;
+      document.getElementById('loadingState').innerHTML=`<div class="icon">⚠️</div><h3>Could not load survivor</h3><p style="font-size:13px">${err.message}</p>`;
     }
   }
 
-  onAuthStateChanged(auth,async user=>{
-    if(!user){window.location.href='index.html';return;}
+  // ── Auth ──────────────────────────────────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href='index.html'; return; }
     currentUser=user;
-    const ms=await get(ref(db,`adminConfig/members/${user.uid}`));
-    const member=ms.exists()?ms.val():null;
-    const as=await get(ref(db,`adminConfig/admins/${user.uid}`));
+    const ms = await get(ref(db,`adminConfig/members/${user.uid}`));
+    const member = ms.exists() ? ms.val() : null;
+    const as = await get(ref(db,`adminConfig/admins/${user.uid}`));
     isAdmin=as.exists();
-    if(!member?.approved&&!isAdmin){window.location.href='index.html';return;}
-    initNav({activePage:'survivor.html',isAdmin,userName:member?.displayName||user.email});
-    const so=()=>signOut(auth).then(()=>window.location.href='index.html');
+    if (!member?.approved && !isAdmin) { window.location.href='index.html'; return; }
+    initNav({ activePage:'survivor.html', isAdmin, userName:member?.displayName||user.email });
+    checkPendingFP();
+    const so = ()=>signOut(auth).then(()=>window.location.href='index.html');
     document.getElementById('signOutBtn')?.addEventListener('click',so);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click',so);
     await loadSurvivor();
