@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Survivor · MLB Pick'em</title>
+  <title>Survivor · NFL Pick Em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -145,7 +145,7 @@
         <div class="leader-list" id="leaderList"></div>
       </div>
       <div class="section">
-        <div class="section-title" id="gridTitle">📅 Monthly Picks</div>
+        <div class="section-title" id="gridTitle">📅 Weekly Picks</div>
         <div class="grid-wrap"><div id="monthlyGrid"></div></div>
       </div>
     </div>
@@ -157,44 +157,49 @@
   import { getDatabase, ref, get, set, update }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
-    apiKey:"AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
-    authDomain:"mlbpickem-5bc9c.firebaseapp.com",
-    databaseURL:"https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
-    projectId:"mlbpickem-5bc9c",
-    storageBucket:"mlbpickem-5bc9c.firebasestorage.app",
-    messagingSenderId:"699113861941",
-    appId:"1:699113861941:web:5731f1544c1f11a30a927c"
+    apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+    authDomain: "nflpickem1728.firebaseapp.com",
+    databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com",
+    projectId: "nflpickem1728",
+    storageBucket: "nflpickem1728.firebasestorage.app",
+    messagingSenderId: "752271833942",
+    appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
   };
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getDatabase(app);
 
   // ── Helpers ───────────────────────────────────────────────────────────
-  function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  }
-  function yearMonthStr() { return todayStr().substring(0,7); }
-  function monthLabel() { return new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}); }
   function norm(a) {
-    const s = (a||'').toUpperCase();
-    if (s==='CHW') return 'CWS';
-    if (s==='KCR') return 'KC';
-    if (s==='SDP') return 'SD';
-    if (s==='SFG') return 'SF';
-    if (s==='TBR') return 'TB';
-    if (s==='WSN') return 'WSH';
-    if (s==='OAK') return 'ATH';
-    return s;
+    const m = { 'WAS':'WSH', 'JAC':'JAX', 'KAN':'KC', 'NEP':'NE', 'NOS':'NO', 'GNB':'GB', 'SFO':'SF', 'TAM':'TB' };
+    const up = (a || '').toUpperCase();
+    return m[up] || up || '??';
   }
   function logo(abbrev) {
-    const a = norm(abbrev);
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${a==='ATH'?'oak':a.toLowerCase()}.png`;
+    return `https://a.espncdn.com/i/teamlogos/nfl/500/${norm(abbrev).toLowerCase()}.png`;
   }
+
+  const NFL_TEAMS = [
+    'ARI','ATL','BAL','BUF','CAR','CHI','CIN','CLE','DAL','DEN',
+    'DET','GB','HOU','IND','JAX','KC','LAC','LAR','LV','MIA',
+    'MIN','NE','NO','NYG','NYJ','PHI','PIT','SEA','SF','TB','TEN','WSH'
+  ];
 
   // ── State ─────────────────────────────────────────────────────────────
   let currentUser = null, isAdmin = false;
-  let allMembers = [], allStates = {}, survivorStartDay = 1;
+  let allMembers = [], allStates = {}, survivorStartWeek = 1;
+  let seasonStartDate = null;
+  let weekGamesCache = {}; // 'week-N' → { lastStartTime, games, allFinal }
+
+  function seasonKey() {
+    return seasonStartDate ? seasonStartDate.slice(0,4) : String(new Date().getFullYear());
+  }
+  function getCurrentWeek() {
+    if (!seasonStartDate) return 1;
+    const start = new Date(seasonStartDate + 'T00:00:00');
+    const diff  = Math.floor((new Date() - start) / 86400000);
+    return Math.max(1, Math.min(18, Math.floor(diff / 7) + 1));
+  }
 
   // ── Nav ───────────────────────────────────────────────────────────────
   function initNav({ activePage, isAdmin = false, userName = '' }) {
@@ -209,7 +214,7 @@
     if (isAdmin) pages.push({ href:'admin.html', label:'Admin', icon:'⚙️' });
     nav.innerHTML = `
       <div class="nav-inner">
-        <a href="index.html" class="nav-logo">⚾ Pick'em</a>
+        <a href="index.html" class="nav-logo">🏈 NFL Pick Em</a>
         <div class="nav-links">${pages.map(p=>`<a href="${p.href}" class="nav-link${p.href===activePage?' active':''}"${p.href==='admin.html'?' id="adminLink"':''}>${p.label}</a>`).join('')}</div>
         <div class="nav-right">
           <span class="nav-user">${userName}</span>
@@ -218,7 +223,7 @@
         </div>
       </div>
       <div class="mobile-drawer" id="mobileDrawer">
-        <div class="drawer-header"><span class="drawer-title">⚾ Pick'em</span><button class="drawer-close" id="drawerClose">✕</button></div>
+        <div class="drawer-header"><span class="drawer-title">🏈 NFL Pick Em</span><button class="drawer-close" id="drawerClose">✕</button></div>
         <div class="drawer-user">${userName}</div>
         <nav class="drawer-nav">${pages.map(p=>`<a href="${p.href}" class="drawer-link${p.href===activePage?' active':''}"${p.href==='admin.html'?' id="drawerAdminLink"':''}><span class="drawer-icon">${p.icon}</span>${p.label}</a>`).join('')}</nav>
         <button class="drawer-signout" id="drawerSignOutBtn">Sign out</button>
@@ -236,7 +241,7 @@
 
   async function checkPendingFP() {
     try {
-      const snap = await get(ref(db, `survivor/${yearMonthStr()}`));
+      const snap = await get(ref(db, `survivor/${seasonKey()}`));
       if (!snap.exists()) return;
       let n = 0;
       snap.forEach(c=>{ const v=c.val(); if(v&&v.freePassRequested&&!v.freePassUsed) n++; });
@@ -249,41 +254,33 @@
   }
 
   // ── Compute status (pure function, no Firebase writes) ────────────────
-  function computeStatus(usedTeams, fpUsed, fpDay, monthGames, startDay, today) {
+  function computeStatus(usedTeams, fpUsed, fpWeek, weekGames, startWeek, upToWeek) {
     if (!usedTeams) usedTeams = {};
-    const now = new Date();
-    const ym  = today.substring(0,7);
-    const [yr, mo] = ym.split('-').map(Number);
-    const dim = new Date(yr, mo, 0).getDate();
-    let alive=true, eliminatedDay=null, eliminatedReason=null;
+    let alive=true, eliminatedWeek=null, eliminatedReason=null;
 
-    // Find the earliest day they actually made a pick — don't penalize for days before that
-    // This handles the case where survivorStartDay is before the user's first pick (e.g. after a reset)
-    const pickDays = Object.keys(usedTeams).map(ds => parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
-    const effectiveStartDay = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
+    const pickWeeks = Object.keys(usedTeams).map(k => parseInt(k.split('-')[1])).sort((a,b)=>a-b);
+    const effectiveStartWeek = pickWeeks.length > 0 ? Math.max(startWeek, pickWeeks[0]) : startWeek;
 
-    for (let d=effectiveStartDay; d<=Math.min(dim,30); d++) {
-      const ds = `${ym}-${String(d).padStart(2,'0')}`;
-      if (ds > today) break;
-      const dd = monthGames[ds]; if (!dd) continue;
-      if (now < dd.lastStartTime) continue;
-      const pick = usedTeams[ds];
+    for (let w=effectiveStartWeek; w<=upToWeek; w++) {
+      const wk = `week-${w}`;
+      const wd = weekGames[wk]; if (!wd) continue;
+      if (new Date() < wd.lastStartTime) continue;
+      const pick = usedTeams[wk];
       if (!pick) {
-        // Don't eliminate for today if user has no picks at all — handles post-reset joins
-        if (ds === today && pickDays.length === 0) break;
-        alive=false; eliminatedDay=d; eliminatedReason='missed'; break;
+        if (w === upToWeek && pickWeeks.length === 0) break;
+        alive=false; eliminatedWeek=w; eliminatedReason='missed'; break;
       }
       const np = norm(pick);
-      const game = dd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
+      const game = wd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
       if (!game || game.statusName!=='STATUS_FINAL' || !game.winnerId) continue;
       const homeWon = String(game.winnerId)===String(game.homeTeam?.id);
       const won = homeWon ? norm(game.homeTeam.abbrev)===np : norm(game.awayTeam.abbrev)===np;
       if (!won) {
-        if (fpUsed && Number(fpDay)===d) continue; // FP approved for this day
-        alive=false; eliminatedDay=d; eliminatedReason='loss'; break;
+        if (fpUsed && Number(fpWeek)===w) continue; // FP approved for this week
+        alive=false; eliminatedWeek=w; eliminatedReason='loss'; break;
       }
     }
-    return { alive, eliminatedDay, eliminatedReason };
+    return { alive, eliminatedWeek, eliminatedReason };
   }
 
   function getPickResult(pick, games) {
@@ -299,9 +296,10 @@
   }
 
   // ── Fetch games from ESPN ─────────────────────────────────────────────
-  async function fetchGames(dateStr) {
+  async function fetchWeekGames(week) {
     try {
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateStr.replace(/-/g,'')}`);
+      const year = seasonKey();
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`);
       const data = await res.json();
       const games = [];
       for (const ev of (data?.events||[])) {
@@ -317,79 +315,73 @@
           else if (home.score!=null&&away.score!=null)
             winnerId = parseInt(home.score)>parseInt(away.score) ? String(home.team.id) : String(away.team.id);
         }
-        games.push({ id:ev.id, startTime:ev.date, statusName,
-          homeTeam:{ id:String(home.team.id), abbrev:home.team.abbreviation },
-          awayTeam:{ id:String(away.team.id), abbrev:away.team.abbreviation },
+        games.push({ id:ev.id, startTime: comp.date || ev.date, statusName,
+          homeTeam:{ id:String(home.team.id), abbrev:norm(home.team.abbreviation) },
+          awayTeam:{ id:String(away.team.id), abbrev:norm(away.team.abbreviation) },
           homeScore:home.score??null, awayScore:away.score??null, winnerId });
       }
       games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
       if (games.length) {
         const obj={}; for(const g of games) obj[g.id]=g;
-        await set(ref(db,`games/${dateStr}`),obj).catch(()=>{});
+        await set(ref(db,`games/week-${week}`),obj).catch(()=>{});
       }
       return games;
     } catch(e) { return []; }
   }
 
-  async function loadMonthGames(ym) {
-    const mg = {}, today = todayStr();
+  async function loadSeasonWeekGames(upToWeek) {
+    const wg = {};
     try {
-      const snap = await get(ref(db,'games'));
-      if (snap.exists()) {
-        snap.forEach(c => {
-          if (!c.key.startsWith(ym)) return;
-          const games = Object.values(c.val()).sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
-          if (!games.length) return;
-          mg[c.key] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
-        });
+      for (let w = 1; w <= upToWeek; w++) {
+        const wk = `week-${w}`;
+        const snap = await get(ref(db, `games/${wk}`));
+        if (snap.exists()) {
+          const games = Object.entries(snap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v)
+            .sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
+          if (games.length) wg[wk] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
+        }
       }
     } catch(e){}
-    // Re-fetch non-final + today + last 3 days
-    const toFetch = new Set([today]);
-    for (const [d,v] of Object.entries(mg)) { if (!v.allFinal && d<=today) toFetch.add(d); }
-    for (let i=1;i<=3;i++) {
-      const d2=new Date(); d2.setDate(d2.getDate()-i);
-      const dk=`${d2.getFullYear()}-${String(d2.getMonth()+1).padStart(2,'0')}-${String(d2.getDate()).padStart(2,'0')}`;
-      if (dk>=`${ym}-01`) toFetch.add(dk);
-    }
-    await Promise.all([...toFetch].map(async ds => {
-      const games = await fetchGames(ds);
-      if (games.length) mg[ds] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
+    // Re-fetch non-final weeks + current week
+    const toFetch = new Set([upToWeek]);
+    for (let w = 1; w <= upToWeek; w++) { if (!wg[`week-${w}`] || !wg[`week-${w}`].allFinal) toFetch.add(w); }
+    await Promise.all([...toFetch].map(async w => {
+      const games = await fetchWeekGames(w);
+      if (games.length) wg[`week-${w}`] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
     }));
-    return mg;
+    return wg;
   }
 
   // ── Render status card ────────────────────────────────────────────────
-  function renderMyStatus(myState, todayGames) {
+  function renderMyStatus(myState, weekGames, week) {
     const section  = document.getElementById('myStatusSection');
-    const today    = todayStr();
-    const day      = new Date().getDate();
+    const wk       = `week-${week}`;
     const picks    = myState.usedTeams || {};
-    const todayPick = picks[today];
-    const result   = getPickResult(todayPick, todayGames);
+    const weekPick = picks[wk];
+    const result   = getPickResult(weekPick, weekGames);
     const pickCount = Object.keys(picks).length;
 
     let cardClass='alive', icon='✅', title="You're Alive!";
-    let subtitle = `Day ${day} · ${pickCount} pick${pickCount!==1?'s':''} made`;
-    const lostToday = result === 'loss';
+    let subtitle = `Week ${week} · ${pickCount} pick${pickCount!==1?'s':''} made`;
+    const lostThisWeek = result === 'loss';
     const fpUsed    = myState.freePassUsed;
     const fpReq     = myState.freePassRequested && !myState.freePassUsed;
 
     if (!myState.alive) {
       cardClass='dead'; icon='💀'; title='Eliminated';
       const why = myState.eliminatedReason==='missed' ? 'missed a pick' : 'team lost';
-      subtitle = myState.eliminatedDay ? `Eliminated day ${myState.eliminatedDay} (${why})` : 'Better luck next month';
+      subtitle = myState.eliminatedWeek ? `Eliminated week ${myState.eliminatedWeek} (${why})` : 'Better luck next season';
     } else if (fpUsed) {
       cardClass='freepass'; icon='🎟️'; title='Alive — Free Pass Used';
-      subtitle = `Free pass used on day ${myState.freePassDay}`;
-    } else if (lostToday && !fpUsed) {
+      subtitle = `Free pass used week ${myState.freePassWeek}`;
+    } else if (lostThisWeek && !fpUsed) {
       cardClass='dead'; icon='❌';
       title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      subtitle = fpReq ? 'Awaiting admin approval' : `Day ${day}`;
+      subtitle = fpReq ? 'Awaiting admin approval' : `Week ${week}`;
     }
 
     const fpNote = myState.freePassUsed
-      ? `<span class="fp-note" style="color:var(--ink-faint)">🎟️ FP used day ${myState.freePassDay}</span>`
+      ? `<span class="fp-note" style="color:var(--ink-faint)">🎟️ FP used week ${myState.freePassWeek}</span>`
       : myState.freePassRequested
         ? `<span class="fp-note" style="color:#7A5A10">⏳ FP requested</span>`
         : myState.alive
@@ -397,19 +389,19 @@
           : '';
 
     let pickHTML = '';
-    if (todayPick) {
+    if (weekPick) {
       const bc = result==='win' ? 'win' : result==='loss' ? 'loss' : 'pending';
       const bl = result==='win' ? '✅ Win'
         : result==='loss'
-          ? (myState.freePassUsed && Number(myState.freePassDay)===day ? '🎟️ FP saved you'
+          ? (myState.freePassUsed && Number(myState.freePassWeek)===week ? '🎟️ FP saved you'
             : myState.freePassRequested ? '⏳ FP requested' : '❌ Loss')
           : '⏳ Pending';
       const showBtn = result==='loss' && myState.alive && !myState.freePassUsed && !myState.freePassRequested;
       const showMsg = myState.freePassRequested && !myState.freePassUsed;
       pickHTML = `
         <div class="pick-result-row">
-          <img class="pick-logo" src="${logo(todayPick)}" onerror="this.style.display='none'" />
-          <span class="pick-team-name">${norm(todayPick)}</span>
+          <img class="pick-logo" src="${logo(weekPick)}" onerror="this.style.display='none'" />
+          <span class="pick-team-name">${norm(weekPick)}</span>
           <span class="result-badge ${bc}">${bl}</span>
         </div>
         ${showBtn ? `<button class="btn-fp" id="reqFPBtn">🎟️ Request Free Pass</button>` : ''}
@@ -435,22 +427,21 @@
       btn.disabled=true; btn.textContent='Requesting…';
       try {
         await update(ref(db), {
-          [`survivor/${yearMonthStr()}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${yearMonthStr()}/${currentUser.uid}/freePassDay`]: day,
+          [`survivor/${seasonKey()}/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/${seasonKey()}/${currentUser.uid}/freePassWeek`]: week,
         });
-        myState.freePassRequested=true; myState.freePassDay=day;
-        renderMyStatus(myState, todayGames);
+        myState.freePassRequested=true; myState.freePassWeek=week;
+        renderMyStatus(myState, weekGames, week);
       } catch(e) { btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
     });
   }
 
   // ── Render leaderboard ────────────────────────────────────────────────
-  function renderLeaderboard(monthGames) {
-    const today = todayStr();
+  function renderLeaderboard(weekGames, week, startWeek) {
     const rows = allMembers.map(m => {
       const raw = allStates[m.uid] || {};
       const ut = raw.usedTeams || {};
-      const c  = computeStatus(ut, raw.freePassUsed, raw.freePassDay, monthGames, survivorStartDay, today);
+      const c  = computeStatus(ut, raw.freePassUsed, raw.freePassWeek, weekGames, startWeek, week);
       return { ...m, alive:c.alive, fpUsed:raw.freePassUsed, fpReq:raw.freePassRequested, picks:Object.keys(ut).length };
     });
     rows.sort((a,b) => { if(a.alive!==b.alive) return a.alive?-1:1; return b.picks-a.picks; });
@@ -468,40 +459,31 @@
     }).join('');
   }
 
-  // ── Render monthly grid ───────────────────────────────────────────────
-  function renderMonthlyGrid(monthGames) {
-    const ym    = yearMonthStr();
-    const today = todayStr();
-    const now   = new Date();
-    const [yr,mo] = ym.split('-').map(Number);
-    const dim = new Date(yr, mo, 0).getDate();
+  // ── Render weekly grid ────────────────────────────────────────────────
+  function renderWeeklyGrid(weekGames, curWeek, defaultStartWeek) {
     const members = [...allMembers].sort((a,b)=>{
       if(a.uid===currentUser.uid) return -1;
       if(b.uid===currentUser.uid) return 1;
       return (a.displayName||'').localeCompare(b.displayName||'');
     });
 
-    // Start grid from earliest actual pick day across all members
-    // If nobody has picks yet, fall back to survivorStartDay
-    const allPickDays = [];
+    // Start grid from earliest actual pick week across all members
+    const allPickWeeks = [];
     for (const m of members) {
       const ut = allStates[m.uid]?.usedTeams || {};
-      Object.keys(ut).forEach(ds => allPickDays.push(parseInt(ds.split('-')[2])));
+      Object.keys(ut).forEach(k => allPickWeeks.push(parseInt(k.split('-')[1])));
     }
-    const gridStartDay = allPickDays.length > 0
-      ? Math.min(...allPickDays)
-      : survivorStartDay;
+    const gridStartWeek = allPickWeeks.length > 0 ? Math.min(...allPickWeeks) : defaultStartWeek;
 
-    const days = [];
-    for (let d=gridStartDay; d<=Math.min(dim,30); d++)
-      days.push({ d, ds:`${ym}-${String(d).padStart(2,'0')}` });
+    const weeks = [];
+    for (let w=gridStartWeek; w<=curWeek; w++) weeks.push(w);
 
     const t = document.createElement('table'); t.className='mgrid';
     const thead = t.createTHead(); const hr = thead.insertRow();
     const mh = document.createElement('th'); mh.className='mth'; mh.textContent='Member'; hr.appendChild(mh);
-    for (const {d,ds} of days) {
-      const th=document.createElement('th'); th.className=`day-hd${ds===today?' today':''}`;
-      th.textContent=d; hr.appendChild(th);
+    for (const w of weeks) {
+      const th=document.createElement('th'); th.className=`day-hd${w===curWeek?' today':''}`;
+      th.textContent=`W${w}`; hr.appendChild(th);
     }
     const tot=document.createElement('th'); tot.className='totals-hd'; tot.textContent='W–L'; hr.appendChild(tot);
 
@@ -511,21 +493,20 @@
       const hasPicks = raw.usedTeams && Object.keys(raw.usedTeams).length>0;
       const ut  = hasPicks ? (raw.usedTeams||{}) : {};
       const fpU = raw.freePassUsed||false;
-      const fpD = raw.freePassDay||null;
+      const fpW = raw.freePassWeek||null;
       const fpR = raw.freePassRequested||false;
       const isYou = m.uid===currentUser.uid;
       const row=tbody.insertRow(); if(isYou) row.className='is-you';
       const ntd=row.insertCell(); ntd.className='mtd';
       ntd.innerHTML=`${m.displayName||m.email}${isYou?'<span class="you-tag">(you)</span>':''}`;
       let wins=0, losses=0;
-      for (const {d,ds} of days) {
+      for (const w of weeks) {
+        const wk = `week-${w}`;
         const td=row.insertCell();
-        const pick=ut[ds];
-        const dd=monthGames[ds];
-        const isFuture=ds>today;
-        // Deadline = last game start time for this day
-      const unlocked = dd ? now >= dd.lastStartTime : ds < today;
-        const fpDateStr=fpD ? `${ym}-${String(fpD).padStart(2,'0')}` : null;
+        const pick=ut[wk];
+        const wd=weekGames[wk];
+        const isFuture=w>curWeek;
+        const unlocked = wd ? new Date() >= wd.lastStartTime : w < curWeek;
         let cell='';
         if (isFuture) {
           cell=`<span class="gc-future">·</span>`;
@@ -535,13 +516,13 @@
         } else if (!unlocked) {
           cell=`<span class="gc gc-pending">🔒</span>`;
         } else {
-          const r=getPickResult(pick, dd?.games||[]);
+          const r=getPickResult(pick, wd?.games||[]);
           const label=norm(pick);
           if (r==='win') { wins++; cell=`<span class="gc gc-win">${label}</span>`; }
           else if (r==='loss') {
             losses++;
-            if (fpDateStr===ds && fpU) cell=`<span class="gc gc-fp">🎟️${label}</span>`;
-            else if (fpDateStr===ds && fpR) cell=`<span class="gc gc-fp">⏳${label}</span>`;
+            if (Number(fpW)===w && fpU) cell=`<span class="gc gc-fp">🎟️${label}</span>`;
+            else if (Number(fpW)===w && fpR) cell=`<span class="gc gc-fp">⏳${label}</span>`;
             else cell=`<span class="gc gc-loss">${label}</span>`;
           } else { cell=`<span class="gc gc-pending">${label}</span>`; }
         }
@@ -557,19 +538,15 @@
 
   // ── Load everything ───────────────────────────────────────────────────
   async function loadSurvivor() {
-    const ym    = yearMonthStr();
-    const today = todayStr();
-    document.getElementById('monthBadge').textContent = monthLabel();
+    const season = seasonKey();
+    document.getElementById('monthBadge').textContent = `${season} Season`;
     try {
       // Settings
       const ss = await get(ref(db,'adminConfig/settings'));
       const ss_val = ss.exists() ? ss.val() : {};
-      // survivorStartDay is only valid for the current month.
-      // If it was set in a previous month (via reset), default to 1 for the new month.
-      const storedStartDay = ss_val.survivorStartDay || 1;
-      const storedStartMonth = ss_val.survivorStartMonth || '';
-      const currentYM = yearMonthStr();
-      survivorStartDay = (storedStartMonth === currentYM) ? storedStartDay : 1;
+      survivorStartWeek = ss_val.survivorStartWeek || 1;
+
+      const week = getCurrentWeek();
 
       // Members
       const ms = await get(ref(db,'adminConfig/members'));
@@ -577,33 +554,32 @@
       if (ms.exists()) ms.forEach(c=>{ if(c.val().approved) allMembers.push({uid:c.key,...c.val()}); });
 
       // Survivor states — skip null/empty records from reset
-      const sv = await get(ref(db,`survivor/${ym}`));
+      const sv = await get(ref(db,`survivor/${season}`));
       allStates={};
       if (sv.exists()) sv.forEach(c=>{ const v=c.val(); if(v&&typeof v==='object') allStates[c.key]=v; });
 
       // My state
       const myRaw = allStates[currentUser.uid]||{};
-      const myBase = { 
-        alive: true, freePassUsed: false, freePassRequested: false, 
-        freePassDay: null, usedTeams: {}, 
-        ...myRaw 
+      const myBase = {
+        alive: true, freePassUsed: false, freePassRequested: false,
+        freePassWeek: null, usedTeams: {},
+        ...myRaw
       };
 
-      // Games
-      const todayGames = await fetchGames(today);
-      const monthGames = await loadMonthGames(ym);
+      // Games — all weeks up to current
+      const weekGames = await loadSeasonWeekGames(week);
+      weekGamesCache = weekGames;
 
       // Compute my status
-      const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassDay, monthGames, survivorStartDay, today);
+      const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassWeek, weekGames, survivorStartWeek, week);
       const myState = { ...myBase, ...c };
-      console.log('[Survivor] myState:', JSON.stringify(myState));
 
       // Show
       document.getElementById('loadingState').style.display='none';
       document.getElementById('mainContent').style.display='';
-      renderMyStatus(myState, todayGames);
-      renderLeaderboard(monthGames);
-      renderMonthlyGrid(monthGames);
+      renderMyStatus(myState, weekGames[`week-${week}`]?.games || [], week);
+      renderLeaderboard(weekGames, week, survivorStartWeek);
+      renderWeeklyGrid(weekGames, week, survivorStartWeek);
 
     } catch(err) {
       console.error(err);
@@ -621,6 +597,11 @@
     isAdmin=as.exists();
     if (!member?.approved && !isAdmin) { window.location.href='index.html'; return; }
     initNav({ activePage:'survivor.html', isAdmin, userName:member?.displayName||user.email });
+
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
+    seasonStartDate = settings.seasonStartDate || null;
+
     checkPendingFP();
     const so = ()=>signOut(auth).then(()=>window.location.href='index.html');
     document.getElementById('signOutBtn')?.addEventListener('click',so);
