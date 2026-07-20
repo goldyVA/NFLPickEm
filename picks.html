@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>My Picks · MLB Pick'em</title>
+  <title>My Picks · NFL Pick Em</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚾</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏈</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
@@ -86,7 +86,7 @@
       margin-top: 4px;
     }
 
-    /* ── Date selector ───────────────────────── */
+    /* ── Week selector ───────────────────────── */
     .date-nav {
       display: flex;
       align-items: center;
@@ -114,19 +114,57 @@
       font-size: 14px;
       font-weight: 600;
       color: var(--ink);
-      min-width: 140px;
+      min-width: 100px;
       text-align: center;
-      cursor: pointer;
-      position: relative;
     }
 
-    .date-display input[type="date"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
+    /* ── MNF badge on game card ──────────────── */
+    .mnf-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--white);
+      background: var(--navy);
+      padding: 2px 8px;
+      border-radius: 100px;
+      letter-spacing: .04em;
+      margin-right: auto;
     }
+
+    /* ── MNF Tiebreaker card ──────────────────── */
+    .tiebreaker-card {
+      background: var(--white);
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .tiebreaker-title { font-size: 15px; font-weight: 700; color: var(--navy); }
+    .tiebreaker-sub { font-size: 13px; color: var(--ink-light); margin-top: 2px; margin-bottom: 12px; }
+    .tiebreaker-input-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .tiebreaker-input-row input {
+      width: 120px;
+      padding: 8px 12px;
+      border: 1.5px solid var(--cream-dark);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .tiebreaker-input-row button {
+      padding: 8px 16px;
+      background: var(--navy);
+      color: var(--white);
+      border: 1.5px solid var(--navy);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tiebreaker-locked { font-size: 14px; color: var(--ink); }
+    .tiebreaker-msg { font-size: 13px; }
+    .tiebreaker-msg.error { color: var(--red); }
+    .tiebreaker-msg.success { color: var(--green); }
 
     /* ── Summary bar ─────────────────────────── */
     .summary-bar {
@@ -951,19 +989,16 @@
 
 <div class="page-body">
 
-  <!-- Header + date nav -->
+  <!-- Header + week nav -->
   <div class="page-header">
     <div>
       <h1>My Picks</h1>
-      <p id="headerSubtitle">Pick a winner for each game before first pitch.</p>
+      <p id="headerSubtitle">Pick a winner for each game before kickoff.</p>
     </div>
     <div class="date-nav">
-      <button class="date-btn" id="prevDay" title="Previous day">‹</button>
-      <div class="date-display" id="dateDisplay">
-        <span id="dateLabel">Today</span>
-        <input type="date" id="datePicker" />
-      </div>
-      <button class="date-btn" id="nextDay" title="Next day">›</button>
+      <button class="date-btn" id="prevWeek" title="Previous week">‹</button>
+      <div class="date-display" id="weekDisplay">Week —</div>
+      <button class="date-btn" id="nextWeek" title="Next week">›</button>
     </div>
   </div>
 
@@ -984,13 +1019,15 @@
     </div>
   </div>
 
+  <!-- MNF Tiebreaker -->
+  <div id="tiebreakerSection" style="display:none"></div>
 
   <!-- Survivor Section -->
   <div class="survivor-section" id="survivorSection" style="display:none">
     <div class="survivor-section-header">
       <div>
         <div class="survivor-section-title">💀 Survivor</div>
-        <div class="survivor-section-sub" id="survivorSub">Pick one team today to stay alive.</div>
+        <div class="survivor-section-sub" id="survivorSub">Pick one team this week to stay alive.</div>
       </div>
       <a href="survivor.html" class="view-survivor-link">Full survivor page →</a>
     </div>
@@ -1025,7 +1062,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
 
   nav.innerHTML = `
     <div class="nav-inner">
-<a href="index.html" class="nav-logo">⚾ Pick'em</a>
+<a href="index.html" class="nav-logo">🏈 NFL Pick Em</a>
 
       <div class="nav-links" id="navLinks">
         ${pages.map(p => `
@@ -1047,7 +1084,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     <!-- Mobile drawer -->
     <div class="mobile-drawer" id="mobileDrawer">
       <div class="drawer-header">
-        <span class="drawer-title">⚾ Pick'em</span>
+        <span class="drawer-title">🏈 NFL Pick Em</span>
         <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
       </div>
       ${userName ? `<div class="drawer-user">${userName}</div>` : ''}
@@ -1084,282 +1121,26 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     document.body.style.overflow = '';
   }
 
-  hamburger.addEventListener('click', openDrawer);
-  closeBtn.addEventListener('click', closeDrawer);
-  overlay.addEventListener('click', closeDrawer);
-
-  // Close on nav
-  drawer.querySelectorAll('.drawer-link').forEach(link => {
-    link.addEventListener('click', closeDrawer);
-  });
-
-  return {
-    setUser(name) {
-      const el = document.getElementById('navUser');
-      if (el) el.textContent = name;
-      const du = drawer.querySelector('.drawer-user');
-      if (du) du.textContent = name;
-    }
-  };
+  hamburger?.addEventListener('click', openDrawer);
+  closeBtn?.addEventListener('click', closeDrawer);
+  overlay?.addEventListener('click', closeDrawer);
+  drawer?.querySelectorAll('.drawer-link').forEach(l => l.addEventListener('click', closeDrawer));
 }
-
-const NAV_STYLES = `
-  /* ── Nav base ─────────────────────────────── */
-  #mainNav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: var(--white);
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    z-index: 200;
-    height: 58px;
-  }
-
-  .nav-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 24px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .nav-logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px;
-    color: var(--navy);
-    text-decoration: none;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 2px;
-    flex: 1;
-    justify-content: center;
-  }
-
-  .nav-link {
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--ink-light);
-    text-decoration: none;
-    transition: background .15s, color .15s;
-    white-space: nowrap;
-  }
-
-  .nav-link:hover  { background: var(--cream); color: var(--ink); }
-  .nav-link.active { background: var(--navy); color: var(--white); }
-
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-
-  .nav-user {
-    font-size: 13px;
-    color: var(--ink-faint);
-    white-space: nowrap;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .btn-signout {
-    padding: 6px 12px;
-    border: 1.5px solid var(--cream-dark);
-    border-radius: 6px;
-    background: transparent;
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink-light);
-    cursor: pointer;
-    transition: border-color .15s, color .15s;
-    white-space: nowrap;
-  }
-
-  .btn-signout:hover { border-color: var(--red); color: var(--red); }
-
-  /* ── Hamburger ────────────────────────────── */
-  .hamburger {
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    width: 36px;
-    height: 36px;
-    background: transparent;
-    border: 1.5px solid var(--cream-dark);
-    border-radius: 8px;
-    cursor: pointer;
-    padding: 0;
-    flex-shrink: 0;
-  }
-
-  .hamburger span {
-    display: block;
-    width: 18px;
-    height: 2px;
-    background: var(--ink);
-    border-radius: 2px;
-    transition: all .2s ease;
-  }
-
-  .hamburger[aria-expanded="true"] span:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-  }
-  .hamburger[aria-expanded="true"] span:nth-child(2) {
-    opacity: 0;
-  }
-  .hamburger[aria-expanded="true"] span:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
-  }
-
-  /* ── Mobile drawer ────────────────────────── */
-  .mobile-drawer {
-    position: fixed;
-    top: 0; right: 0;
-    width: 280px;
-    height: 100dvh;
-    background: var(--white);
-    z-index: 300;
-    transform: translateX(100%);
-    transition: transform .28s cubic-bezier(.4,0,.2,1);
-    display: flex;
-    flex-direction: column;
-    box-shadow: -4px 0 24px rgba(0,0,0,.12);
-  }
-
-  .mobile-drawer.open { transform: translateX(0); }
-
-  .drawer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.4);
-    z-index: 299;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .28s ease;
-  }
-
-  .drawer-overlay.show { opacity: 1; pointer-events: all; }
-
-  .drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    height: 58px;
-    border-bottom: 1px solid var(--cream-dark);
-    flex-shrink: 0;
-  }
-
-  .drawer-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px;
-    color: var(--navy);
-  }
-
-  .drawer-close {
-    width: 32px; height: 32px;
-    border: none;
-    background: var(--cream);
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    color: var(--ink-light);
-    display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
-  }
-
-  .drawer-close:hover { background: var(--cream-dark); }
-
-  .drawer-user {
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--ink-faint);
-    border-bottom: 1px solid var(--cream-dark);
-    background: var(--cream);
-  }
-
-  .drawer-nav {
-    flex: 1;
-    padding: 12px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    overflow-y: auto;
-  }
-
-  .drawer-link {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 13px 16px;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--ink);
-    text-decoration: none;
-    transition: background .15s;
-  }
-
-  .drawer-link:hover  { background: var(--cream); }
-  .drawer-link.active { background: var(--navy); color: var(--white); }
-
-  .drawer-icon { font-size: 20px; width: 28px; text-align: center; }
-
-  .drawer-signout {
-    margin: 12px;
-    padding: 13px;
-    background: transparent;
-    border: 1.5px solid var(--cream-dark);
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--red);
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    flex-shrink: 0;
-  }
-
-  .drawer-signout:hover { background: #FDF0EF; border-color: var(--red); }
-
-  /* ── Responsive breakpoint ────────────────── */
-  @media (max-width: 720px) {
-    .nav-links  { display: none; }
-    .nav-user   { display: none; }
-    .btn-signout { display: none; }
-    .hamburger  { display: flex; }
-  }
-`;
-
 
   // ── Check pending free pass requests and badge Admin nav ─────────────
   async function checkPendingFPRequests() {
     try {
-      const ym   = yearMonthStr();
-      const snap = await get(ref(db, `survivor/${ym}`));
+      const season = seasonKey();
+      const snap = await get(ref(db, `survivor/${season}`));
       if (!snap.exists()) return;
       let count = 0;
       snap.forEach(child => {
         const s = child.val();
         if (s.freePassRequested && !s.freePassUsed) count++;
       });
-      // Update both desktop and mobile admin links
       ['adminLink', 'drawerAdminLink'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
-        // Remove existing badge
         el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b => b.remove());
         if (count > 0) {
           const isDrawer = id === 'drawerAdminLink';
@@ -1373,13 +1154,13 @@ const NAV_STYLES = `
   }
 
   const firebaseConfig = {
-    apiKey:            "AIzaSyCxWtcT-g-KBJ_mj2jcKKv45XzjU_HexWg",
-    authDomain:        "mlbpickem-5bc9c.firebaseapp.com",
-    databaseURL:       "https://mlbpickem-5bc9c-default-rtdb.firebaseio.com",
-    projectId:         "mlbpickem-5bc9c",
-    storageBucket:     "mlbpickem-5bc9c.firebasestorage.app",
-    messagingSenderId: "699113861941",
-    appId:             "1:699113861941:web:5731f1544c1f11a30a927c"
+    apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
+    authDomain: "nflpickem1728.firebaseapp.com",
+    databaseURL: "https://nflpickem1728-default-rtdb.firebaseio.com",
+    projectId: "nflpickem1728",
+    storageBucket: "nflpickem1728.firebasestorage.app",
+    messagingSenderId: "752271833942",
+    appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
   };
 
   const app  = initializeApp(firebaseConfig);
@@ -1387,43 +1168,29 @@ const NAV_STYLES = `
   const db   = getDatabase(app);
 
   // ── State ─────────────────────────────────────────────────────────────
-  let currentUser   = null;
-  let currentDate   = todayStr();       // 'YYYY-MM-DD'
-  let userPicks     = {};               // gameId → {teamId, lockedIn}
-  let gamesCache    = {};               // gameId → game object
-  let lockTimers    = {};               // gameId → setTimeout id
+  let currentUser     = null;
+  let currentWeek      = 1;
+  let seasonStartDate  = null;
+  let userPicks        = {};               // gameId → {teamId, lockedIn}
+  let gamesCache        = {};               // gameId → game object
+  let lockTimers        = {};               // gameId → setTimeout id
+  let pollInterval      = null;
 
   // ── Survivor state ────────────────────────────────────────────────────
-  const MLB_TEAMS = [
-    { abbrev:'LAA', name:'Angels' },    { abbrev:'HOU', name:'Astros' },
-    { abbrev:'ATH', name:'Athletics' }, { abbrev:'TOR', name:'Blue Jays' },
-    { abbrev:'ATL', name:'Braves' },    { abbrev:'MIL', name:'Brewers' },
-    { abbrev:'STL', name:'Cardinals' }, { abbrev:'DET', name:'Tigers' },
-    { abbrev:'CLE', name:'Guardians' }, { abbrev:'SF',  name:'Giants' },
-    { abbrev:'SD',  name:'Padres' },    { abbrev:'LAD', name:'Dodgers' },
-    { abbrev:'TB',  name:'Rays' },      { abbrev:'TEX', name:'Rangers' },
-    { abbrev:'MIN', name:'Twins' },     { abbrev:'NYY', name:'Yankees' },
-    { abbrev:'MIA', name:'Marlins' },   { abbrev:'NYM', name:'Mets' },
-    { abbrev:'PHI', name:'Phillies' },  { abbrev:'PIT', name:'Pirates' },
-    { abbrev:'ARI', name:'Diamondbacks'},{ abbrev:'COL', name:'Rockies' },
-    { abbrev:'KC',  name:'Royals' },    { abbrev:'BAL', name:'Orioles' },
-    { abbrev:'BOS', name:'Red Sox' },   { abbrev:'CIN', name:'Reds' },
-    { abbrev:'CHC', name:'Cubs' },      { abbrev:'CWS', name:'White Sox' },
-    { abbrev:'SEA', name:'Mariners' },  { abbrev:'WSH', name:'Nationals' },
+  const NFL_TEAMS = [
+    'ARI','ATL','BAL','BUF','CAR','CHI','CIN','CLE','DAL','DEN',
+    'DET','GB','HOU','IND','JAX','KC','LAC','LAR','LV','MIA',
+    'MIN','NE','NO','NYG','NYJ','PHI','PIT','SEA','SF','TB','TEN','WSH'
   ];
 
   let survivorState    = null;
   let survivorSelected = null;
-  let monthGamesCache  = {};   // all month games keyed by YYYY-MM-DD, for FP window check
+  let weekGamesCache   = {};   // 'week-N' → { lastStartTime, games }
 
   // ── Winner resolution ────────────────────────────────────────────────
   function didPickWin(userPick, game) {
     if (!userPick || !game.winnerId) return false;
-    const winnerIsHome  = String(game.winnerId) === String(game.homeTeam.id);
-    const winningAbbrev = winnerIsHome ? game.homeTeam.abbrev : game.awayTeam.abbrev;
-    const pickedAbbrev  = String(userPick) === String(game.homeTeam.id)
-      ? game.homeTeam.abbrev : game.awayTeam.abbrev;
-    return pickedAbbrev === winningAbbrev;
+    return String(userPick) === String(game.winnerId);
   }
 
   function pickAbbrev(userPick, game) {
@@ -1431,46 +1198,46 @@ const NAV_STYLES = `
       ? game.homeTeam.abbrev : game.awayTeam.abbrev;
   }
 
-  // ── Date helpers ──────────────────────────────────────────────────────
-  function todayStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // ── Season / week helpers ────────────────────────────────────────────
+  function seasonKey() {
+    return seasonStartDate ? seasonStartDate.slice(0,4) : String(new Date().getFullYear());
   }
 
-  function dateToESPN(dateStr) {
-    return dateStr.replace(/-/g, '');  // 'YYYYMMDD'
+  function getCurrentWeek() {
+    if (!seasonStartDate) return 1;
+    const start = new Date(seasonStartDate + 'T00:00:00');
+    const diff  = Math.floor((new Date() - start) / 86400000);
+    return Math.max(1, Math.min(18, Math.floor(diff / 7) + 1));
   }
 
-  function formatDateLabel(dateStr) {
-    const today = todayStr();
-    const d = new Date(dateStr + 'T12:00:00');
-    if (dateStr === today) return 'Today';
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
-    if (dateStr === yStr) return 'Yesterday';
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    const tStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${String(tomorrow.getDate()).padStart(2,'0')}`;
-    if (dateStr === tStr) return 'Tomorrow';
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
-  }
-
-  function shiftDate(dateStr, days) {
-    const d = new Date(dateStr + 'T12:00:00');
-    d.setDate(d.getDate() + days);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  function normalizeAbbrev(a) {
+    const m = { 'WAS':'WSH', 'JAC':'JAX', 'KAN':'KC', 'NEP':'NE', 'NOS':'NO', 'GNB':'GB', 'SFO':'SF', 'TAM':'TB' };
+    const up = (a || '').toUpperCase();
+    return m[up] || up || '??';
   }
 
   // ── ESPN helpers ──────────────────────────────────────────────────────
-  function espnLogoUrl(teamId) {
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${teamId}.png`;
+  function espnLogoUrl(abbrev) {
+    return `https://a.espncdn.com/i/teamlogos/nfl/500/${(abbrev||'').toLowerCase()}.png`;
   }
 
   function gameIsLocked(startTimeISO) {
     return new Date() >= new Date(startTimeISO);
   }
 
+  function formatGameDay(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' });
+  }
+
   function formatGameTime(iso) {
-    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+    return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' });
+  }
+
+  function findMNFGame(games) {
+    const mon = games.filter(g => formatGameDay(g.startTime) === 'Mon');
+    if (!mon.length) return null;
+    return mon.reduce((a,b) => new Date(a.startTime) > new Date(b.startTime) ? a : b);
   }
 
   // ── Parse ESPN scoreboard ─────────────────────────────────────────────
@@ -1489,30 +1256,11 @@ const NAV_STYLES = `
 
       const status     = event.status?.type;
       const statusName = status?.name || 'STATUS_SCHEDULED';
-      const startTime  = event.date;
+      const startTime  = comp.date || event.date;
 
-      // Probable pitchers — ESPN puts these on the competitor object, not comp.
-      const getPitcherInfo = (competitor) => {
-        const prob = competitor.probables?.[0];
-        if (!prob) return null;
-        const name = prob.athlete?.shortName
-          || prob.athlete?.displayName
-          || prob.displayName
-          || null;
-        if (!name) return null;
-        const stats = prob.statistics || [];
-        const wins   = stats.find(s => s.name === 'wins')?.displayValue ?? null;
-        const losses = stats.find(s => s.name === 'losses')?.displayValue ?? null;
-        const era    = stats.find(s => s.name === 'ERA' || s.abbreviation === 'ERA')?.displayValue ?? null;
-        const record = (wins != null && losses != null) ? `${wins}-${losses}` : null;
-        return { name, record: record ?? null, era };
-      };
-
-      // Score
       const homeScore = home.score ?? null;
       const awayScore = away.score ?? null;
 
-      // Winner
       let winnerId = null;
       if (statusName === 'STATUS_FINAL') {
         if (home.winner) winnerId = String(home.team.id);
@@ -1526,10 +1274,8 @@ const NAV_STYLES = `
         startTime,
         statusName,
         statusShort: status?.shortDetail || '',
-        homeTeam:    { id: String(home.team.id), abbrev: home.team.abbreviation, name: home.team.displayName, record: home.records?.[0]?.summary || '' },
-        awayTeam:    { id: String(away.team.id), abbrev: away.team.abbreviation, name: away.team.displayName, record: away.records?.[0]?.summary || '' },
-        homePitcher: getPitcherInfo(home),
-        awayPitcher: getPitcherInfo(away),
+        homeTeam:    { id: String(home.team.id), abbrev: normalizeAbbrev(home.team.abbreviation), name: home.team.displayName, record: home.records?.[0]?.summary || '' },
+        awayTeam:    { id: String(away.team.id), abbrev: normalizeAbbrev(away.team.abbreviation), name: away.team.displayName, record: away.records?.[0]?.summary || '' },
         homeScore,
         awayScore,
         winnerId,
@@ -1539,74 +1285,44 @@ const NAV_STYLES = `
   }
 
   // ── Load games ────────────────────────────────────────────────────────
-  let pollInterval = null; // polling timer for live games
-
-  // Normalize a game object read from Firebase cache.
-  // Old cache entries had pitcher as a plain string; new ones are {name, record, era}.
-  // This ensures both formats render correctly.
-  function normalizeCachedGame(g) {
-    const normPitcher = (p) => {
-      if (!p) return null;
-      if (typeof p === 'string') return { name: p, record: null, era: null };
-      return p;
-    };
-    return { ...g, homePitcher: normPitcher(g.homePitcher), awayPitcher: normPitcher(g.awayPitcher) };
-  }
-
-  async function fetchGamesFromESPN(dateStr) {
-    const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=${dateToESPN(dateStr)}`);
+  async function fetchGamesFromESPN(week) {
+    const year = seasonKey();
+    const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`);
     const data = await res.json();
     const games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-    // Write to Firebase cache
     if (games.length > 0) {
       const cacheObj = {};
       for (const g of games) cacheObj[g.id] = g;
-      await set(ref(db, `games/${dateStr}`), cacheObj).catch(() => {});
+      await set(ref(db, `games/week-${week}`), cacheObj).catch(() => {});
     }
     return games;
   }
 
-  async function loadGames(dateStr) {
+  async function loadGames(week) {
     const container  = document.getElementById('gamesContainer');
     const summaryBar = document.getElementById('summaryBar');
     summaryBar.style.display = 'none';
     container.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading games…</p></div>`;
 
-    // Clear timers
     Object.values(lockTimers).forEach(clearTimeout);
     lockTimers = {};
     if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
 
     let games = [];
-    const isToday = dateStr === todayStr();
 
     try {
-      if (isToday) {
-        // Always fetch live from ESPN for today, fall back to Firebase cache if ESPN fails
-        try {
-          games = await fetchGamesFromESPN(dateStr);
-        } catch (espnErr) {
-          console.warn('ESPN fetch failed for today, trying Firebase cache:', espnErr);
-          const dbSnap = await get(ref(db, `games/${dateStr}`));
-          if (dbSnap.exists()) {
-            games = Object.values(dbSnap.val())
-              .map(g => normalizeCachedGame(g))
-              .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-          } else {
-            throw espnErr; // no cache either, surface the error
-          }
-        }
-      } else {
-        // Past/future dates: use cache only if all games are final, otherwise re-fetch
-        const dbSnap = await get(ref(db, `games/${dateStr}`));
-        const allFinal = dbSnap.exists() &&
-          Object.values(dbSnap.val()).every(g => g.statusName === 'STATUS_FINAL');
-        if (allFinal) {
-          games = Object.values(dbSnap.val())
-            .map(g => normalizeCachedGame(g))
+      try {
+        games = await fetchGamesFromESPN(week);
+      } catch (espnErr) {
+        console.warn('ESPN fetch failed, trying Firebase cache:', espnErr);
+      }
+      if (!games.length) {
+        const dbSnap = await get(ref(db, `games/week-${week}`));
+        if (dbSnap.exists()) {
+          games = Object.entries(dbSnap.val())
+            .filter(([k]) => k !== '_cachedAt')
+            .map(([,v]) => v)
             .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-        } else {
-          games = await fetchGamesFromESPN(dateStr);
         }
       }
     } catch (err) {
@@ -1619,58 +1335,51 @@ const NAV_STYLES = `
     for (const g of games) gamesCache[g.id] = g;
 
     if (games.length === 0) {
-      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Enjoy the off day!</p></div>`;
+      container.innerHTML = `<div class="state-box"><div class="icon">🏟️</div><h3>No games scheduled</h3><p>Check back once the schedule is posted for this week.</p></div>`;
+      document.getElementById('tiebreakerSection').style.display = 'none';
+      document.getElementById('survivorSection').style.display = 'none';
       return;
     }
 
-    // Load user picks
-    await loadUserPicks(dateStr);
+    await loadUserPicks(week);
 
-    renderGames(games, dateStr);
+    renderGames(games, week);
     updateSummary(games);
+    renderTiebreaker(games, week);
+    loadSurvivorSection(games, week);
 
-    // Survivor section
-    if (isToday) {
-      loadSurvivorSection(games);
-    } else {
-      document.getElementById('survivorSection').style.display = 'none';
-    }
-
-    // Poll every 5 minutes while any game is not final (today only)
-    if (isToday) {
-      const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
-      if (hasActive) {
-        pollInterval = setInterval(async () => {
-          try {
-            const fresh = await fetchGamesFromESPN(dateStr);
-            if (!fresh.length) return;
-            for (const g of fresh) gamesCache[g.id] = g;
-            await loadUserPicks(dateStr);
-            renderGames(fresh, dateStr);
-            updateSummary(fresh);
-            loadSurvivorSection(fresh);
-            // Stop polling once all games are final
-            if (fresh.every(g => g.statusName === 'STATUS_FINAL')) {
-              clearInterval(pollInterval);
-              pollInterval = null;
-            }
-          } catch (e) { console.warn('Poll failed:', e); }
-        }, 3 * 60 * 1000); // every 3 minutes
-      }
+    const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
+    if (hasActive) {
+      pollInterval = setInterval(async () => {
+        try {
+          const fresh = await fetchGamesFromESPN(week);
+          if (!fresh.length) return;
+          for (const g of fresh) gamesCache[g.id] = g;
+          await loadUserPicks(week);
+          renderGames(fresh, week);
+          updateSummary(fresh);
+          renderTiebreaker(fresh, week);
+          loadSurvivorSection(fresh, week);
+          if (fresh.every(g => g.statusName === 'STATUS_FINAL')) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        } catch (e) { console.warn('Poll failed:', e); }
+      }, 3 * 60 * 1000);
     }
   }
 
   // ── Load picks ────────────────────────────────────────────────────────
-  async function loadUserPicks(dateStr) {
+  async function loadUserPicks(week) {
     if (!currentUser) return;
-    const snap = await get(ref(db, `picks/${currentUser.uid}/${dateStr}`));
+    const snap = await get(ref(db, `picks/${currentUser.uid}/week-${week}`));
     userPicks = snap.exists() ? snap.val() : {};
   }
 
   // ── Save pick ─────────────────────────────────────────────────────────
-  async function savePick(dateStr, gameId, teamId) {
+  async function savePick(week, gameId, teamId) {
     if (!currentUser) return;
-    const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${gameId}`);
+    const pickRef = ref(db, `picks/${currentUser.uid}/week-${week}/${gameId}`);
     await set(pickRef, { teamId, lockedIn: true, correct: null });
     if (!userPicks[gameId]) userPicks[gameId] = {};
     userPicks[gameId].teamId = teamId;
@@ -1678,27 +1387,28 @@ const NAV_STYLES = `
   }
 
   // ── Render ─────────────────────────────────────────────────────────────
-  function renderGames(games, dateStr) {
+  function renderGames(games, week) {
     const container = document.getElementById('gamesContainer');
     container.innerHTML = '';
 
     const grid = document.createElement('div');
     grid.className = 'games-grid';
 
+    const mnfGame = findMNFGame(games);
+
     for (const game of games) {
-      grid.appendChild(buildCard(game, dateStr));
+      grid.appendChild(buildCard(game, week, mnfGame && game.id === mnfGame.id));
     }
 
     container.appendChild(grid);
   }
 
-  function buildCard(game, dateStr) {
+  function buildCard(game, week, isMNF) {
     const locked   = gameIsLocked(game.startTime);
     const isFinal  = game.statusName === 'STATUS_FINAL';
     const isLive   = game.statusName === 'STATUS_IN_PROGRESS';
     const userPick = userPicks[game.id]?.teamId || null;
 
-    // Determine correct/wrong
     let resultClass = '';
     let correct = null;
     if (isFinal && game.winnerId && userPick) {
@@ -1710,27 +1420,25 @@ const NAV_STYLES = `
     card.className = `game-card ${locked ? 'locked' : ''} ${resultClass}`;
     card.dataset.gameId = game.id;
 
-    // Status badge
     let badgeClass = 'badge-upcoming';
     let badgeText  = formatGameTime(game.startTime);
     if (isFinal) { badgeClass = 'badge-final'; badgeText = 'Final'; }
     else if (isLive) { badgeClass = 'badge-live'; badgeText = game.statusShort || 'Live'; }
 
-    // Score or VS
     const midContent = (isFinal || isLive)
       ? `<div class="score-display">${game.awayScore ?? '–'} – ${game.homeScore ?? '–'}</div>`
-      : `<div class="vs-text">vs</div>`;
+      : `<div class="vs-text">@</div>`;
 
-    // Team logo helper
     const logoHtml = (team) => `
       <img class="team-logo"
-           src="${espnLogoUrl(team.abbrev.toLowerCase())}"
+           src="${espnLogoUrl(team.abbrev)}"
            alt="${team.name}"
            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-      <div class="team-logo-placeholder" style="display:none">⚾</div>`;
+      <div class="team-logo-placeholder" style="display:none">🏈</div>`;
 
     card.innerHTML = `
       <div class="card-header">
+        ${isMNF ? '<span class="mnf-badge">MNF</span>' : ''}
         <span class="game-time">${badgeText}</span>
         <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
       </div>
@@ -1740,7 +1448,6 @@ const NAV_STYLES = `
           ${logoHtml(game.awayTeam)}
           <div class="team-name">${game.awayTeam.name}</div>
           <div class="team-record">${game.awayTeam.record}</div>
-          ${game.awayPitcher ? `<div class="team-pitcher">SP: ${typeof game.awayPitcher === 'object' ? game.awayPitcher.name : game.awayPitcher}${typeof game.awayPitcher === 'object' && (game.awayPitcher.record || game.awayPitcher.era) ? `<br><span class="pitcher-stat">${[game.awayPitcher.record, game.awayPitcher.era ? game.awayPitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
 
         <div class="card-mid">
@@ -1752,7 +1459,6 @@ const NAV_STYLES = `
           ${logoHtml(game.homeTeam)}
           <div class="team-name">${game.homeTeam.name}</div>
           <div class="team-record">${game.homeTeam.record}</div>
-          ${game.homePitcher ? `<div class="team-pitcher">SP: ${typeof game.homePitcher === 'object' ? game.homePitcher.name : game.homePitcher}${typeof game.homePitcher === 'object' && (game.homePitcher.record || game.homePitcher.era) ? `<br><span class="pitcher-stat">${[game.homePitcher.record, game.homePitcher.era ? game.homePitcher.era+' ERA' : null].filter(Boolean).join(' · ')}</span>` : ''}</div>` : ''}
         </div>
       </div>
 
@@ -1761,14 +1467,12 @@ const NAV_STYLES = `
       </div>
     `;
 
-    // Pick button listeners (only if not locked)
     if (!locked) {
-      card.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      card.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
+      card.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, week));
+      card.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, week));
 
-      // Schedule lock at game start
       const msUntilLock = new Date(game.startTime) - new Date();
-      if (msUntilLock > 0 && msUntilLock < 86400000) {
+      if (msUntilLock > 0 && msUntilLock < 86400000 * 7) {
         lockTimers[game.id] = setTimeout(() => {
           const footer = document.getElementById(`footer-${game.id}`);
           if (footer) footer.innerHTML = buildFooter(game, true, false, userPicks[game.id]?.teamId || null, null);
@@ -1788,13 +1492,13 @@ const NAV_STYLES = `
       if (!userPick) {
         return `<span class="lock-msg">🔒 No pick made</span>`;
       }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+      const teamName = String(userPick) === String(game.homeTeam.id) ? game.homeTeam.name : game.awayTeam.name;
       const isAuto   = userPicks[game.id]?.auto === true;
       const autoBadge = isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : '';
       if (correct) {
         return `<span class="result-indicator correct">✅ Correct — ${teamName}${autoBadge}</span>`;
       } else {
-        const winnerName = game.winnerId === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+        const winnerName = String(game.winnerId) === String(game.homeTeam.id) ? game.homeTeam.name : game.awayTeam.name;
         return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}${autoBadge}</span>`;
       }
     }
@@ -1803,50 +1507,45 @@ const NAV_STYLES = `
       if (!userPick) {
         return `<span class="lock-msg">🔒 Locked — no pick made</span>`;
       }
-      const teamName = userPick === game.homeTeam.id ? game.homeTeam.name : game.awayTeam.name;
+      const teamName = String(userPick) === String(game.homeTeam.id) ? game.homeTeam.name : game.awayTeam.name;
       const isAuto   = userPicks[game.id]?.auto === true;
       return `<span class="lock-msg">🔒 Locked in: <strong>${teamName}</strong>${isAuto ? '<span class="auto-pick-badge">🤖 auto</span>' : ''}</span>`;
     }
 
-    // Open for picks
     return `
       <span class="pick-label">Pick the winner:</span>
       <div class="pick-controls">
         <button class="pick-btn ${awaySelected ? 'selected' : ''}" id="pick-away-${game.id}">
-          <img src="${espnLogoUrl(game.awayTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
+          <img src="${espnLogoUrl(game.awayTeam.abbrev)}" alt="" onerror="this.style.display='none'" />
           ${game.awayTeam.abbrev}
         </button>
         <button class="pick-btn ${homeSelected ? 'selected' : ''}" id="pick-home-${game.id}">
-          <img src="${espnLogoUrl(game.homeTeam.abbrev.toLowerCase())}" alt="" onerror="this.style.display='none'" />
+          <img src="${espnLogoUrl(game.homeTeam.abbrev)}" alt="" onerror="this.style.display='none'" />
           ${game.homeTeam.abbrev}
         </button>
       </div>
     `;
   }
 
-  async function handlePick(game, teamId, dateStr) {
+  async function handlePick(game, teamId, week) {
     if (gameIsLocked(game.startTime)) return;
 
-    // Toggle off if same pick
     const existing = userPicks[game.id]?.teamId;
-    const newTeamId = existing === teamId ? null : teamId;
+    const newTeamId = String(existing) === String(teamId) ? null : teamId;
 
     userPicks[game.id] = newTeamId ? { teamId: newTeamId, lockedIn: true } : {};
 
-    // Update UI immediately
     const footer = document.getElementById(`footer-${game.id}`);
     if (footer) {
       footer.innerHTML = buildFooter(game, false, false, newTeamId, null);
-      footer.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, dateStr));
-      footer.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, dateStr));
+      footer.querySelector(`#pick-away-${game.id}`)?.addEventListener('click', () => handlePick(game, game.awayTeam.id, week));
+      footer.querySelector(`#pick-home-${game.id}`)?.addEventListener('click', () => handlePick(game, game.homeTeam.id, week));
     }
 
-    // Save to Firebase
     if (newTeamId) {
-      await savePick(dateStr, game.id, newTeamId);
+      await savePick(week, game.id, newTeamId);
     } else {
-      // Remove pick
-      const pickRef = ref(db, `picks/${currentUser.uid}/${dateStr}/${game.id}`);
+      const pickRef = ref(db, `picks/${currentUser.uid}/week-${week}/${game.id}`);
       await set(pickRef, null).catch(() => {});
     }
 
@@ -1861,7 +1560,7 @@ const NAV_STYLES = `
     const total   = games.length;
     const picked  = games.filter(g => userPicks[g.id]?.teamId).length;
     const finals  = games.filter(g => g.statusName === 'STATUS_FINAL' && userPicks[g.id]?.teamId);
-    const correct = finals.filter(g => userPicks[g.id]?.teamId === g.winnerId).length;
+    const correct = finals.filter(g => String(userPicks[g.id]?.teamId) === String(g.winnerId)).length;
 
     document.getElementById('sumGames').textContent  = total;
     document.getElementById('sumPicked').textContent = picked;
@@ -1875,106 +1574,108 @@ const NAV_STYLES = `
     }
   }
 
-  // ── Date nav ──────────────────────────────────────────────────────────
-  function setDate(dateStr) {
-    currentDate = dateStr;
-    document.getElementById('dateLabel').textContent = formatDateLabel(dateStr);
-    document.getElementById('datePicker').value = dateStr;
-    loadGames(dateStr);
+  // ── MNF Tiebreaker ────────────────────────────────────────────────────
+  async function renderTiebreaker(games, week) {
+    const section = document.getElementById('tiebreakerSection');
+    const mnfGame = findMNFGame(games);
+
+    if (!mnfGame) { section.style.display = 'none'; return; }
+    section.style.display = '';
+
+    const locked = gameIsLocked(mnfGame.startTime);
+    const snap   = await get(ref(db, `tiebreakers/${currentUser.uid}/week-${week}`));
+    const guess  = snap.exists() ? snap.val() : null;
+
+    const actual = mnfGame.statusName === 'STATUS_FINAL'
+      ? (parseInt(mnfGame.awayScore||0) + parseInt(mnfGame.homeScore||0)) : null;
+
+    section.innerHTML = `
+      <div class="tiebreaker-card">
+        <div class="tiebreaker-title">🏈 MNF Tiebreaker</div>
+        <div class="tiebreaker-sub">${mnfGame.awayTeam.abbrev} @ ${mnfGame.homeTeam.abbrev} — guess the total combined score.</div>
+        ${locked
+          ? `<div class="tiebreaker-locked">🔒 Your guess: <strong>${guess != null ? guess : 'none submitted'}</strong>${actual != null ? ` · actual: <strong>${actual}</strong>` : ''}</div>`
+          : `<div class="tiebreaker-input-row">
+               <input type="number" step="0.1" id="tiebreakerInput" placeholder="Total points" value="${guess != null ? guess : ''}" />
+               <button id="tiebreakerSaveBtn">Save Guess</button>
+               <span id="tiebreakerMsg" class="tiebreaker-msg"></span>
+             </div>`
+        }
+      </div>`;
+
+    document.getElementById('tiebreakerSaveBtn')?.addEventListener('click', async () => {
+      const input = document.getElementById('tiebreakerInput');
+      const val   = parseFloat(input.value);
+      const msg   = document.getElementById('tiebreakerMsg');
+      if (isNaN(val)) { msg.textContent = 'Enter a number.'; msg.className = 'tiebreaker-msg error'; return; }
+      try {
+        await set(ref(db, `tiebreakers/${currentUser.uid}/week-${week}`), val);
+        msg.textContent = '✅ Saved';
+        msg.className = 'tiebreaker-msg success';
+      } catch (e) {
+        msg.textContent = 'Failed to save.';
+        msg.className = 'tiebreaker-msg error';
+      }
+    });
   }
 
-  document.getElementById('prevDay').addEventListener('click', () => setDate(shiftDate(currentDate, -1)));
-  document.getElementById('nextDay').addEventListener('click', () => setDate(shiftDate(currentDate, +1)));
-  document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
+  // ── Week nav ──────────────────────────────────────────────────────────
+  function setWeek(week) {
+    week = Math.max(1, Math.min(18, week));
+    currentWeek = week;
+    document.getElementById('weekDisplay').textContent = `Week ${week}`;
+    loadGames(week);
+  }
 
-  // ── Auth gate ─────────────────────────────────────────────────────────
+  document.getElementById('prevWeek').addEventListener('click', () => { if (currentWeek > 1) setWeek(currentWeek - 1); });
+  document.getElementById('nextWeek').addEventListener('click', () => { if (currentWeek < 18) setWeek(currentWeek + 1); });
 
   // ── Survivor helpers ──────────────────────────────────────────────────
-  function espnLogoSurv(abbrev) {
-    const a = abbrev.toUpperCase();
-    const slug = a === 'ATH' ? 'oak' : a === 'CHW' ? 'cws' : abbrev.toLowerCase();
-    return `https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png`;
+  function teamsPlayingIn(games) {
+    const s = new Set();
+    for (const g of games) { s.add(normalizeAbbrev(g.homeTeam.abbrev)); s.add(normalizeAbbrev(g.awayTeam.abbrev)); }
+    return s;
   }
 
-  function yearMonthStr() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-  }
-
-  function teamsPlayingToday(games) {
-    const set = new Set();
-    for (const g of games) {
-      set.add(g.homeTeam.abbrev.toUpperCase());
-      set.add(g.awayTeam.abbrev.toUpperCase());
-    }
-    return set;
-  }
-
-  function getSurvivorPickResult(state, games) {
-    const today     = todayStr();
-    const todayPick = state.usedTeams?.[today];
-    if (!todayPick) return null;
+  function getSurvivorPickResult(state, games, week) {
+    const wk   = `week-${week}`;
+    const pick = state.usedTeams?.[wk];
+    if (!pick) return null;
+    const normPick = normalizeAbbrev(pick);
     for (const g of games) {
       const homeAbbrev = normalizeAbbrev(g.homeTeam.abbrev);
       const awayAbbrev = normalizeAbbrev(g.awayTeam.abbrev);
-      const pick       = normalizeAbbrev(todayPick);
-      const inGame     = homeAbbrev === pick || awayAbbrev === pick;
-      if (!inGame) continue;
+      if (homeAbbrev !== normPick && awayAbbrev !== normPick) continue;
       if (g.statusName === 'STATUS_FINAL') {
-        if (!g.winnerId) return { abbrev: todayPick, result: 'pending' };
-        const homeWon = String(g.winnerId) === String(g.homeTeam.id);
-        const won     = homeWon ? normalizeAbbrev(g.homeTeam.abbrev) === pick : normalizeAbbrev(g.awayTeam.abbrev) === pick;
-        return { abbrev: todayPick, result: won ? 'win' : 'loss' };
+        if (!g.winnerId) return { abbrev: pick, result: 'pending' };
+        const won = String(g.winnerId) === String(homeAbbrev === normPick ? g.homeTeam.id : g.awayTeam.id);
+        return { abbrev: pick, result: won ? 'win' : 'loss' };
       }
-      return { abbrev: todayPick, result: 'pending' };
+      return { abbrev: pick, result: 'pending' };
     }
-    return { abbrev: todayPick, result: 'pending' };
+    return { abbrev: pick, result: 'pending' };
   }
 
-
-
-  function normalizeAbbrev(a) {
-    const abbrev = (a || '').toUpperCase();
-    if (abbrev === 'CHW') return 'CWS';
-    if (abbrev === 'KCR') return 'KC';
-    if (abbrev === 'SDP') return 'SD';
-    if (abbrev === 'SFG') return 'SF';
-    if (abbrev === 'TBR') return 'TB';
-    if (abbrev === 'WSN') return 'WSH';
-    return abbrev;
-  }
-
-  // ── Compute survivor status ──────────────────────────────────────────
+  // ── Compute survivor status across weeks ───────────────────────────────
   // Free pass must be explicitly approved by admin — no auto-apply.
-  function computeSurvivorStatus(usedTeams, freePassUsed, freePassDay, monthGames, startDay, today) {
-    const now  = new Date();
-    const ym   = today.substring(0, 7);
-    const year = parseInt(ym.split('-')[0]);
-    const mon  = parseInt(ym.split('-')[1]) - 1;
-    const daysInMonth = new Date(year, mon + 1, 0).getDate();
-    let alive = true, eliminatedDay = null, eliminatedReason = null;
+  function computeSurvivorStatus(usedTeams, freePassUsed, freePassWeek, weekGames, startWeek, upToWeek) {
+    let alive = true, eliminatedWeek = null, eliminatedReason = null;
 
-    // Effective start: if user has picks, start from their first pick day
-    // (handles post-reset joins). If no picks, start from survivorStartDay.
-    // New users who joined late will be eliminated for missed days.
-    const pickDays = Object.keys(usedTeams||{}).map(ds=>parseInt(ds.split('-')[2])).sort((a,b)=>a-b);
-    const effectiveStart = pickDays.length > 0 ? Math.max(startDay, pickDays[0]) : startDay;
+    const pickWeeks = Object.keys(usedTeams||{}).map(k => parseInt(k.split('-')[1])).sort((a,b)=>a-b);
+    const effectiveStart = pickWeeks.length > 0 ? Math.max(startWeek, pickWeeks[0]) : startWeek;
 
-    for (let d = effectiveStart; d <= Math.min(daysInMonth, 30); d++) {
-      const dateStr = `${ym}-${String(d).padStart(2,'0')}`;
-      if (dateStr > today) break;
-      const dayData = monthGames[dateStr];
-      if (!dayData) continue;
-      if (now < dayData.lastStartTime) continue;
-      const pick = (usedTeams || {})[dateStr];
+    for (let w = effectiveStart; w <= upToWeek; w++) {
+      const wk = `week-${w}`;
+      const wkData = weekGames[wk];
+      if (!wkData) continue;
+      if (new Date() < wkData.lastStartTime) continue;
+      const pick = (usedTeams || {})[wk];
       if (!pick) {
-        // Don't eliminate for today if the user has NO picks at all this month —
-        // this handles a mid-day reset where the user hasn't had a chance to pick yet.
-        if (dateStr === today && pickDays.length === 0) break;
-        alive = false; eliminatedDay = d; eliminatedReason = 'missed'; break;
+        if (w === upToWeek && pickWeeks.length === 0) break;
+        alive = false; eliminatedWeek = w; eliminatedReason = 'missed'; break;
       }
       const normPick = normalizeAbbrev(pick);
-      const game = dayData.games.find(g =>
+      const game = wkData.games.find(g =>
         normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
         normalizeAbbrev(g.awayTeam?.abbrev) === normPick
       );
@@ -1984,234 +1685,169 @@ const NAV_STYLES = `
         ? normalizeAbbrev(game.homeTeam.abbrev) === normPick
         : normalizeAbbrev(game.awayTeam.abbrev) === normPick;
       if (!won) {
-        const fpSaves = freePassUsed && freePassDay === d;
-        if (!fpSaves) { alive = false; eliminatedDay = d; eliminatedReason = 'loss'; break; }
+        const fpSaves = freePassUsed && Number(freePassWeek) === w;
+        if (!fpSaves) { alive = false; eliminatedWeek = w; eliminatedReason = 'loss'; break; }
       }
     }
-    return { alive, eliminatedDay, eliminatedReason };
+    return { alive, eliminatedWeek, eliminatedReason };
   }
 
+  async function loadWeekGames(week) {
+    const wk = `week-${week}`;
+    if (weekGamesCache[wk] && weekGamesCache[wk].allFinal) return weekGamesCache[wk];
+    const dbSnap = await get(ref(db, `games/${wk}`));
+    let games = dbSnap.exists()
+      ? Object.entries(dbSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v).sort((a,b)=>new Date(a.startTime)-new Date(b.startTime))
+      : [];
+    if (!games.length) {
+      try { games = await fetchGamesFromESPN(week); } catch(e) {}
+    }
+    if (games.length) {
+      weekGamesCache[wk] = {
+        lastStartTime: new Date(games[games.length-1].startTime),
+        games,
+        allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
+      };
+    }
+    return weekGamesCache[wk];
+  }
 
-  async function loadSurvivorSection(games) {
+  async function loadSurvivorSection(games, week) {
     const section = document.getElementById('survivorSection');
-    const day     = new Date().getDate();
-    const ym      = yearMonthStr();
-    const today   = todayStr();
-
-    if (day === 31) { section.style.display = 'none'; return; }
     section.style.display = '';
 
-    // Load fresh state
-    const snap = await get(ref(db, `survivor/${ym}/${currentUser.uid}`));
+    const season = seasonKey();
+    const snap = await get(ref(db, `survivor/${season}/${currentUser.uid}`));
     survivorState = snap.exists() ? snap.val() : {
       alive: true, freePassUsed: false, freePassRequested: false,
-      freePassDay: null, usedTeams: {}
+      freePassWeek: null, usedTeams: {}
     };
 
-    // Load settings for startDay — month-aware so a May reset doesn't affect June
     const settingsSnap = await get(ref(db, 'adminConfig/settings'));
     const settings = settingsSnap.exists() ? settingsSnap.val() : {};
-    const storedStartDay = settings.survivorStartDay || 1;
-    const storedStartMonth = settings.survivorStartMonth || '';
-    const currentYM2 = yearMonthStr();
-    const startDay = (storedStartMonth === currentYM2) ? storedStartDay : 1;
+    const startWeek = settings.survivorStartWeek || 1;
 
-
-    // Build monthGames from today's games for compute
-    const todayData = {
+    weekGamesCache[`week-${week}`] = {
       lastStartTime: games.length ? new Date(games[games.length-1].startTime) : new Date(0),
       games,
+      allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
     };
-    const monthGamesForCompute = { [today]: todayData };
 
-    // Load past month games too so compute works for past days
-    try {
-      const gSnap = await get(ref(db, 'games'));
-      if (gSnap.exists()) {
-        gSnap.forEach(dc => {
-          if (!dc.key.startsWith(ym) || dc.key === today) return;
-          const gs = Object.values(dc.val()).sort((a,b) => new Date(a.startTime)-new Date(b.startTime));
-          if (!gs.length) return;
-          monthGamesForCompute[dc.key] = {
-            lastStartTime: new Date(gs[gs.length-1].startTime),
-            games: gs,
-          };
-        });
-      }
-    } catch(e) {}
+    for (let w = startWeek; w <= week; w++) {
+      if (w === week) continue;
+      await loadWeekGames(w);
+    }
 
-    monthGamesCache = monthGamesForCompute;  // save for FP window check in renderSurvivorCard
     const raw = survivorState;
     const computed = computeSurvivorStatus(
-      raw.usedTeams, raw.freePassUsed, raw.freePassDay,
-      monthGamesForCompute, startDay, today
+      raw.usedTeams, raw.freePassUsed, raw.freePassWeek,
+      weekGamesCache, startWeek, week
     );
     survivorState = { ...raw, ...computed };
 
-    renderSurvivorCard(games);
+    renderSurvivorCard(games, week);
   }
 
+  function renderSurvivorCard(games, week) {
+    const card  = document.getElementById('survivorCard');
+    const state = survivorState;
+    const wk    = `week-${week}`;
+    const weekPick = state.usedTeams?.[wk];
 
-  function renderSurvivorCard(games) {
-    const card      = document.getElementById('survivorCard');
-    const today     = todayStr();
-    const state     = survivorState;
-    const todayPick = state.usedTeams?.[today];
-    const day       = new Date().getDate();
+    const pickResult = getSurvivorPickResult(state, games, week);
 
-    // Determine pick result for today
-    const pickResult = getSurvivorPickResult(state, games);
+    const lostThisWeek = pickResult?.result === 'loss';
+    const fpUsed = state.freePassUsed;
+    const fpReq  = state.freePassRequested && !state.freePassUsed;
 
-    // ── Determine exact status ────────────────────────────────────────
-    // alive: computed (from computeSurvivorStatus via loadSurvivorSection)
-    // lostToday: pick exists and game is final and they lost
-    // fpRequested: requested but not yet approved
-    // fpUsed: approved and used
-    // canPick: alive AND (no pick yet, OR pick's game hasn't started) AND no pending loss
-    const lostToday = pickResult?.result === 'loss';
-    const fpUsed    = state.freePassUsed;
-    const fpReq     = state.freePassRequested && !state.freePassUsed;
-
-    // A user can pick if:
-    // 1. They are alive (computed)
-    // 2. They haven't lost today (or if they lost, their free pass was approved)
-    // 3. Their current pick's game hasn't started yet (or they have no pick)
-    const pickGame = todayPick ? games.find(g =>
-      normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(todayPick) ||
-      normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(todayPick)
+    const pickGame = weekPick ? games.find(g =>
+      normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(weekPick) ||
+      normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(weekPick)
     ) : null;
     const pickGameStarted = pickGame ? new Date() >= new Date(pickGame.startTime) : false;
     const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
 
-    // Blocking conditions
     function fpWindowOpen() {
-      if (!state.eliminatedDay) return false;
-      const ym = today.substring(0, 7);
-      const nextDay = state.eliminatedDay + 1;
-      const nextDateStr = `${ym}-${String(nextDay).padStart(2, '0')}`;
-      const nextDayData = monthGamesCache[nextDateStr];
-      if (!nextDayData || !nextDayData.games?.length) return true;
-      const allFinal = nextDayData.games.every(g => g.statusName === 'STATUS_FINAL');
-      return !allFinal;
+      if (!state.eliminatedWeek) return false;
+      const nextWeek = state.eliminatedWeek + 1;
+      const nextData = weekGamesCache[`week-${nextWeek}`];
+      if (!nextData || !nextData.games?.length) return true;
+      return !nextData.allFinal;
     }
 
     const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
       && !fpUsed && !fpReq && fpWindowOpen();
-    const blockedByLoss    = (lostToday || lostWithFPAvailable) && !fpUsed;
-    const blockedByElim    = !state.alive && !lostWithFPAvailable;
+    const blockedByLoss = (lostThisWeek || lostWithFPAvailable) && !fpUsed;
+    const blockedByElim = !state.alive && !lostWithFPAvailable;
 
-    // allGamesStarted = last game has started (survivor picks lock at last game start)
     const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
     const allGamesStarted = lastGame ? new Date() >= new Date(lastGame.startTime) : false;
 
     const canPick = state.alive
       && !blockedByLoss
       && (() => {
-        if (todayPick) return !pickGameStarted;  // can change if picked team's game not started
-        return !allGamesStarted;                  // can pick until last game starts
+        if (weekPick) return !pickGameStarted;
+        return !allGamesStarted;
       })();
 
-    // ── Card header ───────────────────────────────────────────────────
     let cardClass = 's-alive', icon = '✅', title = 'Alive';
-    let sub = `Day ${day}`;
+    let sub = `Week ${week}`;
 
     if (blockedByElim) {
       cardClass = 's-dead'; icon = '💀'; title = 'Eliminated';
-      sub = state.eliminatedReason === 'missed' ? `Missed pick on day ${state.eliminatedDay}` : `Lost on day ${state.eliminatedDay}`;
+      sub = state.eliminatedReason === 'missed' ? `Missed pick in week ${state.eliminatedWeek}` : `Lost in week ${state.eliminatedWeek}`;
     } else if (fpUsed) {
       cardClass = 's-freepass'; icon = '🎟️';
       title = 'Alive — Free Pass Used';
-      sub = `Free pass used on day ${state.freePassDay}`;
+      sub = `Free pass used week ${state.freePassWeek}`;
     } else if (blockedByLoss) {
       cardClass = 's-dead'; icon = '❌';
       title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
       sub = fpReq
-        ? `Day ${state.eliminatedDay || day} · awaiting admin approval`
-        : `Lost on day ${state.eliminatedDay || day} · free pass available`;
+        ? `Week ${state.eliminatedWeek || week} · awaiting admin approval`
+        : `Lost week ${state.eliminatedWeek || week} · free pass available`;
     }
 
-    card.className = `survivor-status-card ${cardClass}`;
-
-    // ── Pick display ──────────────────────────────────────────────────
     let pickHTML = '';
+    if (weekPick) {
+      const wrapClass   = pickResult?.result === 'win' ? 'pick-win' : pickResult?.result === 'loss' ? 'pick-loss' : 'pick-pending';
+      const resultClass = pickResult?.result === 'win' ? 's-result-win' : pickResult?.result === 'loss' ? 's-result-loss' : 's-result-pending';
+      const resultLabel = pickResult?.result === 'win' ? '✅ Win'
+        : pickResult?.result === 'loss'
+          ? (fpUsed && Number(state.freePassWeek) === week ? '🎟️ FP saved you' : fpReq ? '⏳ FP requested' : '❌ Loss')
+          : '⏳ Pending';
 
-    if (blockedByElim) {
-      // Eliminated — show why, no grid
       pickHTML = `
         <div class="s-pick-row">
-          <span style="font-size:13px;color:var(--ink-faint)">
-            ${state.eliminatedReason === 'missed'
-              ? '⚠️ You missed a pick and have been eliminated.'
-              : fpUsed
-                ? '⚠️ Your team lost. Your free pass was already used.'
-                : '⚠️ Your team lost and you have no free pass remaining.'}
-          </span>
-        </div>`;
-
-    } else if (blockedByLoss) {
-      // Lost on today or a past day — show pick result and FP request button, no grid
-      const showReqBtn = !fpReq;
-      const losingPick = lostWithFPAvailable
-        ? (state.usedTeams?.[`${today.substring(0,7)}-${String(state.eliminatedDay).padStart(2,'0')}`] || todayPick)
-        : todayPick;
-      pickHTML = `
-        <div class="s-pick-row">
-          <span class="s-pick-label">${lostWithFPAvailable ? `Day ${state.eliminatedDay} pick:` : "Today's pick:"}</span>
-          ${losingPick ? `
-          <div class="s-current-pick pick-loss">
-            <img src="${espnLogoSurv(losingPick)}" alt="${losingPick}" onerror="this.style.display='none'" />
-            ${normalizeAbbrev(losingPick)}
-          </div>
-          <span class="s-result-loss">❌ Team lost</span>` : ''}
+          <span class="s-pick-label">${canPick ? "This week's survivor pick:" : "Your pick:"}${canPick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
         </div>
-        ${showReqBtn ? `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:8px">🎟️ Request Free Pass</button>` : ''}
-        ${fpReq ? `<div class="s-msg show info" style="margin-top:8px">⏳ Free pass requested — awaiting admin approval. You cannot pick until approved.</div>` : ''}`;
-
-    } else if (todayPick) {
-      // Has a pick, not blocked — show it with change option if game not started
-      const chipClass = pickResult?.result === 'win' ? 'pick-win'
-                      : pickResult?.result === 'loss' ? 'pick-loss'
-                      : 'pick-pending';
-      const resultLabel = pickResult?.result === 'win' ? '✅ Survived!'
-        : pickGameStarted ? '⏳ Game in progress…'
-        : '🔓 Pick saved — game not started yet';
-      const resultClass = pickResult?.result === 'win' ? 's-result-win' : 's-result-pending';
-
-      pickHTML = `
-        <div class="s-pick-row">
-          <span class="s-pick-label">Today's survivor pick:${canPick ? ' <span style="font-size:12px;color:var(--ink-faint);font-weight:400">(tap team below to change)</span>' : ''}</span>
-          <div class="s-current-pick ${chipClass}">
-            <img src="${espnLogoSurv(todayPick)}" alt="${todayPick}" onerror="this.style.display='none'" />
-            ${normalizeAbbrev(todayPick)}
-          </div>
+        <div class="s-current-pick ${wrapClass}">
+          <img src="${espnLogoUrl(weekPick)}" onerror="this.style.display='none'" />
+          ${normalizeAbbrev(weekPick)}
           <span class="${resultClass}">${resultLabel}</span>
         </div>`;
 
+      if (blockedByLoss && !fpUsed && !fpReq) {
+        pickHTML += `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:10px">🎟️ Request Free Pass</button>`;
+      }
     } else {
-      // No pick yet — show prompt or warning
       if (anyGameStarted && !canPick) {
-        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ All games have started — no pick made today.</span></div>`;
+        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Games have started — no pick made this week.</span></div>`;
       } else {
         pickHTML = `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive.</span></div>`;
       }
     }
 
-    // ── Team grid (only when canPick) ─────────────────────────────────
     let gridHTML = '';
     if (canPick) {
       const usedSet = new Set(
         Object.entries(state.usedTeams || {})
-          .filter(([date]) => date !== today) // exclude today so they can re-pick same team
-          .map(([, abbrev]) => abbrev)
+          .filter(([w]) => w !== wk)
+          .map(([, abbrev]) => normalizeAbbrev(abbrev))
       );
-      const allTeams = [
-        'ARI','ATL','BAL','BOS','CHC','CWS','CIN','CLE','COL','DET',
-        'HOU','KC','LAA','LAD','MIA','MIL','MIN','NYM','NYY','ATH',
-        'PHI','PIT','SD','SF','SEA','STL','TB','TEX','TOR','WSH'
-      ];
       gridHTML = `
         <div class="s-team-grid" id="sTeamGrid">
-          ${allTeams.map(abbrev => {
+          ${NFL_TEAMS.map(abbrev => {
             const used    = usedSet.has(abbrev);
             const playing = games.some(g =>
               normalizeAbbrev(g.homeTeam.abbrev) === abbrev ||
@@ -2222,30 +1858,28 @@ const NAV_STYLES = `
                normalizeAbbrev(g.awayTeam.abbrev) === abbrev) &&
               new Date() >= new Date(g.startTime)
             );
-            const isCurrentPick = normalizeAbbrev(todayPick||'') === abbrev;
+            const isCurrentPick = normalizeAbbrev(weekPick||'') === abbrev;
             const disabled = used || started;
             return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}${isCurrentPick ? ' s-selected' : ''}"
               data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
-              title="${used ? 'Already used this month' : started ? 'Game started' : !playing ? 'Not playing today' : abbrev}"
+              title="${used ? 'Already used this season' : started ? 'Game started' : !playing ? 'Not playing this week' : abbrev}"
               style="${!playing && !disabled ? 'opacity:.4' : ''}">
-              <img src="${espnLogoSurv(abbrev)}" onerror="this.style.display='none'" />
+              <img src="${espnLogoUrl(abbrev)}" onerror="this.style.display='none'" />
               <span>${abbrev}</span>
-              ${used ? '<span class="s-tile-badge">✓</span>' : ''}
-              ${started && !used ? '<span class="s-tile-badge">🔒</span>' : ''}
+              ${used || (started && !used) ? '<span class="s-used-dot"></span>' : ''}
             </button>`;
           }).join('')}
         </div>
         <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
           <span id="sSelectedLabel" class="s-selected-label"></span>
           <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>{if(b.dataset.abbrev!=='${normalizeAbbrev(todayPick||'')}')b.classList.remove('s-selected')})">Cancel</button>
+          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>{if(b.dataset.abbrev!=='${normalizeAbbrev(weekPick||'')}')b.classList.remove('s-selected')})">Cancel</button>
         </div>
         <div class="s-msg" id="sMsg"></div>`;
     }
 
-    // ── FP note ───────────────────────────────────────────────────────
     const fpNote = fpUsed
-      ? `<span class="s-fp-note">🎟️ Free pass used day ${state.freePassDay}</span>`
+      ? `<span class="s-fp-note">🎟️ Free pass used week ${state.freePassWeek}</span>`
       : fpReq
         ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
         : state.alive
@@ -2263,33 +1897,30 @@ const NAV_STYLES = `
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           ${fpNote}
-          <button onclick="loadSurvivorSection(window._lastSurvivorGames||[])" style="background:none;border:none;font-size:12px;color:var(--ink-faint);cursor:pointer;padding:4px">↻</button>
         </div>
       </div>
       ${pickHTML}
       ${gridHTML}
     `;
 
-    // Wire FP request button
     document.getElementById('requestFPBtn')?.addEventListener('click', async () => {
       const btn = document.getElementById('requestFPBtn');
       btn.disabled = true; btn.textContent = 'Requesting…';
-      const ym2 = yearMonthStr();
-      const fpDay = state.eliminatedDay || day;
+      const season = seasonKey();
+      const fpWeek = state.eliminatedWeek || week;
       try {
         await update(ref(db), {
-          [`survivor/${ym2}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${ym2}/${currentUser.uid}/freePassDay`]: fpDay,
+          [`survivor/${season}/${currentUser.uid}/freePassRequested`]: true,
+          [`survivor/${season}/${currentUser.uid}/freePassWeek`]: fpWeek,
         });
         survivorState.freePassRequested = true;
-        survivorState.freePassDay = fpDay;
-        renderSurvivorCard(games);
+        survivorState.freePassWeek = fpWeek;
+        renderSurvivorCard(games, week);
       } catch(e) {
         btn.disabled = false; btn.textContent = '🎟️ Request Free Pass';
       }
     });
 
-    // Wire team grid clicks
     if (canPick) {
       document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2302,43 +1933,39 @@ const NAV_STYLES = `
           if (label) label.textContent = `Pick: ${survivorSelected}`;
         });
       });
-      document.getElementById('sConfirmBtn')?.addEventListener('click', confirmSurvivorPick);
+      document.getElementById('sConfirmBtn')?.addEventListener('click', () => confirmSurvivorPick(week));
     }
   }
 
-
-  async function confirmSurvivorPick() {
+  async function confirmSurvivorPick(week) {
     if (!survivorSelected) return;
-    const today = todayStr();
-    const ym    = yearMonthStr();
-    const btn   = document.getElementById('sConfirmBtn');
+    const season = seasonKey();
+    const wk     = `week-${week}`;
+    const btn    = document.getElementById('sConfirmBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
 
     try {
-      const updatedTeams = { ...(survivorState.usedTeams || {}), [today]: survivorSelected };
+      const updatedTeams = { ...(survivorState.usedTeams || {}), [wk]: survivorSelected };
       await update(ref(db), {
-        [`survivor/${ym}/${currentUser.uid}/usedTeams`]:    updatedTeams,
-        [`survivor/${ym}/${currentUser.uid}/alive`]:        survivorState.alive,
-        [`survivor/${ym}/${currentUser.uid}/freePassUsed`]: survivorState.freePassUsed,
+        [`survivor/${season}/${currentUser.uid}/usedTeams`]:    updatedTeams,
+        [`survivor/${season}/${currentUser.uid}/alive`]:        survivorState.alive,
+        [`survivor/${season}/${currentUser.uid}/freePassUsed`]: survivorState.freePassUsed,
       });
       survivorState.usedTeams = updatedTeams;
       survivorSelected = null;
-      renderSurvivorCard(Object.values(gamesCache));
+      renderSurvivorCard(Object.values(gamesCache), week);
     } catch (err) {
       const msg = document.getElementById('sMsg');
       if (msg) { msg.textContent = 'Failed to save. Try again.'; msg.className = 's-msg error show'; }
-      btn.disabled = false; btn.textContent = 'Confirm Survivor Pick';
+      btn.disabled = false; btn.textContent = 'Confirm Pick';
     }
   }
-
-
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'index.html'; return; }
 
     currentUser = user;
 
-    // Check approval
     const snap = await get(child(ref(db), `adminConfig/members/${user.uid}`));
     const member = snap.exists() ? snap.val() : null;
     const adminSnap = await get(child(ref(db), `adminConfig/admins/${user.uid}`));
@@ -2348,21 +1975,21 @@ const NAV_STYLES = `
       window.location.href = 'index.html'; return;
     }
 
-    // Nav
-    // Init shared nav
     initNav({
       activePage: 'picks.html',
       isAdmin,
       userName: member?.displayName || user.email,
     });
-    // admin link handled by nav.js
+    checkPendingFPRequests();
     const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
     document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
 
-    // Load today's games
-    setDate(todayStr());
+    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
+    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
+    seasonStartDate = settings.seasonStartDate || null;
 
+    setWeek(getCurrentWeek());
   });
 </script>
 
