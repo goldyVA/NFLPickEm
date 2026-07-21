@@ -1098,10 +1098,11 @@
     <div id="tab-games" style="display:none">
       <div class="data-controls">
         <input type="number" class="data-input" id="gamesWeek" min="1" max="18" style="width:90px" placeholder="Week" />
-        <button class="btn-load" id="loadGamesBtn">Load</button>
+        <button class="btn-load" id="loadGamesBtn">🔄 Refresh from ESPN</button>
       </div>
+      <div style="font-size:12px;color:var(--ink-faint);margin:8px 0 0">This pulls the latest schedule/scores from ESPN for the selected week and caches them to the database — the same thing happens automatically whenever a member opens the Picks page for that week.</div>
       <div id="gamesDataContainer">
-        <div class="state-box"><p>Select a week and click Load.</p></div>
+        <div class="state-box"><p>Select a week and click Refresh.</p></div>
       </div>
     </div>
 
