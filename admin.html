@@ -1838,6 +1838,7 @@ const NAV_STYLES = `
         games[event.id] = {
           id: event.id,
           startTime:   comp.date || event.date,
+          startTimeMs: new Date(comp.date || event.date).getTime(),
           statusName,
           statusShort: event.status?.type?.shortDetail || '',
           homeTeam: { id: String(home.team.id), abbrev: nflNormalizeAbbrev(home.team.abbreviation), name: home.team.displayName, record: home.records?.[0]?.summary || '' },
