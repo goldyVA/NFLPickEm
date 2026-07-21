@@ -315,7 +315,7 @@
           else if (home.score!=null&&away.score!=null)
             winnerId = parseInt(home.score)>parseInt(away.score) ? String(home.team.id) : String(away.team.id);
         }
-        games.push({ id:ev.id, startTime: comp.date || ev.date, statusName,
+        games.push({ id:ev.id, startTime: comp.date || ev.date, startTimeMs: new Date(comp.date || ev.date).getTime(), statusName,
           homeTeam:{ id:String(home.team.id), abbrev:norm(home.team.abbreviation) },
           awayTeam:{ id:String(away.team.id), abbrev:norm(away.team.abbreviation) },
           homeScore:home.score??null, awayScore:away.score??null, winnerId });
