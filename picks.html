@@ -1421,7 +1421,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     card.dataset.gameId = game.id;
 
     let badgeClass = 'badge-upcoming';
-    let badgeText  = formatGameTime(game.startTime);
+    let badgeText  = `${formatGameDay(game.startTime)} ${formatGameTime(game.startTime)}`;
     if (isFinal) { badgeClass = 'badge-final'; badgeText = 'Final'; }
     else if (isLive) { badgeClass = 'badge-live'; badgeText = game.statusShort || 'Live'; }
 
