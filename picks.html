@@ -1272,6 +1272,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       games.push({
         id:          event.id,
         startTime,
+        startTimeMs: new Date(startTime).getTime(),
         statusName,
         statusShort: status?.shortDetail || '',
         homeTeam:    { id: String(home.team.id), abbrev: normalizeAbbrev(home.team.abbreviation), name: home.team.displayName, record: home.records?.[0]?.summary || '' },
