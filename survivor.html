@@ -322,7 +322,9 @@
       }
       games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
       if (games.length) {
-        const obj={}; for(const g of games) obj[g.id]=g;
+        const monGames = games.filter(g => new Date(g.startTime).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }) === 'Mon');
+        const mnfGame  = monGames.length ? monGames.reduce((a,b) => new Date(a.startTime) > new Date(b.startTime) ? a : b) : null;
+        const obj={}; for(const g of games) obj[g.id]={ ...g, isMNF: !!(mnfGame && g.id === mnfGame.id) };
         await set(ref(db,`games/week-${week}`),obj).catch(()=>{});
       }
       return games;
