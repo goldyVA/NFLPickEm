@@ -1848,6 +1848,12 @@ const NAV_STYLES = `
           winnerId,
         };
       }
+      // Tag the MNF game (last Monday game by start time) so Cloud Functions can detect it
+      const gameList = Object.values(games);
+      const monGames = gameList.filter(g => new Date(g.startTime).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }) === 'Mon');
+      const mnfGame  = monGames.length ? monGames.reduce((a,b) => new Date(a.startTime) > new Date(b.startTime) ? a : b) : null;
+      for (const g of gameList) g.isMNF = !!(mnfGame && g.id === mnfGame.id);
+
       // Update Firebase cache
       if (Object.keys(games).length > 0) {
         await set(ref(db, `games/week-${week}`), games).catch(() => {});
