@@ -1292,8 +1292,9 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     const data = await res.json();
     const games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
     if (games.length > 0) {
+      const mnfGame = findMNFGame(games);
       const cacheObj = {};
-      for (const g of games) cacheObj[g.id] = g;
+      for (const g of games) cacheObj[g.id] = { ...g, isMNF: !!(mnfGame && g.id === mnfGame.id) };
       await set(ref(db, `games/week-${week}`), cacheObj).catch(() => {});
     }
     return games;
