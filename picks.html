@@ -503,7 +503,6 @@
 
     .survivor-status-card.s-alive  { border-color: #A8D5B5; background: linear-gradient(135deg,#F0FBF4 0%,var(--white) 50%); }
     .survivor-status-card.s-dead   { border-color: #F0C4C0; background: linear-gradient(135deg,#FDF0EF 0%,var(--white) 50%); }
-    .survivor-status-card.s-freepass { border-color: #F5DFA0; background: linear-gradient(135deg,#FEF9EE 0%,var(--white) 50%); }
 
     .s-top {
       display: flex;
@@ -622,6 +621,14 @@
       background: var(--cream);
     }
 
+    .s-team-tile.s-bye {
+      cursor: not-allowed;
+      background: var(--cream);
+    }
+    .s-team-tile[disabled]:not(.s-used) {
+      cursor: not-allowed;
+    }
+
     .s-used-dot {
       position: absolute;
       top: 3px; right: 3px;
@@ -677,21 +684,6 @@
     }
     @media (hover: hover) { .s-cancel-btn:hover { border-color: var(--red); color: var(--red); } }
     .s-cancel-btn:active { border-color: var(--red); color: var(--red); }
-
-    .s-freepass-btn {
-      padding: 8px 16px;
-      border: 1.5px solid var(--accent);
-      border-radius: var(--radius-sm);
-      background: #FEF9EE;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: #7A5A10;
-      cursor: pointer;
-      transition: all .15s;
-    }
-    .s-freepass-btn:hover { background: var(--accent); color: var(--white); }
-    .s-freepass-btn:disabled { opacity: .5; cursor: not-allowed; }
 
     .s-msg {
       margin-top: 10px;
@@ -1126,32 +1118,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
   overlay?.addEventListener('click', closeDrawer);
   drawer?.querySelectorAll('.drawer-link').forEach(l => l.addEventListener('click', closeDrawer));
 }
-
-  // ── Check pending free pass requests and badge Admin nav ─────────────
-  async function checkPendingFPRequests() {
-    try {
-      const season = seasonKey();
-      const snap = await get(ref(db, `survivor/${season}`));
-      if (!snap.exists()) return;
-      let count = 0;
-      snap.forEach(child => {
-        const s = child.val();
-        if (s.freePassRequested && !s.freePassUsed) count++;
-      });
-      ['adminLink', 'drawerAdminLink'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b => b.remove());
-        if (count > 0) {
-          const isDrawer = id === 'drawerAdminLink';
-          const badge = document.createElement('span');
-          badge.className = isDrawer ? 'drawer-badge' : 'nav-badge';
-          badge.textContent = count;
-          el.appendChild(badge);
-        }
-      });
-    } catch(e) { /* silent */ }
-  }
 
   const firebaseConfig = {
     apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -1658,61 +1624,10 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     return { abbrev: pick, result: 'pending' };
   }
 
-  // ── Compute survivor status across weeks ───────────────────────────────
-  // Free pass must be explicitly approved by admin — no auto-apply.
-  function computeSurvivorStatus(usedTeams, freePassUsed, freePassWeek, weekGames, startWeek, upToWeek) {
-    let alive = true, eliminatedWeek = null, eliminatedReason = null;
-
-    const pickWeeks = Object.keys(usedTeams||{}).map(k => parseInt(k.split('-')[1])).sort((a,b)=>a-b);
-    const effectiveStart = pickWeeks.length > 0 ? Math.max(startWeek, pickWeeks[0]) : startWeek;
-
-    for (let w = effectiveStart; w <= upToWeek; w++) {
-      const wk = `week-${w}`;
-      const wkData = weekGames[wk];
-      if (!wkData) continue;
-      if (new Date() < wkData.lastStartTime) continue;
-      const pick = (usedTeams || {})[wk];
-      if (!pick) {
-        if (w === upToWeek && pickWeeks.length === 0) break;
-        alive = false; eliminatedWeek = w; eliminatedReason = 'missed'; break;
-      }
-      const normPick = normalizeAbbrev(pick);
-      const game = wkData.games.find(g =>
-        normalizeAbbrev(g.homeTeam?.abbrev) === normPick ||
-        normalizeAbbrev(g.awayTeam?.abbrev) === normPick
-      );
-      if (!game || game.statusName !== 'STATUS_FINAL' || !game.winnerId) continue;
-      const homeWon = String(game.winnerId) === String(game.homeTeam?.id);
-      const won = homeWon
-        ? normalizeAbbrev(game.homeTeam.abbrev) === normPick
-        : normalizeAbbrev(game.awayTeam.abbrev) === normPick;
-      if (!won) {
-        const fpSaves = freePassUsed && Number(freePassWeek) === w;
-        if (!fpSaves) { alive = false; eliminatedWeek = w; eliminatedReason = 'loss'; break; }
-      }
-    }
-    return { alive, eliminatedWeek, eliminatedReason };
-  }
-
-  async function loadWeekGames(week) {
-    const wk = `week-${week}`;
-    if (weekGamesCache[wk] && weekGamesCache[wk].allFinal) return weekGamesCache[wk];
-    const dbSnap = await get(ref(db, `games/${wk}`));
-    let games = dbSnap.exists()
-      ? Object.entries(dbSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v).sort((a,b)=>new Date(a.startTime)-new Date(b.startTime))
-      : [];
-    if (!games.length) {
-      try { games = await fetchGamesFromESPN(week); } catch(e) {}
-    }
-    if (games.length) {
-      weekGamesCache[wk] = {
-        lastStartTime: new Date(games[games.length-1].startTime),
-        games,
-        allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
-      };
-    }
-    return weekGamesCache[wk];
-  }
+  // Note: `alive` / `eliminatedWeek` / `eliminatedReason` are written
+  // authoritatively by the onGameFinal Cloud Function once each week's MNF
+  // game goes final. This page reads them directly instead of recomputing —
+  // that also means we don't need to re-fetch every prior week's games here.
 
   async function loadSurvivorSection(games, week) {
     const section = document.getElementById('survivorSection');
@@ -1721,31 +1636,16 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     const season = seasonKey();
     const snap = await get(ref(db, `survivor/${season}/${currentUser.uid}`));
     survivorState = snap.exists() ? snap.val() : {
-      alive: true, freePassUsed: false, freePassRequested: false,
-      freePassWeek: null, usedTeams: {}
+      alive: true, eliminatedWeek: null, eliminatedReason: null, usedTeams: {}
     };
-
-    const settingsSnap = await get(ref(db, 'adminConfig/settings'));
-    const settings = settingsSnap.exists() ? settingsSnap.val() : {};
-    const startWeek = settings.survivorStartWeek || 1;
+    // Fill in any missing fields (e.g. legacy record from before this format)
+    survivorState = { alive: true, eliminatedWeek: null, eliminatedReason: null, usedTeams: {}, ...survivorState };
 
     weekGamesCache[`week-${week}`] = {
       lastStartTime: games.length ? new Date(games[games.length-1].startTime) : new Date(0),
       games,
       allFinal: games.every(g => g.statusName === 'STATUS_FINAL'),
     };
-
-    for (let w = startWeek; w <= week; w++) {
-      if (w === week) continue;
-      await loadWeekGames(w);
-    }
-
-    const raw = survivorState;
-    const computed = computeSurvivorStatus(
-      raw.usedTeams, raw.freePassUsed, raw.freePassWeek,
-      weekGamesCache, startWeek, week
-    );
-    survivorState = { ...raw, ...computed };
 
     renderSurvivorCard(games, week);
   }
@@ -1758,10 +1658,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
 
     const pickResult = getSurvivorPickResult(state, games, week);
 
-    const lostThisWeek = pickResult?.result === 'loss';
-    const fpUsed = state.freePassUsed;
-    const fpReq  = state.freePassRequested && !state.freePassUsed;
-
     const pickGame = weekPick ? games.find(g =>
       normalizeAbbrev(g.homeTeam.abbrev) === normalizeAbbrev(weekPick) ||
       normalizeAbbrev(g.awayTeam.abbrev) === normalizeAbbrev(weekPick)
@@ -1769,55 +1665,28 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     const pickGameStarted = pickGame ? new Date() >= new Date(pickGame.startTime) : false;
     const anyGameStarted  = games.some(g => new Date() >= new Date(g.startTime));
 
-    function fpWindowOpen() {
-      if (!state.eliminatedWeek) return false;
-      const nextWeek = state.eliminatedWeek + 1;
-      const nextData = weekGamesCache[`week-${nextWeek}`];
-      if (!nextData || !nextData.games?.length) return true;
-      return !nextData.allFinal;
-    }
-
-    const lostWithFPAvailable = !state.alive && state.eliminatedReason === 'loss'
-      && !fpUsed && !fpReq && fpWindowOpen();
-    const blockedByLoss = (lostThisWeek || lostWithFPAvailable) && !fpUsed;
-    const blockedByElim = !state.alive && !lostWithFPAvailable;
-
     const lastGame = [...games].sort((a,b) => new Date(b.startTime)-new Date(a.startTime))[0];
     const allGamesStarted = lastGame ? new Date() >= new Date(lastGame.startTime) : false;
 
-    const canPick = state.alive
-      && !blockedByLoss
-      && (() => {
-        if (weekPick) return !pickGameStarted;
-        return !allGamesStarted;
-      })();
+    // Pick locks the moment that team's game kicks off; otherwise changeable
+    // up until the last game of the week starts.
+    const canPick = state.alive && (weekPick ? !pickGameStarted : !allGamesStarted);
 
     let cardClass = 's-alive', icon = '✅', title = 'Alive';
     let sub = `Week ${week}`;
 
-    if (blockedByElim) {
+    if (!state.alive) {
       cardClass = 's-dead'; icon = '💀'; title = 'Eliminated';
-      sub = state.eliminatedReason === 'missed' ? `Missed pick in week ${state.eliminatedWeek}` : `Lost in week ${state.eliminatedWeek}`;
-    } else if (fpUsed) {
-      cardClass = 's-freepass'; icon = '🎟️';
-      title = 'Alive — Free Pass Used';
-      sub = `Free pass used week ${state.freePassWeek}`;
-    } else if (blockedByLoss) {
-      cardClass = 's-dead'; icon = '❌';
-      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      sub = fpReq
-        ? `Week ${state.eliminatedWeek || week} · awaiting admin approval`
-        : `Lost week ${state.eliminatedWeek || week} · free pass available`;
+      sub = state.eliminatedReason === 'missed' ? `Missed pick in week ${state.eliminatedWeek}`
+        : state.eliminatedReason === 'tie' ? `Team tied in week ${state.eliminatedWeek}`
+        : `Lost in week ${state.eliminatedWeek}`;
     }
 
     let pickHTML = '';
     if (weekPick) {
       const wrapClass   = pickResult?.result === 'win' ? 'pick-win' : pickResult?.result === 'loss' ? 'pick-loss' : 'pick-pending';
       const resultClass = pickResult?.result === 'win' ? 's-result-win' : pickResult?.result === 'loss' ? 's-result-loss' : 's-result-pending';
-      const resultLabel = pickResult?.result === 'win' ? '✅ Win'
-        : pickResult?.result === 'loss'
-          ? (fpUsed && Number(state.freePassWeek) === week ? '🎟️ FP saved you' : fpReq ? '⏳ FP requested' : '❌ Loss')
-          : '⏳ Pending';
+      const resultLabel = pickResult?.result === 'win' ? '✅ Win' : pickResult?.result === 'loss' ? '❌ Loss/Tie' : '⏳ Pending';
 
       pickHTML = `
         <div class="s-pick-row">
@@ -1828,10 +1697,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
           ${normalizeAbbrev(weekPick)}
           <span class="${resultClass}">${resultLabel}</span>
         </div>`;
-
-      if (blockedByLoss && !fpUsed && !fpReq) {
-        pickHTML += `<button class="s-freepass-btn" id="requestFPBtn" style="margin-top:10px">🎟️ Request Free Pass</button>`;
-      }
     } else {
       if (anyGameStarted && !canPick) {
         pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Games have started — no pick made this week.</span></div>`;
@@ -1860,12 +1725,14 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
                normalizeAbbrev(g.awayTeam.abbrev) === abbrev) &&
               new Date() >= new Date(g.startTime)
             );
+            const bye = !playing; // team not in this week's schedule at all
             const isCurrentPick = normalizeAbbrev(weekPick||'') === abbrev;
-            const disabled = used || started;
-            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}${isCurrentPick ? ' s-selected' : ''}"
+            const disabled = used || started || bye;
+            const title_ = used ? 'Already used this season' : started ? 'Game started' : bye ? 'On a bye this week' : abbrev;
+            return `<button class="s-team-tile${used ? ' s-used' : ''}${started && !used ? ' s-started' : ''}${bye ? ' s-bye' : ''}${isCurrentPick ? ' s-selected' : ''}"
               data-abbrev="${abbrev}" ${disabled ? 'disabled' : ''}
-              title="${used ? 'Already used this season' : started ? 'Game started' : !playing ? 'Not playing this week' : abbrev}"
-              style="${!playing && !disabled ? 'opacity:.4' : ''}">
+              title="${title_}"
+              style="${bye ? 'opacity:.4' : ''}">
               <img src="${espnLogoUrl(abbrev)}" onerror="this.style.display='none'" />
               <span>${abbrev}</span>
               ${used || (started && !used) ? '<span class="s-used-dot"></span>' : ''}
@@ -1880,14 +1747,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
         <div class="s-msg" id="sMsg"></div>`;
     }
 
-    const fpNote = fpUsed
-      ? `<span class="s-fp-note">🎟️ Free pass used week ${state.freePassWeek}</span>`
-      : fpReq
-        ? `<span class="s-fp-note" style="color:#7A5A10">⏳ Free pass pending</span>`
-        : state.alive
-          ? `<span class="s-fp-note" style="color:var(--green)">🎟️ Free pass available</span>`
-          : '';
-
     card.innerHTML = `
       <div class="s-status-header">
         <div class="s-top-left">
@@ -1897,31 +1756,10 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
             <div class="s-sub">${sub}</div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${fpNote}
-        </div>
       </div>
       ${pickHTML}
       ${gridHTML}
     `;
-
-    document.getElementById('requestFPBtn')?.addEventListener('click', async () => {
-      const btn = document.getElementById('requestFPBtn');
-      btn.disabled = true; btn.textContent = 'Requesting…';
-      const season = seasonKey();
-      const fpWeek = state.eliminatedWeek || week;
-      try {
-        await update(ref(db), {
-          [`survivor/${season}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${season}/${currentUser.uid}/freePassWeek`]: fpWeek,
-        });
-        survivorState.freePassRequested = true;
-        survivorState.freePassWeek = fpWeek;
-        renderSurvivorCard(games, week);
-      } catch(e) {
-        btn.disabled = false; btn.textContent = '🎟️ Request Free Pass';
-      }
-    });
 
     if (canPick) {
       document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
@@ -1949,9 +1787,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     try {
       const updatedTeams = { ...(survivorState.usedTeams || {}), [wk]: survivorSelected };
       await update(ref(db), {
-        [`survivor/${season}/${currentUser.uid}/usedTeams`]:    updatedTeams,
-        [`survivor/${season}/${currentUser.uid}/alive`]:        survivorState.alive,
-        [`survivor/${season}/${currentUser.uid}/freePassUsed`]: survivorState.freePassUsed,
+        [`survivor/${season}/${currentUser.uid}/usedTeams`]: updatedTeams,
       });
       survivorState.usedTeams = updatedTeams;
       survivorSelected = null;
@@ -1982,7 +1818,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       isAdmin,
       userName: member?.displayName || user.email,
     });
-    checkPendingFPRequests();
     const _signOut = () => signOut(auth).then(() => window.location.href = 'index.html');
     document.getElementById('signOutBtn')?.addEventListener('click', _signOut);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click', _signOut);
