@@ -31,13 +31,11 @@
     /* Status card */
     .status-card { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:20px 24px; margin-bottom:24px; border-left:4px solid var(--green); }
     .status-card.dead     { border-left-color:var(--red); }
-    .status-card.freepass { border-left-color:var(--accent); }
     .status-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
     .status-left { display:flex; align-items:center; gap:14px; }
     .status-icon { font-size:36px; line-height:1; }
     .status-title { font-family:'DM Serif Display',serif; font-size:22px; color:var(--navy); }
     .status-subtitle { font-size:13px; color:var(--ink-faint); margin-top:3px; }
-    .fp-note { font-size:13px; }
     .pick-result-row { margin-top:16px; padding-top:16px; border-top:1px solid var(--cream-dark); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
     .pick-logo { width:28px; height:28px; object-fit:contain; }
     .pick-team-name { font-weight:600; font-size:15px; }
@@ -45,10 +43,13 @@
     .result-badge.win     { background:#D4EDDA; color:#155724; }
     .result-badge.loss    { background:#F8D7DA; color:#721C24; }
     .result-badge.pending { background:var(--cream-dark); color:var(--ink-faint); }
-    .btn-fp { margin-top:12px; padding:10px 18px; background:var(--accent); color:var(--ink); border:none; border-radius:var(--radius-sm); font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; display:block; }
-    .fp-pending-msg { margin-top:10px; font-size:13px; color:#7A5A10; background:#FEF9EE; border:1px solid #F5DFA0; border-radius:8px; padding:10px 14px; }
     .picks-link { margin-top:10px; font-size:13px; color:var(--ink-faint); }
     .picks-link a { color:var(--navy); font-weight:600; }
+    .mass-elim-note { margin-top:12px; font-size:13px; color:#7A5A10; background:#FEF9EE; border:1px solid #F5DFA0; border-radius:8px; padding:10px 14px; }
+
+    /* Rules */
+    .rules-list { display:flex; flex-direction:column; gap:10px; font-size:14px; line-height:1.5; color:var(--ink-light); }
+    .rules-list li { margin-left:20px; }
 
     /* Section */
     .section { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm); padding:20px 24px; margin-bottom:24px; }
@@ -64,7 +65,6 @@
     .lstatus { font-size:12px; font-weight:600; padding:3px 10px; border-radius:100px; }
     .lstatus-alive    { background:#D4EDDA; color:#155724; }
     .lstatus-dead     { background:#F8D7DA; color:#721C24; }
-    .lstatus-freepass { background:#FEF9EE; color:#7A5A10; }
     .leader-picks { font-size:12px; color:var(--ink-faint); flex-shrink:0; }
 
     /* Monthly grid */
@@ -81,7 +81,6 @@
     .gc { display:inline-block; border-radius:4px; padding:2px 3px; font-size:10px; font-weight:700; min-width:26px; text-align:center; }
     .gc-win     { background:#D4EDDA; color:#155724; }
     .gc-loss    { background:#F8D7DA; color:#721C24; }
-    .gc-fp      { background:#FEF9EE; color:#7A5A10; border:1px solid #F5DFA0; }
     .gc-pending { background:var(--cream-dark); color:var(--ink-faint); }
     .gc-future  { color:var(--cream-dark); }
     .gc-blank   { color:var(--cream-dark); }
@@ -139,6 +138,7 @@
     </div>
 
     <div id="mainContent" style="display:none">
+      <div id="championsBanner"></div>
       <div id="myStatusSection"></div>
       <div class="section">
         <div class="section-title">🏆 Survivor Board</div>
@@ -148,13 +148,25 @@
         <div class="section-title" id="gridTitle">📅 Weekly Picks</div>
         <div class="grid-wrap"><div id="monthlyGrid"></div></div>
       </div>
+      <div class="section">
+        <div class="section-title">📜 Rules</div>
+        <ul class="rules-list">
+          <li>Pick one team to win, straight up, every week — no spreads.</li>
+          <li>You can't pick the same team twice in a season.</li>
+          <li>Your pick locks the moment that team's game kicks off. Until then, you can change it right up until the last game of the week starts.</li>
+          <li>No pick by Monday Night kickoff, or your team loses or ties, and you're eliminated.</li>
+          <li>Teams on a bye that week aren't pickable. Teams you've already used are greyed out below.</li>
+          <li>If everyone still alive would be eliminated in the same week, nobody's out — the pool carries on so a single winner can still emerge. (Your pick still counts as used either way.)</li>
+          <li>If more than one person is still alive after Week 18, it's a tie — co-champions.</li>
+        </ul>
+      </div>
     </div>
   </div>
 
 <script type="module">
   import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get, set, update }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getDatabase, ref, get, set }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -239,49 +251,9 @@
     dr.querySelectorAll('.drawer-link').forEach(l=>l.addEventListener('click',close));
   }
 
-  async function checkPendingFP() {
-    try {
-      const snap = await get(ref(db, `survivor/${seasonKey()}`));
-      if (!snap.exists()) return;
-      let n = 0;
-      snap.forEach(c=>{ const v=c.val(); if(v&&v.freePassRequested&&!v.freePassUsed) n++; });
-      ['adminLink','drawerAdminLink'].forEach(id=>{
-        const el = document.getElementById(id); if(!el) return;
-        el.querySelectorAll('.nav-badge,.drawer-badge').forEach(b=>b.remove());
-        if(n>0){ const b=document.createElement('span'); b.className=id==='drawerAdminLink'?'drawer-badge':'nav-badge'; b.textContent=n; el.appendChild(b); }
-      });
-    } catch(e){}
-  }
-
-  // ── Compute status (pure function, no Firebase writes) ────────────────
-  function computeStatus(usedTeams, fpUsed, fpWeek, weekGames, startWeek, upToWeek) {
-    if (!usedTeams) usedTeams = {};
-    let alive=true, eliminatedWeek=null, eliminatedReason=null;
-
-    const pickWeeks = Object.keys(usedTeams).map(k => parseInt(k.split('-')[1])).sort((a,b)=>a-b);
-    const effectiveStartWeek = pickWeeks.length > 0 ? Math.max(startWeek, pickWeeks[0]) : startWeek;
-
-    for (let w=effectiveStartWeek; w<=upToWeek; w++) {
-      const wk = `week-${w}`;
-      const wd = weekGames[wk]; if (!wd) continue;
-      if (new Date() < wd.lastStartTime) continue;
-      const pick = usedTeams[wk];
-      if (!pick) {
-        if (w === upToWeek && pickWeeks.length === 0) break;
-        alive=false; eliminatedWeek=w; eliminatedReason='missed'; break;
-      }
-      const np = norm(pick);
-      const game = wd.games.find(g => norm(g.homeTeam?.abbrev)===np || norm(g.awayTeam?.abbrev)===np);
-      if (!game || game.statusName!=='STATUS_FINAL' || !game.winnerId) continue;
-      const homeWon = String(game.winnerId)===String(game.homeTeam?.id);
-      const won = homeWon ? norm(game.homeTeam.abbrev)===np : norm(game.awayTeam.abbrev)===np;
-      if (!won) {
-        if (fpUsed && Number(fpWeek)===w) continue; // FP approved for this week
-        alive=false; eliminatedWeek=w; eliminatedReason='loss'; break;
-      }
-    }
-    return { alive, eliminatedWeek, eliminatedReason };
-  }
+  // Note: `alive` / `eliminatedWeek` / `eliminatedReason` are now written
+  // authoritatively by the onGameFinal Cloud Function once each week's MNF
+  // game goes final — this page just reads them, it doesn't compute them.
 
   function getPickResult(pick, games) {
     if (!pick || !games?.length) return null;
@@ -354,8 +326,22 @@
     return wg;
   }
 
+  // ── Render champions banner (only appears once Week 18 has resolved) ──
+  function renderChampionsBanner(champions) {
+    const el = document.getElementById('championsBanner');
+    if (!champions || !champions.length) { el.innerHTML=''; return; }
+    const names = champions.map(uid => {
+      const m = allMembers.find(x=>x.uid===uid);
+      return m ? (m.displayName||m.email) : 'Unknown';
+    });
+    const label = names.length > 1 ? `🏆 Co-Champions: ${names.join(' & ')}` : `🏆 Champion: ${names[0]}`;
+    el.innerHTML = `<div class="section" style="border-left:4px solid var(--accent);text-align:center">
+      <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy)">${label}</div>
+    </div>`;
+  }
+
   // ── Render status card ────────────────────────────────────────────────
-  function renderMyStatus(myState, weekGames, week) {
+  function renderMyStatus(myState, weekGames, week, massElimWeeks) {
     const section  = document.getElementById('myStatusSection');
     const wk       = `week-${week}`;
     const picks    = myState.usedTeams || {};
@@ -365,52 +351,30 @@
 
     let cardClass='alive', icon='✅', title="You're Alive!";
     let subtitle = `Week ${week} · ${pickCount} pick${pickCount!==1?'s':''} made`;
-    const lostThisWeek = result === 'loss';
-    const fpUsed    = myState.freePassUsed;
-    const fpReq     = myState.freePassRequested && !myState.freePassUsed;
 
     if (!myState.alive) {
       cardClass='dead'; icon='💀'; title='Eliminated';
-      const why = myState.eliminatedReason==='missed' ? 'missed a pick' : 'team lost';
+      const why = myState.eliminatedReason==='missed' ? 'missed a pick' : myState.eliminatedReason==='tie' ? 'team tied' : 'team lost';
       subtitle = myState.eliminatedWeek ? `Eliminated week ${myState.eliminatedWeek} (${why})` : 'Better luck next season';
-    } else if (fpUsed) {
-      cardClass='freepass'; icon='🎟️'; title='Alive — Free Pass Used';
-      subtitle = `Free pass used week ${myState.freePassWeek}`;
-    } else if (lostThisWeek && !fpUsed) {
-      cardClass='dead'; icon='❌';
-      title = fpReq ? 'Loss — Free Pass Requested' : 'Loss — Request Free Pass';
-      subtitle = fpReq ? 'Awaiting admin approval' : `Week ${week}`;
     }
-
-    const fpNote = myState.freePassUsed
-      ? `<span class="fp-note" style="color:var(--ink-faint)">🎟️ FP used week ${myState.freePassWeek}</span>`
-      : myState.freePassRequested
-        ? `<span class="fp-note" style="color:#7A5A10">⏳ FP requested</span>`
-        : myState.alive
-          ? `<span class="fp-note" style="color:var(--green)">🎟️ FP available</span>`
-          : '';
 
     let pickHTML = '';
     if (weekPick) {
       const bc = result==='win' ? 'win' : result==='loss' ? 'loss' : 'pending';
-      const bl = result==='win' ? '✅ Win'
-        : result==='loss'
-          ? (myState.freePassUsed && Number(myState.freePassWeek)===week ? '🎟️ FP saved you'
-            : myState.freePassRequested ? '⏳ FP requested' : '❌ Loss')
-          : '⏳ Pending';
-      const showBtn = result==='loss' && myState.alive && !myState.freePassUsed && !myState.freePassRequested;
-      const showMsg = myState.freePassRequested && !myState.freePassUsed;
+      const bl = result==='win' ? '✅ Win' : result==='loss' ? '❌ Loss/Tie' : '⏳ Pending';
       pickHTML = `
         <div class="pick-result-row">
           <img class="pick-logo" src="${logo(weekPick)}" onerror="this.style.display='none'" />
           <span class="pick-team-name">${norm(weekPick)}</span>
           <span class="result-badge ${bc}">${bl}</span>
-        </div>
-        ${showBtn ? `<button class="btn-fp" id="reqFPBtn">🎟️ Request Free Pass</button>` : ''}
-        ${showMsg ? `<div class="fp-pending-msg">⏳ Free pass requested — awaiting admin approval</div>` : ''}`;
+        </div>`;
     } else {
       pickHTML = `<div class="picks-link">Make your pick on the <a href="picks.html">My Picks</a> page.</div>`;
     }
+
+    const massNote = massElimWeeks?.[wk]
+      ? `<div class="mass-elim-note">⚠️ Everyone still alive lost in Week ${week} — nobody was eliminated this week so the pool could continue, but that pick still counts as used.</div>`
+      : '';
 
     section.innerHTML = `
       <div class="status-card ${cardClass}">
@@ -419,39 +383,23 @@
             <div class="status-icon">${icon}</div>
             <div><div class="status-title">${title}</div><div class="status-subtitle">${subtitle}</div></div>
           </div>
-          ${fpNote}
         </div>
         ${pickHTML}
+        ${massNote}
       </div>`;
-
-    document.getElementById('reqFPBtn')?.addEventListener('click', async () => {
-      const btn = document.getElementById('reqFPBtn');
-      btn.disabled=true; btn.textContent='Requesting…';
-      try {
-        await update(ref(db), {
-          [`survivor/${seasonKey()}/${currentUser.uid}/freePassRequested`]: true,
-          [`survivor/${seasonKey()}/${currentUser.uid}/freePassWeek`]: week,
-        });
-        myState.freePassRequested=true; myState.freePassWeek=week;
-        renderMyStatus(myState, weekGames, week);
-      } catch(e) { btn.disabled=false; btn.textContent='🎟️ Request Free Pass'; }
-    });
   }
 
   // ── Render leaderboard ────────────────────────────────────────────────
-  function renderLeaderboard(weekGames, week, startWeek) {
+  function renderLeaderboard() {
     const rows = allMembers.map(m => {
       const raw = allStates[m.uid] || {};
-      const ut = raw.usedTeams || {};
-      const c  = computeStatus(ut, raw.freePassUsed, raw.freePassWeek, weekGames, startWeek, week);
-      return { ...m, alive:c.alive, fpUsed:raw.freePassUsed, fpReq:raw.freePassRequested, picks:Object.keys(ut).length };
+      const ut  = raw.usedTeams || {};
+      return { ...m, alive: raw.alive !== false, picks: Object.keys(ut).length };
     });
     rows.sort((a,b) => { if(a.alive!==b.alive) return a.alive?-1:1; return b.picks-a.picks; });
     document.getElementById('leaderList').innerHTML = rows.map((r,i) => {
-      let sc='lstatus-alive', st='✅ Alive';
-      if (!r.alive)   { sc='lstatus-dead'; st='💀 Out'; }
-      else if (r.fpUsed) { sc='lstatus-freepass'; st='🎟️ Alive (FP used)'; }
-      else if (r.fpReq)  { sc='lstatus-freepass'; st='⏳ FP Requested'; }
+      const sc = r.alive ? 'lstatus-alive' : 'lstatus-dead';
+      const st = r.alive ? '✅ Alive' : '💀 Out';
       return `<div class="leader-row${r.uid===currentUser.uid?' is-you':''}">
         <span class="leader-rank">${i+1}</span>
         <span class="leader-name">${r.displayName||r.email}${r.uid===currentUser.uid?'<span class="leader-you">(you)</span>':''}</span>
@@ -462,7 +410,7 @@
   }
 
   // ── Render weekly grid ────────────────────────────────────────────────
-  function renderWeeklyGrid(weekGames, curWeek, defaultStartWeek) {
+  function renderWeeklyGrid(weekGames, curWeek, defaultStartWeek, massElimWeeks) {
     const members = [...allMembers].sort((a,b)=>{
       if(a.uid===currentUser.uid) return -1;
       if(b.uid===currentUser.uid) return 1;
@@ -494,9 +442,6 @@
       const raw = allStates[m.uid]||{};
       const hasPicks = raw.usedTeams && Object.keys(raw.usedTeams).length>0;
       const ut  = hasPicks ? (raw.usedTeams||{}) : {};
-      const fpU = raw.freePassUsed||false;
-      const fpW = raw.freePassWeek||null;
-      const fpR = raw.freePassRequested||false;
       const isYou = m.uid===currentUser.uid;
       const row=tbody.insertRow(); if(isYou) row.className='is-you';
       const ntd=row.insertCell(); ntd.className='mtd';
@@ -523,9 +468,10 @@
           if (r==='win') { wins++; cell=`<span class="gc gc-win">${label}</span>`; }
           else if (r==='loss') {
             losses++;
-            if (Number(fpW)===w && fpU) cell=`<span class="gc gc-fp">🎟️${label}</span>`;
-            else if (Number(fpW)===w && fpR) cell=`<span class="gc gc-fp">⏳${label}</span>`;
-            else cell=`<span class="gc gc-loss">${label}</span>`;
+            const massSafe = massElimWeeks?.[wk];
+            cell = massSafe
+              ? `<span class="gc gc-loss" title="Mass elimination week — everyone stayed alive">${label}*</span>`
+              : `<span class="gc gc-loss">${label}</span>`;
           } else { cell=`<span class="gc gc-pending">${label}</span>`; }
         }
         td.innerHTML=cell;
@@ -555,16 +501,26 @@
       allMembers=[];
       if (ms.exists()) ms.forEach(c=>{ if(c.val().approved) allMembers.push({uid:c.key,...c.val()}); });
 
-      // Survivor states — skip null/empty records from reset
+      // Survivor states — skip null/empty records from reset, and the
+      // 'meta' node (mass-elimination weeks / champions) is not a member
       const sv = await get(ref(db,`survivor/${season}`));
       allStates={};
-      if (sv.exists()) sv.forEach(c=>{ const v=c.val(); if(v&&typeof v==='object') allStates[c.key]=v; });
+      let massElimWeeks = {}, champions = [];
+      if (sv.exists()) sv.forEach(c=>{
+        if (c.key === 'meta') {
+          const meta = c.val() || {};
+          massElimWeeks = meta.massEliminationWeeks || {};
+          champions = meta.champions || [];
+          return;
+        }
+        const v=c.val(); if(v&&typeof v==='object') allStates[c.key]=v;
+      });
 
-      // My state
+      // My state — alive/eliminatedWeek/eliminatedReason are written
+      // authoritatively by the onGameFinal Cloud Function, not computed here
       const myRaw = allStates[currentUser.uid]||{};
-      const myBase = {
-        alive: true, freePassUsed: false, freePassRequested: false,
-        freePassWeek: null, usedTeams: {},
+      const myState = {
+        alive: true, eliminatedWeek: null, eliminatedReason: null, usedTeams: {},
         ...myRaw
       };
 
@@ -572,16 +528,13 @@
       const weekGames = await loadSeasonWeekGames(week);
       weekGamesCache = weekGames;
 
-      // Compute my status
-      const c = computeStatus(myBase.usedTeams, myBase.freePassUsed, myBase.freePassWeek, weekGames, survivorStartWeek, week);
-      const myState = { ...myBase, ...c };
-
       // Show
       document.getElementById('loadingState').style.display='none';
       document.getElementById('mainContent').style.display='';
-      renderMyStatus(myState, weekGames[`week-${week}`]?.games || [], week);
-      renderLeaderboard(weekGames, week, survivorStartWeek);
-      renderWeeklyGrid(weekGames, week, survivorStartWeek);
+      renderChampionsBanner(champions);
+      renderMyStatus(myState, weekGames[`week-${week}`]?.games || [], week, massElimWeeks);
+      renderLeaderboard();
+      renderWeeklyGrid(weekGames, week, survivorStartWeek, massElimWeeks);
 
     } catch(err) {
       console.error(err);
@@ -604,7 +557,6 @@
     const settings = settingsSnap.exists() ? settingsSnap.val() : {};
     seasonStartDate = settings.seasonStartDate || null;
 
-    checkPendingFP();
     const so = ()=>signOut(auth).then(()=>window.location.href='index.html');
     document.getElementById('signOutBtn')?.addEventListener('click',so);
     document.getElementById('drawerSignOutBtn')?.addEventListener('click',so);
