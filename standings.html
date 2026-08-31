@@ -133,7 +133,7 @@
   <div class="page-header">
     <div>
       <h1>Standings</h1>
-      <p id="standingsSubtitle">2025 season</p>
+      <p id="standingsSubtitle">Loading…</p>
     </div>
   </div>
 
@@ -186,6 +186,7 @@
   let allGames   = {};  // { 'week-N': { gameId: game } }
   let allPicks   = {};  // { uid: { 'week-N': { gameId: pick } } }
   let seasonStartDate = null;
+  let seasonYear = new Date().getFullYear();
   let maxWeek = 1;
 
   function initNav({activePage,isAdmin,userName}){
@@ -212,6 +213,7 @@
     const settingsSnap = await get(ref(db,'adminConfig/settings'));
     const settings = settingsSnap.exists()?settingsSnap.val():{};
     seasonStartDate = settings.seasonStartDate||null;
+    seasonYear = seasonStartDate ? new Date(seasonStartDate+'T00:00:00').getFullYear() : new Date().getFullYear();
     maxWeek = getCurrentWeek();
 
     // Populate week selector
@@ -288,7 +290,7 @@
 
     // Subtitle
     document.getElementById('standingsSubtitle').textContent = currentFilter==='season'
-      ? '2025 season · all 18 weeks'
+      ? `${seasonYear} season · all 18 weeks`
       : `Week ${currentWeek} only`;
 
     // Summary (season only)
