@@ -406,10 +406,20 @@
     if (pin !== pin2)            { showMsg('suMsg','PINs do not match.','error'); return; }
     setLoading('suBtn', true, 'Create Account');
     try {
-      const regSnap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
-      if (!regSnap.exists() || !regSnap.val()) { showMsg('suMsg','Registration is currently closed.','error'); setLoading('suBtn',false,'Create Account'); return; }
+      // Create (and authenticate) the account first — registrationOpen can
+      // only be read once auth != null, so the check has to happen after.
       const cred = await createUserWithEmailAndPassword(auth, email, pin);
       const uid  = cred.user.uid;
+
+      const regSnap = await get(ref(db, 'adminConfig/settings/registrationOpen'));
+      if (!regSnap.exists() || !regSnap.val()) {
+        await cred.user.delete().catch(()=>{});
+        await signOut(auth).catch(()=>{});
+        showMsg('suMsg','Registration is currently closed.','error');
+        setLoading('suBtn',false,'Create Account');
+        return;
+      }
+
       const isAdmin = email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
       await set(ref(db,`adminConfig/members/${uid}`),{email,displayName:name,approved:true,joinedAt:new Date().toISOString(),pickReminderOptIn:true,weeklySummaryOptIn:true});
       if (isAdmin) await set(ref(db,`adminConfig/admins/${uid}`),true);
