@@ -150,19 +150,8 @@
       font-family: inherit;
       font-size: 14px;
     }
-    .tiebreaker-input-row button {
-      padding: 8px 16px;
-      background: var(--navy);
-      color: var(--white);
-      border: 1.5px solid var(--navy);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
     .tiebreaker-locked { font-size: 14px; color: var(--ink); }
-    .tiebreaker-msg { font-size: 13px; }
+    .tiebreaker-msg { font-size: 13px; color: var(--ink-faint); min-height: 16px; }
     .tiebreaker-msg.error { color: var(--red); }
     .tiebreaker-msg.success { color: var(--green); }
 
@@ -629,6 +618,12 @@
       cursor: not-allowed;
     }
 
+    .s-team-tile.s-saving {
+      opacity: .6;
+      animation: s-pulse 0.9s ease-in-out infinite;
+    }
+    @keyframes s-pulse { 0%,100% { opacity: .6; } 50% { opacity: .95; } }
+
     .s-used-dot {
       position: absolute;
       top: 3px; right: 3px;
@@ -637,54 +632,6 @@
       background: var(--ink-faint);
     }
 
-    .s-confirm-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 14px;
-      flex-wrap: wrap;
-    }
-
-    .s-selected-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--navy);
-      flex: 1;
-    }
-
-    .s-confirm-btn {
-      padding: 9px 20px;
-      background: var(--navy);
-      color: var(--white);
-      border: 1.5px solid var(--navy);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-    @media (hover: hover) { .s-confirm-btn:hover { background: #152e4a; border-color: #152e4a; } }
-    .s-confirm-btn:active { background: #152e4a; }
-    .s-confirm-btn:disabled { opacity: .5; cursor: not-allowed; }
-
-    .s-cancel-btn {
-      padding: 9px 20px;
-      background: transparent;
-      color: var(--ink-light);
-      border: 1.5px solid var(--cream-dark);
-      border-radius: var(--radius-sm);
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-    @media (hover: hover) { .s-cancel-btn:hover { border-color: var(--red); color: var(--red); } }
-    .s-cancel-btn:active { border-color: var(--red); color: var(--red); }
-
     .s-msg {
       margin-top: 10px;
       padding: 9px 13px;
@@ -692,7 +639,7 @@
       font-size: 13px;
       display: none;
     }
-    .s-msg.show  { display: block; }
+    .s-msg.show  { display: block; background: var(--cream); color: var(--ink-light); }
     .s-msg.error { background: #FDF0EF; color: var(--red); border: 1px solid #F5C6C2; }
     .s-msg.info  { background: #EFF6F2; color: #1D6A3E; border: 1px solid #B8DFCA; }
 
@@ -1150,7 +1097,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
   ];
 
   let survivorState    = null;
-  let survivorSelected = null;
   let weekGamesCache   = {};   // 'week-N' → { lastStartTime, games }
 
   // ── Winner resolution ────────────────────────────────────────────────
@@ -1565,25 +1511,43 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
           ? `<div class="tiebreaker-locked">🔒 Your guess: <strong>${guess != null ? guess : 'none submitted'}</strong>${actual != null ? ` · actual: <strong>${actual}</strong>` : ''}</div>`
           : `<div class="tiebreaker-input-row">
                <input type="number" step="0.1" id="tiebreakerInput" placeholder="Total points" value="${guess != null ? guess : ''}" />
-               <button id="tiebreakerSaveBtn">Save Guess</button>
                <span id="tiebreakerMsg" class="tiebreaker-msg"></span>
              </div>`
         }
       </div>`;
 
-    document.getElementById('tiebreakerSaveBtn')?.addEventListener('click', async () => {
-      const input = document.getElementById('tiebreakerInput');
-      const val   = parseFloat(input.value);
-      const msg   = document.getElementById('tiebreakerMsg');
-      if (isNaN(val)) { msg.textContent = 'Enter a number.'; msg.className = 'tiebreaker-msg error'; return; }
+    const input = document.getElementById('tiebreakerInput');
+    if (!input) return;
+
+    let saveTimer = null;
+    const msg = document.getElementById('tiebreakerMsg');
+
+    async function saveTiebreaker() {
+      const val = parseFloat(input.value);
+      if (isNaN(val)) { msg.textContent = ''; msg.className = 'tiebreaker-msg'; return; }
+      msg.textContent = 'Saving…';
+      msg.className = 'tiebreaker-msg';
       try {
         await set(ref(db, `tiebreakers/${currentUser.uid}/week-${week}`), val);
         msg.textContent = '✅ Saved';
         msg.className = 'tiebreaker-msg success';
       } catch (e) {
-        msg.textContent = 'Failed to save.';
+        msg.textContent = 'Failed to save — try again.';
         msg.className = 'tiebreaker-msg error';
       }
+    }
+
+    // Auto-save shortly after typing stops...
+    input.addEventListener('input', () => {
+      clearTimeout(saveTimer);
+      msg.textContent = '';
+      msg.className = 'tiebreaker-msg';
+      saveTimer = setTimeout(saveTiebreaker, 800);
+    });
+    // ...and immediately if they tab/click away before the debounce fires.
+    input.addEventListener('blur', () => {
+      clearTimeout(saveTimer);
+      if (input.value !== '') saveTiebreaker();
     });
   }
 
@@ -1739,12 +1703,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
             </button>`;
           }).join('')}
         </div>
-        <div id="sPickConfirmRow" style="display:none" class="s-confirm-row">
-          <span id="sSelectedLabel" class="s-selected-label"></span>
-          <button class="s-confirm-btn" id="sConfirmBtn">Confirm Pick</button>
-          <button class="s-cancel-btn" onclick="document.getElementById('sPickConfirmRow').style.display='none';survivorSelected=null;document.querySelectorAll('.s-team-tile.s-selected').forEach(b=>{if(b.dataset.abbrev!=='${normalizeAbbrev(weekPick||'')}')b.classList.remove('s-selected')})">Cancel</button>
-        </div>
-        <div class="s-msg" id="sMsg"></div>`;
+        <div id="sMsg" class="s-msg"></div>`;
     }
 
     card.innerHTML = `
@@ -1764,38 +1723,33 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     if (canPick) {
       document.querySelectorAll('.s-team-tile:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
-          btn.classList.add('s-selected');
-          survivorSelected = btn.dataset.abbrev;
-          const confirmRow = document.getElementById('sPickConfirmRow');
-          const label = document.getElementById('sSelectedLabel');
-          if (confirmRow) confirmRow.style.display = 'flex';
-          if (label) label.textContent = `Pick: ${survivorSelected}`;
+          if (btn.classList.contains('s-saving')) return; // ignore double-clicks mid-save
+          if (normalizeAbbrev(weekPick||'') === btn.dataset.abbrev) return; // already the saved pick
+          saveSurvivorPick(week, btn.dataset.abbrev, games);
         });
       });
-      document.getElementById('sConfirmBtn')?.addEventListener('click', () => confirmSurvivorPick(week));
     }
   }
 
-  async function confirmSurvivorPick(week) {
-    if (!survivorSelected) return;
+  async function saveSurvivorPick(week, abbrev, games) {
     const season = seasonKey();
     const wk     = `week-${week}`;
-    const btn    = document.getElementById('sConfirmBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    const msg    = document.getElementById('sMsg');
+    document.querySelectorAll('.s-team-tile').forEach(b => b.classList.remove('s-selected'));
+    const btn = document.querySelector(`.s-team-tile[data-abbrev="${abbrev}"]`);
+    btn?.classList.add('s-selected', 's-saving');
+    if (msg) { msg.textContent = 'Saving…'; msg.className = 's-msg show'; }
 
     try {
-      const updatedTeams = { ...(survivorState.usedTeams || {}), [wk]: survivorSelected };
+      const updatedTeams = { ...(survivorState.usedTeams || {}), [wk]: abbrev };
       await update(ref(db), {
         [`survivor/${season}/${currentUser.uid}/usedTeams`]: updatedTeams,
       });
       survivorState.usedTeams = updatedTeams;
-      survivorSelected = null;
-      renderSurvivorCard(Object.values(gamesCache), week);
+      renderSurvivorCard(games, week); // re-render shows the saved pick + "Saved" state
     } catch (err) {
-      const msg = document.getElementById('sMsg');
-      if (msg) { msg.textContent = 'Failed to save. Try again.'; msg.className = 's-msg error show'; }
-      btn.disabled = false; btn.textContent = 'Confirm Pick';
+      btn?.classList.remove('s-saving');
+      if (msg) { msg.textContent = 'Failed to save — try again.'; msg.className = 's-msg error show'; }
     }
   }
 
