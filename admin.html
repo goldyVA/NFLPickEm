@@ -1541,6 +1541,11 @@ const NAV_STYLES = `
   }
 
   // ── Render all members ────────────────────────────────────────────────
+  function lastName(name) {
+    const parts = (name || '').trim().split(' ');
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  }
+
   function renderMembers() {
     const list     = document.getElementById('membersList');
     const approved = allMembers.filter(m => m.approved);
@@ -1552,7 +1557,7 @@ const NAV_STYLES = `
 
     approved.sort((a, b) => {
       if (a.isAdmin !== b.isAdmin) return a.isAdmin ? -1 : 1;
-      return (a.displayName || '').localeCompare(b.displayName || '');
+      return lastName(a.displayName).localeCompare(lastName(b.displayName));
     });
 
     list.innerHTML = approved.map(m => {
