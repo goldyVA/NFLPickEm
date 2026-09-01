@@ -306,15 +306,16 @@
   async function loadSeasonWeekGames(upToWeek) {
     const wg = {};
     try {
-      for (let w = 1; w <= upToWeek; w++) {
-        const wk = `week-${w}`;
-        const snap = await get(ref(db, `games/${wk}`));
+      const weekNums = Array.from({length: upToWeek}, (_, i) => i+1);
+      const snaps = await Promise.all(weekNums.map(w => get(ref(db, `games/week-${w}`))));
+      weekNums.forEach((w, i) => {
+        const snap = snaps[i];
         if (snap.exists()) {
           const games = Object.entries(snap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v)
             .sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
-          if (games.length) wg[wk] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
+          if (games.length) wg[`week-${w}`] = { lastStartTime:new Date(games[games.length-1].startTime), games, allFinal:games.every(g=>g.statusName==='STATUS_FINAL') };
         }
-      }
+      });
     } catch(e){}
     // Re-fetch non-final weeks + current week
     const toFetch = new Set([upToWeek]);
