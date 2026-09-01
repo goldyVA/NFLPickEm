@@ -342,19 +342,15 @@
       let members = [];
       if (mSnap.exists()) mSnap.forEach(c=>{ if(c.val().approved) members.push({uid:c.key,...c.val()}); });
 
-      // All picks for this week
+      // All picks for this week — fetched in parallel, not one member at a time
       const allPicks = {};
-      for (const m of members) {
-        const pSnap = await get(ref(db, `picks/${m.uid}/week-${week}`));
-        allPicks[m.uid] = pSnap.exists() ? pSnap.val() : {};
-      }
+      const pickSnaps = await Promise.all(members.map(m => get(ref(db, `picks/${m.uid}/week-${week}`))));
+      members.forEach((m, i) => { allPicks[m.uid] = pickSnaps[i].exists() ? pickSnaps[i].val() : {}; });
 
-      // Tiebreakers
+      // Tiebreakers — same, in parallel
       const allTiebreakers = {};
-      for (const m of members) {
-        const tbSnap = await get(ref(db, `tiebreakers/${m.uid}/week-${week}`));
-        allTiebreakers[m.uid] = tbSnap.exists() ? tbSnap.val() : null;
-      }
+      const tbSnaps = await Promise.all(members.map(m => get(ref(db, `tiebreakers/${m.uid}/week-${week}`))));
+      members.forEach((m, i) => { allTiebreakers[m.uid] = tbSnaps[i].exists() ? tbSnaps[i].val() : null; });
 
       // Compute totals
       const memberTotals = {};
