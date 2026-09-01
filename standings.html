@@ -227,24 +227,32 @@
     allMembers=[];
     if(mSnap.exists()) mSnap.forEach(c=>{if(c.val().approved)allMembers.push({uid:c.key,...c.val()});});
 
-    // Load all games + picks for all weeks up to current
-    for(let w=1;w<=maxWeek;w++){
-      const gSnap = await get(ref(db,`games/week-${w}`));
-      if(gSnap.exists()) {
-        allGames[`week-${w}`] = Object.fromEntries(
+    // Load all games for weeks up to current — in parallel, not one week at a time
+    const gameSnaps = await Promise.all(
+      Array.from({length: maxWeek}, (_, i) => get(ref(db, `games/week-${i+1}`)))
+    );
+    gameSnaps.forEach((gSnap, i) => {
+      if (gSnap.exists()) {
+        allGames[`week-${i+1}`] = Object.fromEntries(
           Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt')
         );
       }
-    }
+    });
 
-    // Load all picks
-    for(const m of allMembers){
-      allPicks[m.uid]={};
-      for(let w=1;w<=maxWeek;w++){
-        const pSnap=await get(ref(db,`picks/${m.uid}/week-${w}`));
-        if(pSnap.exists()) allPicks[m.uid][`week-${w}`]=pSnap.val();
+    // Load all picks — every (member, week) pair fetched in parallel instead
+    // of nested sequential loops. This is the one that scales worst with
+    // more members and more weeks, so it matters most as the season goes on.
+    allMembers.forEach(m => { allPicks[m.uid] = {}; });
+    const pickJobs = [];
+    for (const m of allMembers) {
+      for (let w=1; w<=maxWeek; w++) {
+        pickJobs.push({ uid: m.uid, wk: `week-${w}`, promise: get(ref(db, `picks/${m.uid}/week-${w}`)) });
       }
     }
+    const pickResults = await Promise.all(pickJobs.map(j => j.promise));
+    pickJobs.forEach((j, i) => {
+      if (pickResults[i].exists()) allPicks[j.uid][j.wk] = pickResults[i].val();
+    });
 
     renderStandings();
   }
