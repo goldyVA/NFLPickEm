@@ -301,8 +301,12 @@
     document.getElementById('leadersBar').style.display = 'none';
 
     try {
-      // Games
-      const gSnap = await get(ref(db, `games/week-${week}`));
+      // Games + members are independent of each other — fetch both at once
+      // instead of waiting for games to finish before starting members.
+      const [gSnap, mSnap] = await Promise.all([
+        get(ref(db, `games/week-${week}`)),
+        get(ref(db, 'adminConfig/members')),
+      ]);
       let games = [];
       if (gSnap.exists()) {
         games = Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
@@ -337,19 +341,18 @@
 
       games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
 
-      // Members
-      const mSnap = await get(ref(db, 'adminConfig/members'));
+      // Members (already fetched above, alongside games)
       let members = [];
       if (mSnap.exists()) mSnap.forEach(c=>{ if(c.val().approved) members.push({uid:c.key,...c.val()}); });
 
-      // All picks for this week — fetched in parallel, not one member at a time
-      const allPicks = {};
-      const pickSnaps = await Promise.all(members.map(m => get(ref(db, `picks/${m.uid}/week-${week}`))));
+      // Picks + tiebreakers are independent of each other too — one combined
+      // parallel batch instead of two sequential ones.
+      const allPicks = {}, allTiebreakers = {};
+      const [pickSnaps, tbSnaps] = await Promise.all([
+        Promise.all(members.map(m => get(ref(db, `picks/${m.uid}/week-${week}`)))),
+        Promise.all(members.map(m => get(ref(db, `tiebreakers/${m.uid}/week-${week}`)))),
+      ]);
       members.forEach((m, i) => { allPicks[m.uid] = pickSnaps[i].exists() ? pickSnaps[i].val() : {}; });
-
-      // Tiebreakers — same, in parallel
-      const allTiebreakers = {};
-      const tbSnaps = await Promise.all(members.map(m => get(ref(db, `tiebreakers/${m.uid}/week-${week}`))));
       members.forEach((m, i) => { allTiebreakers[m.uid] = tbSnaps[i].exists() ? tbSnaps[i].val() : null; });
 
       // Compute totals
