@@ -1028,6 +1028,7 @@
   <div class="section">
     <div class="section-header">
       <span class="section-title">All Members</span>
+      <button class="btn-load" id="copyEmailsBtn" title="Copy every approved member's email, one per line">📋 Copy Emails</button>
     </div>
     <div class="card" id="membersList">
       <div class="state-box"><div class="spinner"></div></div>
@@ -1846,6 +1847,40 @@ const NAV_STYLES = `
       return snap.exists() ? snap.val() : {};
     }
   }
+
+  document.getElementById('copyEmailsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('copyEmailsBtn');
+    const emails = allMembers
+      .filter(m => m.approved && m.email)
+      .sort((a, b) => lastName(a.displayName).localeCompare(lastName(b.displayName)))
+      .map(m => m.email)
+      .join('\r\n');
+
+    if (!emails) { toast('No approved member emails to copy.', 'error'); return; }
+
+    try {
+      await navigator.clipboard.writeText(emails);
+    } catch (e) {
+      // Fallback for browsers/contexts where the Clipboard API is blocked
+      const ta = document.createElement('textarea');
+      ta.value = emails;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e2) {
+        document.body.removeChild(ta);
+        toast('Could not copy automatically — select and copy manually.', 'error');
+        return;
+      }
+      document.body.removeChild(ta);
+    }
+
+    const original = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    toast(`Copied ${allMembers.filter(m => m.approved && m.email).length} email addresses.`, 'success');
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  });
 
   document.getElementById('loadPicksBtn').addEventListener('click', async () => {
     const week      = parseInt(document.getElementById('picksWeek').value);
