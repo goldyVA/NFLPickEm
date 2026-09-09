@@ -197,6 +197,30 @@
 
     .summary-chip strong { color: var(--ink); }
 
+    .missing-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: linear-gradient(135deg, #FEF9EE 0%, var(--white) 55%);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(232,168,56,.18);
+    }
+    .missing-banner .mb-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .missing-banner .mb-title { font-weight: 700; color: var(--navy); font-size: 15px; margin-bottom: 4px; }
+    .missing-banner .mb-list { display: flex; flex-direction: column; gap: 4px; }
+    .missing-banner .mb-item {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 13px; color: var(--ink-light);
+    }
+    .missing-banner .mb-item a {
+      color: var(--navy); font-weight: 600; text-decoration: none;
+      border-bottom: 1px solid var(--accent);
+    }
+    .missing-banner .mb-item a:hover { color: #152e4a; }
+
     /* ── Game cards ──────────────────────────── */
     .games-grid {
       display: flex;
@@ -219,11 +243,38 @@
     .game-card.locked  { border-color: #D4CAB8; }
     .game-card.correct { border-color: #A8D5B5; background: #F4FBF6; }
     .game-card.wrong   { border-color: #F0C4C0; background: #FDF5F4; }
+    .game-card.missing-pick {
+      border: 2px solid var(--accent);
+      box-shadow: 0 2px 10px rgba(232,168,56,.2);
+      animation: mp-glow 2.2s ease-in-out infinite;
+    }
+    @keyframes mp-glow {
+      0%,100% { box-shadow: 0 2px 10px rgba(232,168,56,.2); }
+      50%     { box-shadow: 0 2px 18px rgba(232,168,56,.5); }
+    }
+    .game-card.missing-pick.jump-flash {
+      animation: mp-flash 1s ease-in-out 2;
+    }
+    @keyframes mp-flash {
+      0%,100% { background: var(--white); }
+      50%     { background: #FEF9EE; }
+    }
+    .missing-pick-badge {
+      padding: 2px 9px;
+      background: var(--accent);
+      color: #4A3200;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
 
     .card-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px 10px;
       padding: 10px 16px;
       border-bottom: 1px solid var(--cream-dark);
       background: var(--cream);
@@ -962,6 +1013,8 @@
   </div>
 
   <!-- Summary bar -->
+  <div id="missingPicksBanner" style="display:none"></div>
+
   <div class="summary-bar" id="summaryBar" style="display:none">
     <div class="summary-chip">Games: <strong id="sumGames">0</strong></div>
     <div class="summary-chip">Picked: <strong id="sumPicked">0</strong></div>
@@ -1279,7 +1332,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
 
     renderGames(games, week);
     updateSummary(games);
-    renderTiebreaker(games, week);
+    updateMissingBanner(games);
     loadSurvivorSection(games, week);
 
     const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
@@ -1292,6 +1345,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
           await loadUserPicks(week);
           renderGames(fresh, week);
           updateSummary(fresh);
+          updateMissingBanner(fresh);
           renderTiebreaker(fresh, week);
           loadSurvivorSection(fresh, week);
           if (fresh.every(g => g.statusName === 'STATUS_FINAL')) {
@@ -1351,8 +1405,10 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     }
 
     const card = document.createElement('div');
-    card.className = `game-card ${locked ? 'locked' : ''} ${resultClass}`;
+    const missingPick = !locked && !userPick;
+    card.className = `game-card ${locked ? 'locked' : ''} ${resultClass} ${missingPick ? 'missing-pick' : ''}`;
     card.dataset.gameId = game.id;
+    card.id = `game-card-${game.id}`;
 
     let badgeClass = 'badge-upcoming';
     let badgeText  = `${formatGameDay(game.startTime)} ${formatGameTime(game.startTime)}`;
@@ -1375,6 +1431,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
         ${isMNF ? '<span class="mnf-badge">MNF</span>' : ''}
         <span class="game-time">${badgeText}</span>
         <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
+        ${missingPick ? '<span class="missing-pick-badge">⚠️ No pick yet</span>' : ''}
       </div>
 
       <div class="card-body">
@@ -1483,7 +1540,27 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       await set(pickRef, null).catch(() => {});
     }
 
+    updateCardMissingState(game);
     updateSummary(Object.values(gamesCache));
+    updateMissingBanner(Object.values(gamesCache));
+  }
+
+  // Targeted update of one card's missing-pick styling, matching the
+  // footer-only pattern above rather than a full re-render on every click.
+  function updateCardMissingState(game) {
+    const card = document.getElementById(`game-card-${game.id}`);
+    if (!card) return;
+    const locked      = gameIsLocked(game.startTime);
+    const userPick    = userPicks[game.id]?.teamId || null;
+    const missingPick = !locked && !userPick;
+    card.classList.toggle('missing-pick', missingPick);
+    const header = card.querySelector('.card-header');
+    const existingBadge = header?.querySelector('.missing-pick-badge');
+    if (missingPick && !existingBadge) {
+      header.insertAdjacentHTML('beforeend', '<span class="missing-pick-badge">⚠️ No pick yet</span>');
+    } else if (!missingPick && existingBadge) {
+      existingBadge.remove();
+    }
   }
 
   // ── Summary bar ────────────────────────────────────────────────────────
@@ -1507,6 +1584,38 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       correctChip.style.display = 'none';
     }
   }
+
+  function updateMissingBanner(games) {
+    const banner = document.getElementById('missingPicksBanner');
+    const missing = games.filter(g => !gameIsLocked(g.startTime) && !userPicks[g.id]?.teamId);
+
+    if (!missing.length) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+
+    missing.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+
+    banner.style.display = 'flex';
+    banner.className = 'missing-banner';
+    banner.innerHTML = `
+      <span class="mb-icon">⚠️</span>
+      <div>
+        <div class="mb-title">You have ${missing.length} unpicked game${missing.length>1?'s':''}</div>
+        <div class="mb-list">
+          ${missing.map(g => `
+            <div class="mb-item">
+              <a href="#" onclick="jumpToGame('${g.id}');return false;">${g.awayTeam.abbrev} @ ${g.homeTeam.abbrev}</a>
+              <span>— ${formatGameDay(g.startTime)} ${formatGameTime(g.startTime)}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  window.jumpToGame = function(gameId) {
+    const card = document.getElementById(`game-card-${gameId}`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('jump-flash');
+    setTimeout(() => card.classList.remove('jump-flash'), 2000);
+  };
 
   // ── MNF Tiebreaker ────────────────────────────────────────────────────
   async function renderTiebreaker(games, week) {
