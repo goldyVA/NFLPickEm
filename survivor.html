@@ -212,6 +212,10 @@
     const diff  = Math.floor((new Date() - start) / 86400000);
     return Math.max(1, Math.min(18, Math.floor(diff / 7) + 1));
   }
+  function lastName(name) {
+    const parts = (name || '').trim().split(' ');
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  }
 
   // ── Nav ───────────────────────────────────────────────────────────────
   function initNav({ activePage, isAdmin = false, userName = '' }) {
@@ -412,10 +416,22 @@
 
   // ── Render weekly grid ────────────────────────────────────────────────
   function renderWeeklyGrid(weekGames, curWeek, defaultStartWeek, massElimWeeks) {
+    // You're always pinned to the top row. Below that: alive members first
+    // (alphabetical by last name), then eliminated members grouped by the
+    // week they went out — most recently eliminated sits just below the
+    // alive group, earliest-eliminated (Week 1 losers) sinks to the very
+    // bottom. Last name is the tiebreaker within each group.
     const members = [...allMembers].sort((a,b)=>{
-      if(a.uid===currentUser.uid) return -1;
-      if(b.uid===currentUser.uid) return 1;
-      return (a.displayName||'').localeCompare(b.displayName||'');
+      if (a.uid === currentUser.uid) return -1;
+      if (b.uid === currentUser.uid) return 1;
+      const sa = allStates[a.uid] || {}, sb = allStates[b.uid] || {};
+      const aliveA = sa.alive !== false, aliveB = sb.alive !== false;
+      if (aliveA !== aliveB) return aliveA ? -1 : 1;
+      if (!aliveA) {
+        const wa = sa.eliminatedWeek || 0, wb = sb.eliminatedWeek || 0;
+        if (wa !== wb) return wb - wa; // later elimination week ranks higher
+      }
+      return lastName(a.displayName).localeCompare(lastName(b.displayName));
     });
 
     // Start grid from earliest actual pick week across all members
