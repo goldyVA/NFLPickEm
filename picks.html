@@ -1665,6 +1665,21 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       clearTimeout(saveTimer);
       msg.textContent = '';
       msg.className = 'tiebreaker-msg';
+      // Drop the "needs attention" gold state the instant there's a valid
+      // number in the box — don't make them wait for the save to confirm.
+      // If they clear it back out, bring the gold state right back too.
+      const card = document.querySelector('.tiebreaker-card');
+      const hasValidValue = !isNaN(parseFloat(input.value)) && input.value.trim() !== '';
+      if (hasValidValue) {
+        card?.classList.remove('tb-empty');
+        document.querySelector('.tiebreaker-needed')?.remove();
+      } else if (card && !card.classList.contains('tb-empty')) {
+        card.classList.add('tb-empty');
+        const title = card.querySelector('.tiebreaker-title');
+        if (title && !title.querySelector('.tiebreaker-needed')) {
+          title.insertAdjacentHTML('beforeend', '<span class="tiebreaker-needed">NEEDED</span>');
+        }
+      }
       saveTimer = setTimeout(saveTiebreaker, 800);
     });
     // ...and immediately if they tab/click away before the debounce fires.
