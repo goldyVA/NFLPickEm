@@ -1324,6 +1324,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     renderGames(games, week);
     updateSummary(games);
     updateMissingBanner(games);
+    renderTiebreaker(games, week);
     loadSurvivorSection(games, week);
 
     const hasActive = games.some(g => g.statusName !== 'STATUS_FINAL');
