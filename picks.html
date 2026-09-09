@@ -259,15 +259,6 @@
       0%,100% { background: var(--white); }
       50%     { background: #FEF9EE; }
     }
-    .missing-pick-badge {
-      padding: 2px 9px;
-      background: var(--accent);
-      color: #4A3200;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
 
     .card-header {
       display: flex;
@@ -1431,7 +1422,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
         ${isMNF ? '<span class="mnf-badge">MNF</span>' : ''}
         <span class="game-time">${badgeText}</span>
         <span class="game-status-badge ${badgeClass}">${isFinal ? 'Final' : isLive ? '🔴 Live' : 'Upcoming'}</span>
-        ${missingPick ? '<span class="missing-pick-badge">⚠️ No pick yet</span>' : ''}
       </div>
 
       <div class="card-body">
@@ -1554,13 +1544,6 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     const userPick    = userPicks[game.id]?.teamId || null;
     const missingPick = !locked && !userPick;
     card.classList.toggle('missing-pick', missingPick);
-    const header = card.querySelector('.card-header');
-    const existingBadge = header?.querySelector('.missing-pick-badge');
-    if (missingPick && !existingBadge) {
-      header.insertAdjacentHTML('beforeend', '<span class="missing-pick-badge">⚠️ No pick yet</span>');
-    } else if (!missingPick && existingBadge) {
-      existingBadge.remove();
-    }
   }
 
   // ── Summary bar ────────────────────────────────────────────────────────
@@ -1587,9 +1570,12 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
 
   function updateMissingBanner(games) {
     const banner = document.getElementById('missingPicksBanner');
-    const missing = games.filter(g => !gameIsLocked(g.startTime) && !userPicks[g.id]?.teamId);
+    const anyPicked = games.some(g => userPicks[g.id]?.teamId);
+    const missing   = games.filter(g => !gameIsLocked(g.startTime) && !userPicks[g.id]?.teamId);
 
-    if (!missing.length) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
+    // Don't nag on a totally fresh week — only once they've started picking
+    // and might genuinely have skipped one by accident.
+    if (!anyPicked || !missing.length) { banner.style.display = 'none'; banner.innerHTML = ''; return; }
 
     missing.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
 
