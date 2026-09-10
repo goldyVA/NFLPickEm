@@ -296,10 +296,16 @@
     const container=document.getElementById('standingsContainer');
     const podiumEl=document.getElementById('podium');
 
+    // Is the currently-viewed week fully final? Used to hold off on medals
+    // until real results are in — season view has no such concept.
+    const weekGameList = Object.values(allGames[`week-${currentWeek}`] || {});
+    const weekComplete = weekGameList.length > 0 && weekGameList.every(g => g.statusName === 'STATUS_FINAL');
+    const showMedals = currentFilter === 'season' || weekComplete;
+
     // Subtitle
     document.getElementById('standingsSubtitle').textContent = currentFilter==='season'
       ? `${seasonYear} season · all 18 weeks`
-      : `Week ${currentWeek} only`;
+      : `Week ${currentWeek} only${weekComplete ? '' : ' · results still coming in, final standings once all games end'}`;
 
     // Summary (season only)
     if(currentFilter==='season'){
@@ -323,7 +329,7 @@
 
     // Podium
     const podiumRows=rows.filter(r=>r.totalPicks>0).slice(0,3);
-    if(podiumRows.length>=2){
+    if(showMedals && podiumRows.length>=2){
       podiumEl.style.display='grid';
       podiumEl.innerHTML=podiumRows.map((r,i)=>`
         <div class="podium-card rank-${i+1} ${r.uid===currentUser.uid?'is-you':''}">
@@ -359,7 +365,7 @@
               const isYou=r.uid===currentUser.uid;
               const barPct=maxCorrect>0?Math.round((r.totalCorrect/maxCorrect)*100):0;
               return `<tr class="${isYou?'is-you':''}">
-                <td class="rank-cell">${rank<=3&&r.totalPicks>0?`<span class="rank-medal">${MEDALS[rank-1]}</span>`:`<span>${rank}</span>`}</td>
+                <td class="rank-cell">${rank<=3&&r.totalPicks>0&&showMedals?`<span class="rank-medal">${MEDALS[rank-1]}</span>`:`<span>${rank}</span>`}</td>
                 <td>
                   <div class="member-info">
                     <span class="member-name" style="${currentFilter==='season'&&!r.donated?'color:var(--red)':''}">${r.displayName}${isYou?'<span class="you-tag">YOU</span>':''}</span>
