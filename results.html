@@ -154,7 +154,6 @@
     <div>
       <h1>Results</h1>
       <p id="resultsSubtitle">All picks, all members</p>
-      <p id="lastSynced" style="font-size:12px;color:var(--ink-faint);margin-top:2px"></p>
     </div>
     <div class="week-nav">
       <button class="week-btn" id="prevWeek">‹</button>
@@ -316,18 +315,8 @@
         get(ref(db, 'adminConfig/members')),
       ]);
       let games = [];
-      const lastSyncedEl = document.getElementById('lastSynced');
       if (gSnap.exists()) {
-        const raw = gSnap.val();
-        games = Object.entries(raw).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
-        if (raw._cachedAt) {
-          const t = new Date(raw._cachedAt);
-          lastSyncedEl.textContent = `ESPN data last synced ${t.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})}`;
-        } else {
-          lastSyncedEl.textContent = '';
-        }
-      } else {
-        lastSyncedEl.textContent = '';
+        games = Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
       }
 
       if (!games.length) {
