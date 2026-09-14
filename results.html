@@ -183,6 +183,8 @@
                             from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
   import { getDatabase, ref, get }
                             from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+  import { getFunctions, httpsCallable }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 
   const firebaseConfig = {
   apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -194,9 +196,27 @@
   appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
 };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getDatabase(app);
+  const app       = initializeApp(firebaseConfig);
+  const auth      = getAuth(app);
+  const db        = getDatabase(app);
+  const functions = getFunctions(app);
+  const relayGamesSync = httpsCallable(functions, 'relayGamesSync');
+
+  // Refresh this week's ESPN data in the background, if it's not already
+  // fully final — fire-and-forget, never blocks the page's own render.
+  // This means results.html visits (which happen more often than picks or
+  // survivor once people have already made their picks) also keep the
+  // shared data fresh for everyone, not just picks/survivor page visits.
+  async function backgroundRefresh(week, currentGames) {
+    if (currentGames?.length && currentGames.every(g => g.statusName === 'STATUS_FINAL')) return;
+    try {
+      const year = seasonStartDate ? seasonStartDate.slice(0,4) : new Date().getFullYear();
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`);
+      const data = await res.json();
+      if (data?.events?.length) relayGamesSync({ week, espnData: data }).catch(()=>{});
+    } catch(e) { /* best-effort only */ }
+  }
+
 
   let currentUser = null;
   let currentWeek = 1;
@@ -318,6 +338,10 @@
       if (gSnap.exists()) {
         games = Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
       }
+
+      // Keep the shared data fresh in the background — don't wait on this,
+      // it's purely to help other people/pages see current scores sooner.
+      backgroundRefresh(week, games);
 
       if (!games.length) {
         // Try ESPN directly
