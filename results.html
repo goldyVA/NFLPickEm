@@ -425,7 +425,10 @@
         const th = document.createElement('th');
         const locked = gameIsLocked(game.startTime);
         const isFinal = game.statusName === 'STATUS_FINAL';
-        const isLive  = game.statusName === 'STATUS_IN_PROGRESS';
+        // "Live" = kicked off but not final yet — not tied to one specific
+        // ESPN status string, since they use several (in-progress, end of
+        // period, halftime, overtime, etc.) as a game actually plays out.
+        const isLive  = !isFinal && locked;
         const isMNF   = mnfGame && game.id === mnfGame.id;
 
         let statusClass = 'status-upcoming', statusText = formatGameTime(game.startTime);
