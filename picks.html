@@ -1053,6 +1053,7 @@
   import { initializeApp }                         from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
   import { getDatabase, ref, get, set, update, child } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getFunctions, httpsCallable }           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
 function initNav({ activePage, isAdmin = false, userName = '' }) {
   const nav = document.getElementById('mainNav');
@@ -1147,9 +1148,11 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
   };
 
-  const app  = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getDatabase(app);
+  const app       = initializeApp(firebaseConfig);
+  const auth      = getAuth(app);
+  const db        = getDatabase(app);
+  const functions = getFunctions(app);
+  const relayGamesSync = httpsCallable(functions, 'relayGamesSync');
 
   // ── State ─────────────────────────────────────────────────────────────
   let currentUser     = null;
@@ -1275,10 +1278,11 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     const data = await res.json();
     const games = parseESPN(data).sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
     if (games.length > 0) {
-      const mnfGame = findMNFGame(games);
-      const cacheObj = {};
-      for (const g of games) cacheObj[g.id] = { ...g, isMNF: !!(mnfGame && g.id === mnfGame.id) };
-      await set(ref(db, `games/week-${week}`), cacheObj).catch(() => {});
+      // Members can't write games/week-N directly — hand the raw ESPN JSON
+      // to the trusted Cloud Function, which re-parses and saves it itself.
+      // Fire-and-forget: don't block the page on this, and don't let a
+      // relay failure break the user's own (already-fetched) view.
+      relayGamesSync({ week, espnData: data }).catch(() => {});
     }
     return games;
   }
