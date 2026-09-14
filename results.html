@@ -106,6 +106,13 @@
     .pick-cell:last-child{border-right:none}
     .pick-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700}
     .pick-chip img{width:16px;height:16px;object-fit:contain}
+
+    /* Highlight your own row so it's easy to spot at a glance */
+    tbody tr.you-row{background:#FEF9EE}
+    tbody tr.you-row:hover{background:#FDF2DA}
+    tbody tr.you-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+    tbody tr.you-row .member-cell{background:#FEF9EE;border-left:4px solid var(--accent)}
+    tbody tr.you-row:hover .member-cell{background:#FDF2DA}
     .chip-correct{background:#D4EDDA;color:#155724}
     .chip-wrong{background:#F8D7DA;color:#721C24}
     .chip-revealed{background:var(--cream-dark);color:var(--ink)}
@@ -147,6 +154,7 @@
     <div>
       <h1>Results</h1>
       <p id="resultsSubtitle">All picks, all members</p>
+      <p id="lastSynced" style="font-size:12px;color:var(--ink-faint);margin-top:2px"></p>
     </div>
     <div class="week-nav">
       <button class="week-btn" id="prevWeek">‹</button>
@@ -308,8 +316,18 @@
         get(ref(db, 'adminConfig/members')),
       ]);
       let games = [];
+      const lastSyncedEl = document.getElementById('lastSynced');
       if (gSnap.exists()) {
-        games = Object.entries(gSnap.val()).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
+        const raw = gSnap.val();
+        games = Object.entries(raw).filter(([k])=>k!=='_cachedAt').map(([,v])=>v);
+        if (raw._cachedAt) {
+          const t = new Date(raw._cachedAt);
+          lastSyncedEl.textContent = `ESPN data last synced ${t.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})}`;
+        } else {
+          lastSyncedEl.textContent = '';
+        }
+      } else {
+        lastSyncedEl.textContent = '';
       }
 
       if (!games.length) {
@@ -471,6 +489,7 @@
 
       for (const member of members) {
         const row = document.createElement('tr');
+        if (member.uid === currentUser.uid) row.className = 'you-row';
         const isWinner = winnerSet.has(member.uid) && games.every(g=>g.statusName==='STATUS_FINAL');
 
         const nameTd = document.createElement('td');
