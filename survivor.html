@@ -166,7 +166,8 @@
 <script type="module">
   import { initializeApp }                        from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-  import { getDatabase, ref, get, set }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getDatabase, ref, get }  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -177,9 +178,11 @@
     messagingSenderId: "752271833942",
     appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
   };
-  const app  = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getDatabase(app);
+  const app       = initializeApp(firebaseConfig);
+  const auth      = getAuth(app);
+  const db        = getDatabase(app);
+  const functions = getFunctions(app);
+  const relayGamesSync = httpsCallable(functions, 'relayGamesSync');
 
   // ── Helpers ───────────────────────────────────────────────────────────
   function norm(a) {
@@ -298,10 +301,9 @@
       }
       games.sort((a,b)=>new Date(a.startTime)-new Date(b.startTime));
       if (games.length) {
-        const monGames = games.filter(g => new Date(g.startTime).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'America/New_York' }) === 'Mon');
-        const mnfGame  = monGames.length ? monGames.reduce((a,b) => new Date(a.startTime) > new Date(b.startTime) ? a : b) : null;
-        const obj={}; for(const g of games) obj[g.id]={ ...g, isMNF: !!(mnfGame && g.id === mnfGame.id) };
-        await set(ref(db,`games/week-${week}`),obj).catch(()=>{});
+        // Members can't write games/week-N directly — hand the raw ESPN
+        // JSON to the trusted Cloud Function, which re-parses and saves it.
+        relayGamesSync({ week, espnData: data }).catch(()=>{});
       }
       return games;
     } catch(e) { return []; }
