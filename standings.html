@@ -167,6 +167,8 @@
                             from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
   import { getDatabase, ref, get }
                             from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+  import { getFunctions, httpsCallable }
+                            from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-functions.js';
 
   const firebaseConfig = {
   apiKey: "AIzaSyAWAPwR2Qa4uVYatrSN82gKPwUakVd_yoM",
@@ -178,9 +180,26 @@
   appId: "1:752271833942:web:3cd773d3e2c8856dedb4f7"
 };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getDatabase(app);
+  const app       = initializeApp(firebaseConfig);
+  const auth      = getAuth(app);
+  const db        = getDatabase(app);
+  const functions = getFunctions(app);
+  const relayGamesSync = httpsCallable(functions, 'relayGamesSync');
+  let bgRefreshInterval = null;
+
+  // Refresh the current week's ESPN data in the background, if it's not
+  // already fully final — fire-and-forget, never blocks the page's own
+  // render. Standings visits (often checked more than Picks/Survivor once
+  // people are done picking) now also help keep shared data fresh.
+  async function backgroundRefresh(week, currentGames) {
+    if (currentGames?.length && currentGames.every(g => g.statusName === 'STATUS_FINAL')) return;
+    try {
+      const year = seasonStartDate ? seasonStartDate.slice(0,4) : new Date().getFullYear();
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${year}&seasontype=2&week=${week}`);
+      const data = await res.json();
+      if (data?.events?.length) relayGamesSync({ week, espnData: data }).catch(()=>{});
+    } catch(e) { /* best-effort only */ }
+  }
 
   const MEDALS = ['🥇','🥈','🥉'];
   let currentUser = null;
@@ -242,6 +261,15 @@
         );
       }
     });
+
+    // Keep the current week's data fresh in the background — only that one,
+    // not every past week, since only the current week is likely still live.
+    backgroundRefresh(maxWeek, Object.values(allGames[`week-${maxWeek}`] || {}));
+    if (!bgRefreshInterval) {
+      bgRefreshInterval = setInterval(() => {
+        backgroundRefresh(maxWeek, Object.values(allGames[`week-${maxWeek}`] || {}));
+      }, 3 * 60 * 1000);
+    }
 
     // Load all picks — every (member, week) pair fetched in parallel instead
     // of nested sequential loops. This is the one that scales worst with
