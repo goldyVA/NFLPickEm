@@ -1811,7 +1811,9 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
           <span class="${resultClass}">${resultLabel}</span>
         </div>`;
     } else {
-      if (anyGameStarted && !canPick) {
+      if (!state.alive) {
+        pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--ink-faint)">You're out of the survivor pool — no pick needed.</span></div>`;
+      } else if (anyGameStarted && !canPick) {
         pickHTML = `<div class="s-pick-row"><span style="font-size:13px;color:var(--red)">⚠️ Games have started — no pick made this week.</span></div>`;
       } else {
         pickHTML = `<div class="s-pick-row"><span class="s-pick-label">Pick a team below to stay alive.</span></div>`;
