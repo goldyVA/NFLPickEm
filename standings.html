@@ -83,6 +83,10 @@
     .podium-medal{font-size:28px;margin-bottom:8px}
     .podium-name{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:4px}
     .podium-you{font-size:11px;color:var(--ink-faint);font-weight:400}
+    .podium-tie summary{cursor:pointer;list-style:none}
+    .podium-tie summary::-webkit-details-marker{display:none}
+    .podium-tie .tie-more{color:var(--navy);font-weight:600;text-decoration:underline;white-space:nowrap}
+    .podium-tie-full{margin-top:6px;font-size:13px;font-weight:500;color:var(--ink-light);line-height:1.5}
     .podium-num{font-family:'DM Serif Display',serif;font-size:28px;color:var(--charcoal);margin:8px 0 4px}
     .podium-record{font-size:12px;color:var(--ink-faint)}
 
@@ -208,6 +212,7 @@
   let allMembers = [];
   let allGames   = {};  // { 'week-N': { gameId: game } }
   let allPicks   = {};  // { uid: { 'week-N': { gameId: pick } } }
+  let allTiebreakers = {}; // { uid: { 'week-N': guess } }
   let seasonStartDate = null;
   let seasonYear = new Date().getFullYear();
   let maxWeek = 1;
@@ -286,11 +291,33 @@
       if (pickResults[i].exists()) allPicks[j.uid][j.wk] = pickResults[i].val();
     });
 
+    // Load all MNF tiebreaker guesses — needed to break correct-pick ties
+    // in "By Week" view the same way the official weekly winner is decided.
+    allMembers.forEach(m => { allTiebreakers[m.uid] = {}; });
+    const tbJobs = [];
+    for (const m of allMembers) {
+      for (let w=1; w<=maxWeek; w++) {
+        tbJobs.push({ uid: m.uid, wk: `week-${w}`, promise: get(ref(db, `tiebreakers/${m.uid}/week-${w}`)) });
+      }
+    }
+    const tbResults = await Promise.all(tbJobs.map(j => j.promise));
+    tbJobs.forEach((j, i) => {
+      if (tbResults[i].exists()) allTiebreakers[j.uid][j.wk] = tbResults[i].val();
+    });
+
     renderStandings();
   }
 
   function computeStandings(){
     const rows=[];
+    const weekGames = allGames[`week-${currentWeek}`] || {};
+    const weekGameList = Object.values(weekGames);
+    const mnfGame = weekGameList.find(g => g.isMNF);
+    const weekComplete = currentFilter === 'week' && weekGameList.length > 0
+      && weekGameList.every(g => g.statusName === 'STATUS_FINAL');
+    const tbActual = weekComplete && mnfGame
+      ? (parseInt(mnfGame.awayScore) + parseInt(mnfGame.homeScore)) : null;
+
     for(const member of allMembers){
       let totalPicks=0,totalCorrect=0,weeksActive=0;
       const weeks = currentFilter==='season'
@@ -312,11 +339,32 @@
         if(wkHasPick)weeksActive++;
       }
 
-      rows.push({uid:member.uid,displayName:member.displayName,donated:member.donated||false,totalPicks,totalCorrect,weeksActive,percentage:pct(totalCorrect,totalPicks)});
+      // MNF tiebreak data — only meaningful in "By Week" view once the
+      // week's fully final, matching how the official weekly winner and
+      // results.html's sort are both decided.
+      let mnfCorrect = false, tbDiff = Infinity;
+      if (weekComplete && mnfGame) {
+        const mnfPick = allPicks[member.uid]?.[`week-${currentWeek}`]?.[mnfGame.id]?.teamId;
+        mnfCorrect = mnfGame.winnerId && mnfPick ? String(mnfPick) === String(mnfGame.winnerId) : false;
+        const tbGuess = allTiebreakers[member.uid]?.[`week-${currentWeek}`] ?? null;
+        tbDiff = tbGuess != null && tbActual != null ? Math.abs(tbGuess - tbActual) : Infinity;
+      }
+
+      rows.push({uid:member.uid,displayName:member.displayName,donated:member.donated||false,totalPicks,totalCorrect,weeksActive,percentage:pct(totalCorrect,totalPicks),mnfCorrect,tbDiff});
+    }
+
+    function lastName(name) {
+      const parts = (name || '').trim().split(' ');
+      return parts.length > 1 ? parts[parts.length - 1] : parts[0];
     }
 
     rows.sort((a,b)=>{
       if(b.totalCorrect!==a.totalCorrect)return b.totalCorrect-a.totalCorrect;
+      if (weekComplete) {
+        if (a.mnfCorrect !== b.mnfCorrect) return a.mnfCorrect ? -1 : 1;
+        if (a.tbDiff !== b.tbDiff) return a.tbDiff - b.tbDiff;
+        return lastName(a.displayName).localeCompare(lastName(b.displayName));
+      }
       if(b.percentage!==a.percentage)return b.percentage-a.percentage;
       return a.displayName.localeCompare(b.displayName);
     });
@@ -361,13 +409,17 @@
 
     // Podium — group by genuinely-tied rank tiers, not just the first 3 rows.
     // A 7-way tie for 1st should show ONE gold tier listing all 7 names,
-    // not hand out gold/silver/bronze to an arbitrary 3 of them.
+    // not hand out gold/silver/bronze to an arbitrary 3 of them. Once the
+    // week is fully final, "tied" accounts for the MNF tiebreak too — two
+    // people with the same correct count but different MNF results aren't
+    // actually tied anymore.
     const scoredRows = rows.filter(r => r.totalPicks > 0);
+    const tierKey = r => weekComplete ? `${r.totalCorrect}|${r.mnfCorrect}|${r.tbDiff}` : `${r.totalCorrect}`;
     const tierGroups = [];
     for (const r of scoredRows) {
       const last = tierGroups[tierGroups.length - 1];
-      if (last && last.correct === r.totalCorrect) last.members.push(r);
-      else tierGroups.push({ correct: r.totalCorrect, members: [r] });
+      if (last && last.key === tierKey(r)) last.members.push(r);
+      else tierGroups.push({ key: tierKey(r), correct: r.totalCorrect, members: [r] });
     }
     const podiumTiers = tierGroups.slice(0, 3);
 
@@ -379,7 +431,10 @@
         );
         const nameHTML = names.length <= 3
           ? names.join(', ')
-          : `${names.slice(0,2).join(', ')} +${names.length - 2} more`;
+          : `<details class="podium-tie">
+               <summary>${names.slice(0,2).join(', ')} <span class="tie-more">+${names.length-2} more ▾</span></summary>
+               <div class="podium-tie-full">${names.join(', ')}</div>
+             </details>`;
         const anyYou = tier.members.some(m => m.uid === currentUser.uid);
         const anyUndonated = currentFilter === 'season' && tier.members.some(m => !m.donated);
         return `
@@ -396,7 +451,8 @@
 
     // Full table
     const maxCorrect=Math.max(...rows.map(r=>r.totalCorrect),1);
-    let rank=0,lastCorrect=-1;
+    let rank=0,lastKey=null;
+    const rankKey = r => weekComplete ? `${r.totalCorrect}|${r.mnfCorrect}|${r.tbDiff}` : `${r.totalCorrect}`;
     const tableHTML=`
       <div class="standings-card">
         <table>
@@ -411,7 +467,8 @@
           </thead>
           <tbody>
             ${rows.map((r,i)=>{
-              if(r.totalCorrect!==lastCorrect){rank=i+1;lastCorrect=r.totalCorrect;}
+              const k = rankKey(r);
+              if(k!==lastKey){rank=i+1;lastKey=k;}
               const isYou=r.uid===currentUser.uid;
               const barPct=maxCorrect>0?Math.round((r.totalCorrect/maxCorrect)*100):0;
               return `<tr class="${isYou?'is-you':''}">
