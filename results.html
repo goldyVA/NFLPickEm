@@ -289,7 +289,7 @@
         ? String(mnfPick) === String(mnfGame.winnerId) : false;
       const tbGuess = allTiebreakers[m.uid] ?? null;
       const tbActual = mnfGame && mnfGame.statusName === 'STATUS_FINAL'
-        ? (mnfGame.awayScore + mnfGame.homeScore) : null;
+        ? (parseInt(mnfGame.awayScore) + parseInt(mnfGame.homeScore)) : null;
       const tbDiff = tbGuess != null && tbActual != null ? Math.abs(tbGuess - tbActual) : Infinity;
 
       return { uid: m.uid, displayName: m.displayName, correct, mnfCorrect, tbDiff };
