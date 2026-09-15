@@ -2320,6 +2320,15 @@ const NAV_STYLES = `
     // Clear mass-elimination/champions markers too — new season, clean slate
     updates[`survivor/${season}/meta`] = null;
 
+    // Also clear the "already processed this week" flags for every week.
+    // Without this, a stale flag from earlier testing (or a prior season)
+    // can silently block real elimination processing later — the Cloud
+    // Function sees the flag, assumes the week's already handled, and does
+    // nothing, even though nobody was actually evaluated.
+    for (let w = 1; w <= 18; w++) {
+      updates[`remindersSent/week-${w}-survivor`] = null;
+    }
+
     if (Object.keys(updates).length > 0) {
       await update(ref(db), updates);
     }
