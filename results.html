@@ -272,13 +272,15 @@
   }
 
   // ── Determine weekly winner with tiebreakers ──────────────────────────
-  function determineWeekWinner(members, games, allPicks, allTiebreakers) {
+  function computeTiebreakScores(members, games, allPicks, allTiebreakers) {
     const mnfGame = findMNFGame(games);
     const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL' && g.winnerId);
-    if (!finalGames.length) return [];
 
-    // Compute each member's correct count + MNF info
-    const scores = members.map(m => {
+    const tbActual = mnfGame && mnfGame.statusName === 'STATUS_FINAL'
+      ? (parseInt(mnfGame.awayScore) + parseInt(mnfGame.homeScore)) : null;
+
+    const byUid = {};
+    for (const m of members) {
       const correct = finalGames.filter(g => {
         const pick = allPicks[m.uid]?.[g.id]?.teamId;
         return pick && String(pick) === String(g.winnerId);
@@ -288,15 +290,20 @@
       const mnfCorrect = mnfGame && mnfGame.winnerId && mnfPick
         ? String(mnfPick) === String(mnfGame.winnerId) : false;
       const tbGuess = allTiebreakers[m.uid] ?? null;
-      const tbActual = mnfGame && mnfGame.statusName === 'STATUS_FINAL'
-        ? (parseInt(mnfGame.awayScore) + parseInt(mnfGame.homeScore)) : null;
       const tbDiff = tbGuess != null && tbActual != null ? Math.abs(tbGuess - tbActual) : Infinity;
 
-      return { uid: m.uid, displayName: m.displayName, correct, mnfCorrect, tbDiff };
-    });
+      byUid[m.uid] = { uid: m.uid, displayName: m.displayName, correct, mnfCorrect, tbDiff };
+    }
+    return byUid;
+  }
 
-    // All games must be final to declare a winner
+  function determineWeekWinner(members, games, allPicks, allTiebreakers) {
+    const finalGames = games.filter(g => g.statusName === 'STATUS_FINAL' && g.winnerId);
+    if (!finalGames.length) return [];
     if (games.some(g => g.statusName !== 'STATUS_FINAL')) return [];
+
+    const scoresByUid = computeTiebreakScores(members, games, allPicks, allTiebreakers);
+    const scores = members.map(m => scoresByUid[m.uid]);
 
     const maxCorrect = Math.max(...scores.map(s => s.correct));
     let contenders = scores.filter(s => s.correct === maxCorrect);
@@ -401,7 +408,9 @@
       }
 
       // Sort members
-      const anyStarted = games.some(g => gameIsLocked(g.startTime));
+      const anyStarted   = games.some(g => gameIsLocked(g.startTime));
+      const weekComplete = games.length > 0 && games.every(g => g.statusName === 'STATUS_FINAL');
+      const tiebreakScores = weekComplete ? computeTiebreakScores(members, games, allPicks, allTiebreakers) : null;
 
       function lastName(name) {
         const parts = (name || '').trim().split(' ');
@@ -422,7 +431,19 @@
           return lastName(a.displayName).localeCompare(lastName(b.displayName));
         }
 
-        // After games start: by correct picks desc, then last name
+        // Once the week is fully final, ties in correct picks are broken
+        // the same way the official winner is decided: MNF pick correct,
+        // then closest combined-score guess — not just alphabetically.
+        if (weekComplete) {
+          const sa = tiebreakScores[a.uid], sb = tiebreakScores[b.uid];
+          if (sb.correct !== sa.correct) return sb.correct - sa.correct;
+          if (sa.mnfCorrect !== sb.mnfCorrect) return sa.mnfCorrect ? -1 : 1;
+          if (sa.tbDiff !== sb.tbDiff) return sa.tbDiff - sb.tbDiff;
+          return lastName(a.displayName).localeCompare(lastName(b.displayName));
+        }
+
+        // Mid-week (games started, not all final yet): by correct picks
+        // desc, then last name — the MNF tiebreak isn't decided yet.
         const diff = memberTotals[b.uid].correct - memberTotals[a.uid].correct;
         return diff !== 0 ? diff : lastName(a.displayName).localeCompare(lastName(b.displayName));
       });
