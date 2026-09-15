@@ -359,21 +359,39 @@
       return;
     }
 
-    // Podium
-    const podiumRows=rows.filter(r=>r.totalPicks>0).slice(0,3);
-    if(showMedals && podiumRows.length>=2){
-      podiumEl.style.display='grid';
-      podiumEl.innerHTML=podiumRows.map((r,i)=>`
-        <div class="podium-card rank-${i+1} ${r.uid===currentUser.uid?'is-you':''}">
-          <div class="podium-medal">${MEDALS[i]}</div>
-          <div class="podium-name" style="${currentFilter==='season'&&!r.donated?'color:var(--red)':''}">
-            ${r.displayName}${r.uid===currentUser.uid?'<span class="podium-you">(you)</span>':''}
-          </div>
-          <div class="podium-num">${r.totalCorrect}</div>
-          <div class="podium-record">${r.totalCorrect} / ${r.totalPicks} correct</div>
-        </div>`).join('');
+    // Podium — group by genuinely-tied rank tiers, not just the first 3 rows.
+    // A 7-way tie for 1st should show ONE gold tier listing all 7 names,
+    // not hand out gold/silver/bronze to an arbitrary 3 of them.
+    const scoredRows = rows.filter(r => r.totalPicks > 0);
+    const tierGroups = [];
+    for (const r of scoredRows) {
+      const last = tierGroups[tierGroups.length - 1];
+      if (last && last.correct === r.totalCorrect) last.members.push(r);
+      else tierGroups.push({ correct: r.totalCorrect, members: [r] });
+    }
+    const podiumTiers = tierGroups.slice(0, 3);
+
+    if (showMedals && podiumTiers.length >= 2) {
+      podiumEl.style.display = 'grid';
+      podiumEl.innerHTML = podiumTiers.map((tier, i) => {
+        const names = tier.members.map(m =>
+          `${m.displayName}${m.uid === currentUser.uid ? '<span class="podium-you">(you)</span>' : ''}`
+        );
+        const nameHTML = names.length <= 3
+          ? names.join(', ')
+          : `${names.slice(0,2).join(', ')} +${names.length - 2} more`;
+        const anyYou = tier.members.some(m => m.uid === currentUser.uid);
+        const anyUndonated = currentFilter === 'season' && tier.members.some(m => !m.donated);
+        return `
+          <div class="podium-card rank-${i+1} ${anyYou ? 'is-you' : ''}">
+            <div class="podium-medal">${MEDALS[i]}</div>
+            <div class="podium-name" style="${anyUndonated ? 'color:var(--red)' : ''}">${nameHTML}</div>
+            <div class="podium-num">${tier.correct}</div>
+            <div class="podium-record">${tier.members.length > 1 ? `${tier.members.length}-way tie · ` : ''}${tier.correct} correct</div>
+          </div>`;
+      }).join('');
     } else {
-      podiumEl.style.display='none';
+      podiumEl.style.display = 'none';
     }
 
     // Full table
