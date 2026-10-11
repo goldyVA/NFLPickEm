@@ -269,6 +269,7 @@
     if (!g) return null;
     if (g.statusName!=='STATUS_FINAL') return 'pending';
     if (!g.winnerId) return 'pending';
+    if (g.winnerId==='TIE') return 'loss'; // a tie eliminates, same as a loss
     const homeWon = String(g.winnerId)===String(g.homeTeam?.id);
     const won = homeWon ? norm(g.homeTeam.abbrev)===np : norm(g.awayTeam.abbrev)===np;
     return won ? 'win' : 'loss';
@@ -292,7 +293,7 @@
           if (home.winner) winnerId=String(home.team.id);
           else if (away.winner) winnerId=String(away.team.id);
           else if (home.score!=null&&away.score!=null)
-            winnerId = parseInt(home.score)>parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+            winnerId = parseInt(home.score)===parseInt(away.score) ? 'TIE' : (parseInt(home.score)>parseInt(away.score) ? String(home.team.id) : String(away.team.id));
         }
         games.push({ id:ev.id, startTime: comp.date || ev.date, startTimeMs: new Date(comp.date || ev.date).getTime(), statusName,
           homeTeam:{ id:String(home.team.id), abbrev:norm(home.team.abbreviation) },
