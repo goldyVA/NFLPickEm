@@ -366,7 +366,7 @@
               awayScore:parseInt(away?.score)||0,homeScore:parseInt(home?.score)||0,
               awayTeam:{id:away?.team?.id,abbrev:normalizeAbbrev(away?.team?.abbreviation),name:away?.team?.displayName},
               homeTeam:{id:home?.team?.id,abbrev:normalizeAbbrev(home?.team?.abbreviation),name:home?.team?.displayName},
-              winnerId:status?.name==='STATUS_FINAL'?(parseInt(away?.score)>parseInt(home?.score)?away?.team?.id:home?.team?.id):null,
+              winnerId:status?.name==='STATUS_FINAL'?(parseInt(away?.score)===parseInt(home?.score)?'TIE':(parseInt(away?.score)>parseInt(home?.score)?away?.team?.id:home?.team?.id)):null,
             });
           }
         } catch(e){ console.error('ESPN fetch error:', e); }
@@ -545,9 +545,10 @@
             td.innerHTML = `<span class="chip-none">—</span>`;
           } else if (isFinal && game.winnerId) {
             const correct = didPickWin(pick, game);
+            const isTie   = game.winnerId === 'TIE';
             const abbrev  = pickAbbrev(pick, game);
             const isAuto  = allPicks[member.uid]?.[game.id]?.auto === true;
-            td.innerHTML = `<span class="pick-chip ${correct?'chip-correct':'chip-wrong'}"><img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />${abbrev}${isAuto?' 🤖':''}</span>`;
+            td.innerHTML = `<span class="pick-chip ${isTie?'chip-revealed':correct?'chip-correct':'chip-wrong'}"${isTie?' title="Tie — no credit"':''}><img src="${espnLogo(abbrev)}" alt="${abbrev}" onerror="this.style.display='none'" />${abbrev}${isAuto?' 🤖':''}</span>`;
           } else {
             const abbrev = pickAbbrev(pick, game);
             const isAuto = allPicks[member.uid]?.[game.id]?.auto === true;
