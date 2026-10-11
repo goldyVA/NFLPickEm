@@ -1251,8 +1251,11 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       if (statusName === 'STATUS_FINAL') {
         if (home.winner) winnerId = String(home.team.id);
         else if (away.winner) winnerId = String(away.team.id);
-        else if (home.score != null && away.score != null)
-          winnerId = parseInt(home.score) > parseInt(away.score) ? String(home.team.id) : String(away.team.id);
+        else if (home.score != null && away.score != null) {
+          const hs = parseInt(home.score), aw = parseInt(away.score);
+          // Equal final scores = a tie: nobody "won", so no pick can match
+          winnerId = hs === aw ? 'TIE' : (hs > aw ? String(home.team.id) : String(away.team.id));
+        }
       }
 
       games.push({
@@ -1404,7 +1407,7 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
     let correct = null;
     if (isFinal && game.winnerId && userPick) {
       correct = didPickWin(userPick, game);
-      resultClass = correct ? 'correct' : 'wrong';
+      resultClass = game.winnerId === 'TIE' ? '' : (correct ? 'correct' : 'wrong');
     }
 
     const card = document.createElement('div');
@@ -1491,6 +1494,9 @@ function initNav({ activePage, isAdmin = false, userName = '' }) {
       if (correct) {
         return `<span class="result-indicator correct">✅ Correct — ${teamName}${autoBadge}</span>`;
       } else {
+        if (game.winnerId === 'TIE') {
+          return `<span class="result-indicator">🤝 Tie — no credit for ${teamName}${autoBadge}</span>`;
+        }
         const winnerName = String(game.winnerId) === String(game.homeTeam.id) ? game.homeTeam.name : game.awayTeam.name;
         return `<span class="result-indicator wrong">❌ Wrong — picked ${teamName}, winner was ${winnerName}${autoBadge}</span>`;
       }
